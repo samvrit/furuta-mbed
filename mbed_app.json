@@ -1,0 +1,29 @@
+{
+    "macros": ["DEVICE_WIFI_AP=1"],
+    "config": {
+        "wifi-ssid": {
+            "help": "AP SSID",
+            "value": "\"odin-w2\""
+        },
+        "ap-ip": {
+            "help": "AP IP",
+            "value": "\"10.0.0.1\""
+        },
+        "ap-netmask": {
+            "help": "Netmask",
+            "value": "\"255.255.255.0\""
+        },
+        "ap-gateway": {
+            "help": "Network gateway",
+            "value": "\"0.0.0.0\""
+        },
+        "ap-channel": {
+            "help": "AP channel",
+            "value": "\"Furuta\""
+        },
+        "wifi-password": {
+            "help": "WiFi Password",
+            "value": "\"1\""
+        }
+    }
+}
