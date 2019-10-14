@@ -17,6 +17,7 @@
 #include "mbed.h"
 #include "OdinWiFiInterface.h"
 #include "TCPSocket.h"
+#include "UDPSocket.h"
 #include <string> 
 
 #ifdef DEVICE_WIFI_AP
@@ -73,6 +74,7 @@ int main()
     nsapi_size_or_error_t errcode;
     nsapi_error_t *err;
     TCPSocket sock, *sock_data;
+    UDPSocket udpsock(_wifi);
     int n = 0;
     char recv_buf[1024];
     
