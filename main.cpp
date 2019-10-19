@@ -16,7 +16,7 @@
 
 #include "mbed.h"
 #include "OdinWiFiInterface.h"
-#include <string> 
+#include <string>
 
 #ifdef DEVICE_WIFI_AP
 static const char *wifi_ssid = MBED_CONF_APP_WIFI_SSID;
@@ -26,9 +26,9 @@ static const char *ap_netmask = MBED_CONF_APP_AP_NETMASK;
 static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
 #endif
 
-#define ECHO_SERVER_PORT   5050
+#define ECHO_SERVER_PORT 5050
 
-OdinWiFiInterface   *_wifi;
+OdinWiFiInterface *_wifi;
 
 static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
 {
@@ -39,21 +39,20 @@ static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
     // AP Configure and start
     error_code = _wifi->set_ap_network(ap_ip, ap_netmask, ap_gateway);
     MBED_ASSERT(error_code == NSAPI_ERROR_OK);
-    
+
     //DHCP not available
     error_code = _wifi->set_ap_dhcp(false);
     MBED_ASSERT(error_code == NSAPI_ERROR_OK);
-    
+
     //Set beacon interval to default value
     _wifi->set_ap_beacon_interval(100);
-    
+
     //Set ap ssid, password and channel
     error_code = _wifi->ap_start(wifi_ssid, wifi_password, security, cbWLAN_CHANNEL_01);
     MBED_ASSERT(error_code == NSAPI_ERROR_OK);
-    
+
     printf("\nAP started successfully, wifi password: %s\r\n", wifi_password);
 }
-
 
 static void stop_ap()
 {
@@ -61,54 +60,109 @@ static void stop_ap()
 
     error_code = _wifi->ap_stop();
     MBED_ASSERT(error_code == NSAPI_ERROR_OK);
-    
-    printf("\nAP stopped\r\n");
 
+    printf("\nAP stopped\r\n");
 }
- 
+
 int main()
 {
     nsapi_size_or_error_t errcode;
     nsapi_error_t *err;
+#ifdef USE_TCP
+    TCPSocket sock, *sock_data;
+#else
     UDPSocket sock;
+#endif
+
     SocketAddress sockAddr;
     int n = 0;
     char recv_buf[1024];
-    
+
     /*Start AP*/
     _wifi = new OdinWiFiInterface(true);
-    start_ap(); 
-    
+    start_ap();
+
     /*Socket initialization*/
     errcode = sock.open(_wifi);
-    if (errcode != NSAPI_ERROR_OK) {
+    if (errcode != NSAPI_ERROR_OK)
+    {
+#ifdef USE_TCP
+        printf("TCPSocket.open() fails, code: %d\r\n", errcode);
+#else
         printf("UDPSocket.open() fails, code: %d\r\n", errcode);
+#endif
         return -1;
-    }  
+    }
 
     errcode = sock.bind(ap_ip, ECHO_SERVER_PORT);
-    if (errcode < 0) {
+    if (errcode < 0)
+    {
+#ifdef USE_TCP
+        printf("TCPSocket.connect() fails, code: %d\r\n", errcode);
+#else
         printf("UDPSocket.connect() fails, code: %d\r\n", errcode);
+#endif
         return -1;
     }
-    else {
+    else
+    {
+#ifdef USE_TCP
+        printf("TCP: connected with %s server\r\n", ap_ip);
+#else
         printf("UDP: connected with %s server\r\n", ap_ip);
+#endif
     }
-   
-    /*Echo server*/
-    while (1) {
-        n = sock.recvfrom(&sockAddr, (void*) recv_buf, sizeof(recv_buf));
-        if (n > 0) 
+
+/*Echo server*/
+#ifdef USE_TCP
+    if (sock.listen() == 0)
+    {
+        sock_data = sock.accept(err = NULL);
+
+        if (sock_data != NULL)
+        {
+            while (true)
+            {
+                n = sock_data->recv((void *)recv_buf, sizeof(recv_buf));
+                if (n > 0)
+                {
+                    printf("\n Received from client %d bytes: %s \n", n, recv_buf);
+
+                    errcode = sock_data->send((void *)recv_buf, n);
+                    if (errcode < 0)
+                    {
+                        printf("\n TCPSocket.send() fails, code: %d\n", errcode);
+                        return -1;
+                    }
+                    else
+                    {
+                        printf("\n TCP: Sent %d Bytes to client\n", n);
+                    }
+                }
+                else
+                {
+                    printf("\n TCPSocket.recv() failed");
+                    return -1;
+                }
+            }
+        }
+    }
+    sock_data->close();
+#else
+    while (1)
+    {
+        n = sock.recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
+        if (n > 0)
         {
             printf("\n Received from client %d bytes: %s \r\n", n, recv_buf);
 
-            errcode = sock.sendto(sockAddr, (void*) recv_buf, n);
+            errcode = sock.sendto(sockAddr, (void *)recv_buf, n);
             if (errcode < 0)
             {
                 printf("\n UDPSocket.sendto() fails, code: %d\r\n", errcode);
                 return -1;
             }
-            else 
+            else
             {
                 printf("\n UDP: Sent %d Bytes to client\r\n", n);
             }
@@ -119,8 +173,10 @@ int main()
             return -1;
         }
     }
-    
     sock.close();
-    stop_ap();          
+#endif
+
+    
+    stop_ap();
     return 0;
 }
