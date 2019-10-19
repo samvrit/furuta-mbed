@@ -3,7 +3,7 @@
     "config": {
         "wifi-ssid": {
             "help": "AP SSID",
-            "value": "\"odin-w2\""
+            "value": "\"ublox\""
         },
         "ap-ip": {
             "help": "AP IP",
@@ -15,15 +15,15 @@
         },
         "ap-gateway": {
             "help": "Network gateway",
-            "value": "\"0.0.0.0\""
+            "value": "\"10.0.0.1\""
         },
         "ap-channel": {
             "help": "AP channel",
-            "value": "\"Furuta\""
+            "value": "\"6\""
         },
         "wifi-password": {
             "help": "WiFi Password",
-            "value": "\"1\""
+            "value": "\"furuta123\""
         }
     }
 }
