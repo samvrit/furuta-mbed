@@ -1,5 +1,6 @@
 BUILD/
 mbed-os/
+.vscode/
 .hg/
 .mbed
 .temp/
