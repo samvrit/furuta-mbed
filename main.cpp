@@ -18,6 +18,12 @@
 #include "OdinWiFiInterface.h"
 #include <string>
 
+DigitalOut in_A(PF_1);
+DigitalOut in_B(PF_0);
+PwmOut motor_pwm(PA_10);
+
+double pwm_dc = 0.0;
+
 #ifdef DEVICE_WIFI_AP
 static const char *wifi_ssid = MBED_CONF_APP_WIFI_SSID;
 static const char *wifi_password = MBED_CONF_APP_WIFI_PASSWORD;
@@ -66,6 +72,11 @@ static void stop_ap()
 
 int main()
 {
+
+    in_A = 1;
+    in_B = 0;
+    motor_pwm.period_us(500);
+    motor_pwm.write(pwm_dc);
     nsapi_size_or_error_t errcode;
     nsapi_error_t *err;
 #ifdef USE_TCP
@@ -154,18 +165,20 @@ int main()
         n = sock.recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
         if (n > 0)
         {
-            printf("\n Received from client %d bytes: %s \r\n", n, recv_buf);
+            printf("\n Received from client %d bytes: %c \r\n", n, recv_buf);
 
-            errcode = sock.sendto(sockAddr, (void *)recv_buf, n);
-            if (errcode < 0)
-            {
-                printf("\n UDPSocket.sendto() fails, code: %d\r\n", errcode);
-                return -1;
-            }
-            else
-            {
-                printf("\n UDP: Sent %d Bytes to client\r\n", n);
-            }
+            motor_pwm.write(((int)recv_buf)*0.1);
+
+            // errcode = sock.sendto(sockAddr, (void *)recv_buf, n);
+            // if (errcode < 0)
+            // {
+            //     printf("\n UDPSocket.sendto() fails, code: %d\r\n", errcode);
+            //     return -1;
+            // }
+            // else
+            // {
+            //     printf("\n UDP: Sent %d Bytes to client\r\n", n);
+            // }
         }
         else
         {

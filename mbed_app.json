@@ -1,5 +1,5 @@
 {
-    "macros": ["DEVICE_WIFI_AP=1", "USE_TCP=0"],
+    "macros": ["DEVICE_WIFI_AP=1"],
     "config": {
         "wifi-ssid": {
             "help": "AP SSID",
