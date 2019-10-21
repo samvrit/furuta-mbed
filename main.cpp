@@ -34,6 +34,14 @@ static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
 
 #define ECHO_SERVER_PORT 5050
 
+#pragma pack (1)
+struct udp_frame
+{
+  unsigned int pos_rad;
+  uint8_t vel_sign;
+  unsigned int vel_rad;
+} frame;
+
 OdinWiFiInterface *_wifi;
 
 static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
@@ -87,7 +95,6 @@ int main()
 
     SocketAddress sockAddr;
     int n = 0;
-    char recv_buf[1024];
 
     /*Start AP*/
     _wifi = new OdinWiFiInterface(true);
@@ -134,6 +141,8 @@ int main()
         {
             while (true)
             {
+
+                char recv_buf[1024] = "";
                 n = sock_data->recv((void *)recv_buf, sizeof(recv_buf));
                 if (n > 0)
                 {
@@ -162,12 +171,19 @@ int main()
 #else
     while (1)
     {
+
+        char recv_buf[12] = "";
         n = sock.recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
         if (n > 0)
         {
-            printf("\n Received from client %d bytes: %c \r\n", n, recv_buf);
+            printf("\n Received from client %d bytes: %012X \r\n", n, recv_buf);
 
-            motor_pwm.write(((int)recv_buf)*0.1);
+            unsigned int int_buffer = 0;
+            frame.pos_rad = (recv_buf[0] << 24) | (recv_buf[1] << 16) | (recv_buf[2] << 8) | recv_buf[3];
+
+            printf("Decoded: %u\r\n", frame.pos_rad);
+
+            motor_pwm.write(int_buffer*0.01);
 
             // errcode = sock.sendto(sockAddr, (void *)recv_buf, n);
             // if (errcode < 0)
