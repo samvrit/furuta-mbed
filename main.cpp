@@ -44,6 +44,13 @@ struct udp_frame
 
 OdinWiFiInterface *_wifi;
 
+void deserialize_frame(unsigned char* buffer, struct udp_frame* frame)
+{
+    frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
+    frame->vel_sign = *(buffer + 4);
+    frame->vel_rad = (*(buffer + 8) << 24) | (*(buffer + 7) << 16) | (*(buffer + 6) << 8) | (*(buffer + 5));
+}
+
 static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
 {
     nsapi_error_t error_code;
@@ -172,18 +179,19 @@ int main()
     while (1)
     {
 
-        char recv_buf[12] = "";
+        char recv_buf[9] = "";
         n = sock.recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
         if (n > 0)
         {
-            printf("\n Received from client %d bytes: %012X \r\n", n, recv_buf);
+            printf("\n Received from client %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
 
-            unsigned int int_buffer = 0;
-            frame.pos_rad = (recv_buf[0] << 24) | (recv_buf[1] << 16) | (recv_buf[2] << 8) | recv_buf[3];
+            deserialize_frame((unsigned char*)recv_buf, &frame);
+    
+            printf("%d,%d,%d\r\n", frame.pos_rad, frame.vel_sign, frame.vel_rad);
 
             printf("Decoded: %u\r\n", frame.pos_rad);
 
-            motor_pwm.write(int_buffer*0.01);
+            // motor_pwm.write(int_buffer*0.01);
 
             // errcode = sock.sendto(sockAddr, (void *)recv_buf, n);
             // if (errcode < 0)
