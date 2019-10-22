@@ -183,7 +183,9 @@ int main()
         n = sock.recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
         if (n > 0)
         {
-            printf("\n Received from client %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
+            nsapi_addr_t address;
+            address = sockAddr.get_addr();
+            printf("\n Received from client %d.%d.%d.%d, %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", address.bytes[0], address.bytes[1], address.bytes[2], address.bytes[3], n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
 
             deserialize_frame((unsigned char*)recv_buf, &frame);
     
