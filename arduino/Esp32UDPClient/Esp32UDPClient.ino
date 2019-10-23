@@ -30,7 +30,7 @@ unsigned int pwm_dc = 0;
 struct udp_frame
 {
   unsigned int pos_rad;
-  unsigned int vel_sign;
+  uint8_t vel_sign;
   unsigned int vel_rad;
 } frame;
 
@@ -61,11 +61,6 @@ void loop(){
     unsigned char buf9[9];
     char str[] = "";
     serialize_frame(buf9, &frame);
-//    sprintf(str, "%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X", buf9[0], buf9[1], buf9[2], buf9[3], buf9[4], buf9[5], buf9[6], buf9[7], buf9[8]);
-//    Serial.write(str);
-//    Serial.write('|');
-    Serial.print(9);
-    Serial.write("\n");
     udp.beginPacket(udpAddress,udpPort);
     udp.write(buf9, 9);
     udp.endPacket();
@@ -76,7 +71,7 @@ void loop(){
       pwm_dc += 10;
   }
   //Wait for 1 second
-  delay(1000);
+  delayMicroseconds(1);
 }
 
 void connectToWiFi(const char * ssid, const char * pwd){
