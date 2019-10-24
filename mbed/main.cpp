@@ -38,9 +38,9 @@ static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
 
 struct udp_frame
 {
-  unsigned int pos_rad;
-  uint8_t vel_sign;
-  unsigned int vel_rad;
+    unsigned int pos_rad;
+    uint8_t vel_sign;
+    unsigned int vel_rad;
 };
 
 MemoryPool<udp_frame, 12> mpool;
@@ -48,7 +48,7 @@ Queue<udp_frame, 12> queue;
 
 OdinWiFiInterface *_wifi;
 
-void deserialize_frame(unsigned char* buffer, struct udp_frame* frame)
+void deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 {
     frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
     frame->vel_sign = *(buffer + 4);
@@ -149,10 +149,17 @@ void network_receive()
             {
 
                 char recv_buf[1024] = "";
-                n = sock_data->recv((void *)recv_buf, sizeof(recv_buf));
+                n = sock_data->recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
                 if (n > 0)
                 {
-                    printf("\n Received from client %d bytes: %s \n", n, recv_buf);
+                    nsapi_addr_t address;
+                    address = sockAddr.get_addr();
+                    // printf("\n Received from client %d.%d.%d.%d, %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", address.bytes[0], address.bytes[1], address.bytes[2], address.bytes[3], n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
+
+                    udp_frame *frame = mpool.alloc();
+                    deserialize_frame((unsigned char *)recv_buf, frame);
+
+                    queue.put(frame);
                 }
                 else
                 {
@@ -175,10 +182,9 @@ void network_receive()
             // printf("\n Received from client %d.%d.%d.%d, %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", address.bytes[0], address.bytes[1], address.bytes[2], address.bytes[3], n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
 
             udp_frame *frame = mpool.alloc();
-            deserialize_frame((unsigned char*)recv_buf, frame);
+            deserialize_frame((unsigned char *)recv_buf, frame);
 
             queue.put(frame);
-
         }
         else
         {
@@ -198,16 +204,17 @@ int main()
     in_B = 0;
     motor_pwm.period_us(500);
     motor_pwm.write(pwm_dc);
-    
+
     network_thread.start(callback(network_receive));
 
-    while(1)
+    while (1)
     {
         osEvent evt = queue.get();
-        if (evt.status == osEventMessage) {
+        if (evt.status == osEventMessage)
+        {
             udp_frame *frame = (udp_frame *)evt.value.p;
-            printf("\nReceived: %d, %d, %d\r\n", frame->pos_rad, frame->vel_sign, frame->vel_rad); 
-            
+            printf("\nReceived: %d, %d, %d\r\n", frame->pos_rad, frame->vel_sign, frame->vel_rad);
+
             mpool.free(frame);
         }
     }
