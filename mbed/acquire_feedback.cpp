@@ -1,5 +1,13 @@
 #include "acquire_feedback.h"
 
+#ifdef DEVICE_WIFI_AP
+static const char *wifi_ssid = MBED_CONF_APP_WIFI_SSID;
+static const char *wifi_password = MBED_CONF_APP_WIFI_PASSWORD;
+static const char *ap_ip = MBED_CONF_APP_AP_IP;
+static const char *ap_netmask = MBED_CONF_APP_AP_NETMASK;
+static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
+#endif
+
 OdinWiFiInterface *_wifi;
 #define ECHO_SERVER_PORT 5050
 
@@ -50,8 +58,8 @@ void deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 void sensors_receive()
 {
     nsapi_size_or_error_t errcode;
-    nsapi_error_t *err;
 #ifdef USE_TCP
+    nsapi_error_t *err;
     TCPSocket sock, *sock_data;
 #else
     UDPSocket sock;
