@@ -1,3 +1,0 @@
-ROOT=.
-TOOLCHAIN=GCC_ARM
-TARGET=ublox_evk_odin_w2
