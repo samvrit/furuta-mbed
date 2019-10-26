@@ -21,6 +21,7 @@ jobs:
       
       - run:
           name: Install and configure mbed-cli
+          working_directory: /root/project/mbed
           command: |
               echo Installing mbed
               pip install mbed-cli
@@ -35,6 +36,7 @@ jobs:
 
       - run:
           name: Compile
+          working_directory: /root/project/mbed
           command: mbed compile
 
       - run:
