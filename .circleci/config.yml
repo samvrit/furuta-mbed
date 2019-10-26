@@ -19,6 +19,8 @@ jobs:
               tar -jxvf gcc_arm.tar.bz2
               echo 'export PATH="/opt/gcc-arm-none-eabi-5_3-2016q1/bin:$PATH"' >> $BASH_ENV
       
+      - checkout
+      
       - run:
           name: Install and configure mbed-cli
           working_directory: /root/project/mbed
@@ -31,8 +33,6 @@ jobs:
               mbed config --list
               mbed toolchain -G GCC_ARM
               mbed target -G UBLOX_EVK_ODIN_W2
-      
-      - checkout
 
       - run:
           name: Compile
