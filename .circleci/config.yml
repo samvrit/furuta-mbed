@@ -33,8 +33,8 @@ jobs:
               mbed config --list
               mbed toolchain -G GCC_ARM
               mbed target -G UBLOX_EVK_ODIN_W2
-              pwd
-              ls
+              mbed init .
+              mbed deploy
 
       - run:
           name: Compile
