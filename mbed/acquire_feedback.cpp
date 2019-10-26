@@ -55,6 +55,13 @@ void deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
     frame->vel_rad = (*(buffer + 8) << 24) | (*(buffer + 7) << 16) | (*(buffer + 6) << 8) | (*(buffer + 5));
 }
 
+void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
+{
+    udp_frame *frame = mpool.alloc();
+    deserialize_frame((unsigned char *)recv_buf, frame);
+    queue.put(frame);
+}
+
 void sensors_receive()
 {
     nsapi_size_or_error_t errcode;
@@ -120,12 +127,7 @@ void sensors_receive()
                 {
                     nsapi_addr_t address;
                     address = sockAddr.get_addr();
-                    // printf("\n Received from client %d.%d.%d.%d, %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", address.bytes[0], address.bytes[1], address.bytes[2], address.bytes[3], n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
-
-                    udp_frame *frame = mpool.alloc();
-                    deserialize_frame((unsigned char *)recv_buf, frame);
-
-                    queue.put(frame);
+                    process_data((unsigned char *)&recv_buf, &address);
                 }
                 else
                 {
@@ -145,12 +147,7 @@ void sensors_receive()
         {
             nsapi_addr_t address;
             address = sockAddr.get_addr();
-            // printf("\n Received from client %d.%d.%d.%d, %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", address.bytes[0], address.bytes[1], address.bytes[2], address.bytes[3], n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
-
-            udp_frame *frame = mpool.alloc();
-            deserialize_frame((unsigned char *)recv_buf, frame);
-
-            queue.put(frame);
+            process_data((unsigned char *)&recv_buf, &address);
         }
         else
         {
