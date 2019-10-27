@@ -50,7 +50,7 @@ static void stop_ap()
 
 int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 {
-    if (buffer && frame)
+    if (buffer && frame) // check for null pointer
     {
         frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
         frame->vel_sign = *(buffer + 4);
@@ -61,16 +61,16 @@ int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
     {
         return 1;
     }
-    
 }
 
 void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
 {
     udp_frame *frame = mpool.alloc();
-    int retval = deserialize_frame((unsigned char *)recv_buf, frame);
-    // if (!(frame->pos_rad > 628 || frame->pos_rad < 0)) // only add to queue if value is valid
-    if(retval==0)
-        queue.put(frame);
+    if (deserialize_frame((unsigned char *)recv_buf, frame) == 0)
+    {
+        if ((frame->pos_rad <= 628) && (frame->vel_sign == 0 || frame->vel_sign == 1))  // onlu add valid frames to queue
+            queue.put(frame);
+    }
 }
 
 void sensors_receive()
