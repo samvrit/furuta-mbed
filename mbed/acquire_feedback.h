@@ -14,4 +14,6 @@ extern Queue<udp_frame, 12> queue;
 
 int deserialize_frame(unsigned char *buffer, struct udp_frame *frame);
 
+void process_data(unsigned char *recv_buf, nsapi_addr_t *address);
+
 void sensors_receive();
