@@ -48,18 +48,29 @@ static void stop_ap()
     printf("\nAP stopped\r\n");
 }
 
-void deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
+int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 {
-    frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
-    frame->vel_sign = *(buffer + 4);
-    frame->vel_rad = (*(buffer + 8) << 24) | (*(buffer + 7) << 16) | (*(buffer + 6) << 8) | (*(buffer + 5));
+    if (buffer && frame)
+    {
+        frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
+        frame->vel_sign = *(buffer + 4);
+        frame->vel_rad = (*(buffer + 8) << 24) | (*(buffer + 7) << 16) | (*(buffer + 6) << 8) | (*(buffer + 5));
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+    
 }
 
 void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
 {
     udp_frame *frame = mpool.alloc();
-    deserialize_frame((unsigned char *)recv_buf, frame);
-    queue.put(frame);
+    int retval = deserialize_frame((unsigned char *)recv_buf, frame);
+    // if (!(frame->pos_rad > 628 || frame->pos_rad < 0)) // only add to queue if value is valid
+    if(retval==0)
+        queue.put(frame);
 }
 
 void sensors_receive()

@@ -12,6 +12,6 @@ struct udp_frame
 extern MemoryPool<udp_frame, 12> mpool;
 extern Queue<udp_frame, 12> queue;
 
-void deserialize_frame(unsigned char *buffer, struct udp_frame *frame);
+int deserialize_frame(unsigned char *buffer, struct udp_frame *frame);
 
 void sensors_receive();
