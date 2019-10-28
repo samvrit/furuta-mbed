@@ -48,11 +48,29 @@ static void stop_ap()
     printf("\nAP stopped\r\n");
 }
 
-void deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
+int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 {
-    frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
-    frame->vel_sign = *(buffer + 4);
-    frame->vel_rad = (*(buffer + 8) << 24) | (*(buffer + 7) << 16) | (*(buffer + 6) << 8) | (*(buffer + 5));
+    if (buffer && frame) // check for null pointer
+    {
+        frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
+        frame->vel_sign = *(buffer + 4);
+        frame->vel_rad = (*(buffer + 8) << 24) | (*(buffer + 7) << 16) | (*(buffer + 6) << 8) | (*(buffer + 5));
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
+{
+    udp_frame *frame = mpool.alloc();
+    if (deserialize_frame((unsigned char *)recv_buf, frame) == 0)
+    {
+        if ((frame->pos_rad <= 628) && (frame->vel_sign == 0 || frame->vel_sign == 1))  // onlu add valid frames to queue
+            queue.put(frame);
+    }
 }
 
 void sensors_receive()
@@ -120,12 +138,7 @@ void sensors_receive()
                 {
                     nsapi_addr_t address;
                     address = sockAddr.get_addr();
-                    // printf("\n Received from client %d.%d.%d.%d, %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", address.bytes[0], address.bytes[1], address.bytes[2], address.bytes[3], n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
-
-                    udp_frame *frame = mpool.alloc();
-                    deserialize_frame((unsigned char *)recv_buf, frame);
-
-                    queue.put(frame);
+                    process_data((unsigned char *)&recv_buf, &address);
                 }
                 else
                 {
@@ -145,12 +158,7 @@ void sensors_receive()
         {
             nsapi_addr_t address;
             address = sockAddr.get_addr();
-            // printf("\n Received from client %d.%d.%d.%d, %d bytes: %02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X \r\n", address.bytes[0], address.bytes[1], address.bytes[2], address.bytes[3], n, recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5], recv_buf[6], recv_buf[7], recv_buf[8]);
-
-            udp_frame *frame = mpool.alloc();
-            deserialize_frame((unsigned char *)recv_buf, frame);
-
-            queue.put(frame);
+            process_data((unsigned char *)&recv_buf, &address);
         }
         else
         {
