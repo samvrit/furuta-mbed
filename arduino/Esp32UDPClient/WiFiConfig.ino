@@ -24,11 +24,11 @@ void WiFiEvent(WiFiEvent_t event){
           //initializes the UDP state
           //This initializes the transfer buffer
           udp.begin(WiFi.localIP(),udpPort);
-          connected = true;
+          wifi_connected = true;
           break;
       case SYSTEM_EVENT_STA_DISCONNECTED:
           Serial.println("WiFi lost connection");
-          connected = false;
+          wifi_connected = false;
           break;
       default: break;
     }
