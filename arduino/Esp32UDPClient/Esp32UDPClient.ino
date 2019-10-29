@@ -1,7 +1,20 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <SPI.h>
 
-// WiFi network name and password:
+//===================Global Variables===================//
+struct udp_frame
+{
+  unsigned int pos_rad;
+  uint8_t vel_sign;
+  unsigned int vel_rad;
+} frame;
+unsigned long t0 = 0, t1 = 0;
+double velocity = 0.0;
+unsigned int previous_position;
+//==================================================//
+
+//===================Wi-Fi Configs===================//
 const char * networkName = "ublox";
 const char * networkPswd = "furuta123";
 IPAddress ip(10, 0, 0, 5);
@@ -13,31 +26,31 @@ IPAddress dns2(10, 0, 0, 1);
 const char * udpAddress = "10.0.0.1"; // IP address to send the data to
 const int udpPort = 5050;
 
-//The udp library class
 WiFiUDP udp;
 void connectToWiFi(const char * ssid, const char * pwd);
 void WiFiEvent(WiFiEvent_t event);
-boolean connected = false;
+boolean wifi_connected = false;
+//==================================================//
 
-struct udp_frame
-{
-  unsigned int pos_rad;
-  uint8_t vel_sign;
-  unsigned int vel_rad;
-} frame;
+//===================SPI Configs===================//
+SPIClass * hspi = NULL;
+static const int spiClk = 1000000; // 1 MHz
+//================================================//
 
 void setup()
 {
+  hspi = new SPIClass(HSPI);
+  hspi->begin();
+  pinMode(15, OUTPUT); //HSPI SS
   // Initilize hardware serial:
   Serial.begin(115200);
 
   //Connect to the WiFi network
   connectToWiFi(networkName, networkPswd);
 
-  frame.pos_rad = 314;
-  frame.vel_sign = 1;
-  frame.vel_rad = 5067;
-
+  frame.pos_rad = 0;
+  frame.vel_sign = 0;
+  frame.vel_rad = 0;
 }
 
 void serialize_frame(unsigned char* buffer, struct udp_frame* frame)
@@ -49,7 +62,14 @@ void serialize_frame(unsigned char* buffer, struct udp_frame* frame)
 
 void loop()
 {
-  if (connected)  //only send data when connected
+  frame.pos_rad = getAngle();
+  t1 = micros();
+  velocity = (frame.pos_rad - previous_position)/(t1 - t0);
+  previous_position = frame.pos_rad;
+  t0 = t1;
+  frame.vel_sign = velocity < 0 ? 1 : 0;
+  frame.vel_rad = velocity < 0 ? (unsigned int)(-1*velocity*(100)) : (unsigned int)(velocity * 100);
+  if (wifi_connected)  //only send data when connected
   {
     //Send a packet
     unsigned char buf9[9];
