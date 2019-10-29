@@ -34,7 +34,7 @@ boolean wifi_connected = false;
 
 //===================SPI Configs===================//
 SPIClass * hspi = NULL;
-static const int spiClk = 1000000; // 1 MHz
+static const int spiClk = 25000000; // 25 MHz
 //================================================//
 
 void setup()
@@ -64,11 +64,11 @@ void loop()
 {
   frame.pos_rad = getAngle();
   t1 = micros();
-  velocity = (frame.pos_rad - previous_position)/(t1 - t0);
+  velocity = 1000000*(((1.0*frame.pos_rad) - (1.0*previous_position))/(t1 - t0));
   previous_position = frame.pos_rad;
   t0 = t1;
   frame.vel_sign = velocity < 0 ? 1 : 0;
-  frame.vel_rad = velocity < 0 ? (unsigned int)(-1*velocity*(100)) : (unsigned int)(velocity * 100);
+  frame.vel_rad = velocity < 0 ? (unsigned int)(-1*velocity*100) : (unsigned int)(velocity * 100);
   if (wifi_connected)  //only send data when connected
   {
     //Send a packet
