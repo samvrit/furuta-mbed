@@ -5,11 +5,11 @@
 //===================Global Variables===================//
 struct udp_frame
 {
-  unsigned int pos_rad;
+  unsigned short pos_rad;
   uint8_t vel_sign;
   unsigned int vel_rad;
 } frame;
-unsigned long t0 = 0, t1 = 0;
+unsigned long t0 = 0, t1 = 0, dt = 0;
 double velocity = 0.0;
 unsigned int previous_position;
 //==================================================//
@@ -55,29 +55,34 @@ void setup()
 
 void serialize_frame(unsigned char* buffer, struct udp_frame* frame)
 {
-  memcpy(buffer, (const unsigned char*)&frame->pos_rad, 4);
-  memcpy(buffer + 4, (const unsigned char*)&frame->vel_sign, 1);
-  memcpy(buffer + 5, (const unsigned char*)&frame->vel_rad, 4);
+  memcpy(buffer, (const unsigned char*)&frame->pos_rad, 2);
+  memcpy(buffer + 2, (const unsigned char*)&frame->vel_sign, 1);
+  memcpy(buffer + 3, (const unsigned char*)&frame->vel_rad, 4);
 }
 
 void loop()
 {
   frame.pos_rad = getAngle();
   t1 = micros();
-  velocity = 1000000*(((1.0*frame.pos_rad) - (1.0*previous_position))/(t1 - t0));
+  dt = t1 - t0;
+  velocity = 1000000*(((1.0*frame.pos_rad) - (1.0*previous_position))/dt);
   previous_position = frame.pos_rad;
   t0 = t1;
   frame.vel_sign = velocity < 0 ? 1 : 0;
   frame.vel_rad = velocity < 0 ? (unsigned int)(-1*velocity*100) : (unsigned int)(velocity * 100);
+  Serial.print(frame.pos_rad);
+  Serial.print(", ");
+  Serial.print(frame.vel_sign);
+  Serial.print(", ");
+  Serial.println(frame.vel_rad);
   if (wifi_connected)  //only send data when connected
   {
     //Send a packet
-    unsigned char buf9[9];
-    serialize_frame(buf9, &frame);
+    unsigned char buf7[7];
+    serialize_frame(buf7, &frame);
     udp.beginPacket(udpAddress, udpPort);
-    udp.write(buf9, 9);
+    udp.write(buf7, 7);
     udp.endPacket();
-    Serial.println("Packet sent!");
   }
   delayMicroseconds(1);
 }
