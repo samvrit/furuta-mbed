@@ -25,5 +25,10 @@
             "help": "WiFi Password",
             "value": "\"furuta123\""
         }
+    },
+    "target_overrides": {
+        "*": {
+            "platform.stdio-baud-rate": 115200
+        }
     }
 }

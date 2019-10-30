@@ -52,9 +52,9 @@ int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 {
     if (buffer && frame) // check for null pointer
     {
-        frame->pos_rad = (*(buffer + 3) << 24) | (*(buffer + 2) << 16) | (*(buffer + 1) << 8) | (*(buffer + 0));
-        frame->vel_sign = *(buffer + 4);
-        frame->vel_rad = (*(buffer + 8) << 24) | (*(buffer + 7) << 16) | (*(buffer + 6) << 8) | (*(buffer + 5));
+        frame->pos_rad = (*(buffer + 1) << 8) | (*(buffer + 0));
+        frame->vel_sign = *(buffer + 2);
+        frame->vel_rad = (*(buffer + 6) << 24) | (*(buffer + 5) << 16) | (*(buffer + 4) << 8) | (*(buffer + 3));
         return 0;
     }
     else
@@ -132,7 +132,7 @@ void sensors_receive()
             while (true)
             {
 
-                char recv_buf[1024] = "";
+                char recv_buf[7] = "";
                 n = sock_data->recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
                 if (n > 0)
                 {
@@ -152,7 +152,7 @@ void sensors_receive()
 #else
     while (1)
     {
-        char recv_buf[9] = "";
+        char recv_buf[7] = "";
         n = sock.recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
         if (n > 0)
         {

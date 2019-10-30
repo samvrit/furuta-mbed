@@ -4,7 +4,7 @@
 
 struct udp_frame
 {
-    unsigned int pos_rad;
+    unsigned short pos_rad;
     uint8_t vel_sign;
     unsigned int vel_rad;
 };
