@@ -7,7 +7,7 @@ void connectToWiFi(const char * ssid, const char * pwd){
   //register event handler
   WiFi.onEvent(WiFiEvent);
 
-  WiFi.config(ip, gateway, subnet, dns1, dns2);
+  WiFi.config(*ip, gateway, subnet, dns1, dns2);
   //Initiate connection
   WiFi.begin(ssid, pwd);
 
@@ -23,7 +23,7 @@ void WiFiEvent(WiFiEvent_t event){
           Serial.println(WiFi.localIP());  
           //initializes the UDP state
           //This initializes the transfer buffer
-          udp.begin(WiFi.localIP(),udpPort);
+          udp.begin(WiFi.localIP(),udpLocalPort);
           wifi_connected = true;
           break;
       case SYSTEM_EVENT_STA_DISCONNECTED:
