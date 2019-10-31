@@ -12,12 +12,14 @@ struct udp_frame
 unsigned long t0 = 0, t1 = 0, dt = 0;
 double velocity = 0.0;
 unsigned int previous_position;
+byte mac[6];
+bool device1, device2;
 //==================================================//
 
 //===================Wi-Fi Configs===================//
 const char * networkName = "ublox";
 const char * networkPswd = "furuta123";
-IPAddress ip(10, 0, 0, 5);
+IPAddress *ip;  // instantiate an IP address, but initialize it depending on MAC address
 IPAddress gateway(10, 0, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 IPAddress dns1(10, 0, 0, 1);
@@ -25,6 +27,7 @@ IPAddress dns2(10, 0, 0, 1);
 
 const char * udpAddress = "10.0.0.1"; // IP address to send the data to
 const int udpPort = 5050;
+const int udpLocalPort = 8888;
 
 WiFiUDP udp;
 void connectToWiFi(const char * ssid, const char * pwd);
@@ -42,11 +45,18 @@ void setup()
   hspi = new SPIClass(HSPI);
   hspi->begin();
   pinMode(15, OUTPUT); //HSPI SS
-  // Initilize hardware serial:
   Serial.begin(115200);
 
-  //Connect to the WiFi network
-  connectToWiFi(networkName, networkPswd);
+  WiFi.macAddress(mac); // get MAC address of the PHY
+  device1 = ((mac[3] == 0x7A) && (mac[4] == 0x10) && (mac[5] == 0xEC)) ? 1 : 0; // use MAC address to differentiate between the two devices
+  device2 = !device1;
+
+  if (device1)
+    ip = new IPAddress(10, 0, 0, 5);
+  else if (device2)
+    ip = new IPAddress(10, 0, 0, 10);
+
+  connectToWiFi(networkName, networkPswd);  //Connect to the WiFi network
 
   frame.pos_rad = 0;
   frame.vel_sign = 0;
@@ -65,11 +75,11 @@ void loop()
   frame.pos_rad = getAngle();
   t1 = micros();
   dt = t1 - t0;
-  velocity = 1000000*(((1.0*frame.pos_rad) - (1.0*previous_position))/dt);
+  velocity = 1000000 * (((1.0 * frame.pos_rad) - (1.0 * previous_position)) / dt);
   previous_position = frame.pos_rad;
   t0 = t1;
   frame.vel_sign = velocity < 0 ? 1 : 0;
-  frame.vel_rad = velocity < 0 ? (unsigned int)(-1*velocity*100) : (unsigned int)(velocity * 100);
+  frame.vel_rad = velocity < 0 ? (unsigned int)(-1 * velocity * 100) : (unsigned int)(velocity * 100);
   Serial.print(frame.pos_rad);
   Serial.print(", ");
   Serial.print(frame.vel_sign);
@@ -83,6 +93,12 @@ void loop()
     udp.beginPacket(udpAddress, udpPort);
     udp.write(buf7, 7);
     udp.endPacket();
+
+    if (udp.parsePacket())
+    {
+      // code for encoder zero setting
+    }
   }
+
   delayMicroseconds(1);
 }
