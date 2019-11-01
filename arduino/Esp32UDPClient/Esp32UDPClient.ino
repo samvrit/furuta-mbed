@@ -2,6 +2,8 @@
 #include <WiFiUdp.h>
 #include <SPI.h>
 
+#define PI_SCALED 314
+
 //===================Global Variables===================//
 struct udp_frame
 {
@@ -11,7 +13,7 @@ struct udp_frame
 } frame;
 unsigned long t0 = 0, t1 = 0, dt = 0;
 double velocity = 0.0;
-unsigned int previous_position;
+short current_position = 0, previous_position = 0;
 byte mac[6];
 bool device1, device2;
 //==================================================//
@@ -72,11 +74,13 @@ void serialize_frame(unsigned char* buffer, struct udp_frame* frame)
 
 void loop()
 {
-  frame.pos_rad = getAngle();
+  current_position = getAngle();
+  frame.pos_rad = current_position;
+  if(current_position >= PI_SCALED) current_position -= 2*PI_SCALED;
   t1 = micros();
   dt = t1 - t0;
-  velocity = 1000000 * (((1.0 * frame.pos_rad) - (1.0 * previous_position)) / dt);
-  previous_position = frame.pos_rad;
+  velocity = 1000000 * (((1.0 * current_position) - (1.0 * previous_position)) / dt);
+  previous_position = current_position;
   t0 = t1;
   frame.vel_sign = velocity < 0 ? 1 : 0;
   frame.vel_rad = velocity < 0 ? (unsigned int)(-1 * velocity * 100) : (unsigned int)(velocity * 100);
