@@ -10,6 +10,9 @@ PwmOut motor_pwm(PA_10);
 
 double pwm_dc = 0.0;
 
+Timer timer;
+int dt = 0;
+
 int main()
 {
 
@@ -22,11 +25,15 @@ int main()
 
     while (1)
     {
+        timer.start();
         osEvent evt = queue.get();
         if (evt.status == osEventMessage)
         {
+            timer.stop();
+            dt = timer.read_us();
+            timer.reset();
             udp_frame *frame = (udp_frame *)evt.value.p;
-            printf("\nReceived: %d, %d, %d\r\n", frame->pos_rad, frame->vel_sign, frame->vel_rad);
+            printf("\n%d | Received: %d, %d, %d\r\n", dt, frame->pos_rad, frame->vel_sign, frame->vel_rad);
 
             mpool.free(frame);
         }
