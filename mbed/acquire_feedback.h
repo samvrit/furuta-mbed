@@ -2,8 +2,8 @@
 #include "OdinWiFiInterface.h"
 #include <string>
 
-const double alpha_pos = 0.1;
-const double alpha_vel = 0.1;
+const double alpha_pos = 0.8;
+const double alpha_vel = 0.8;
 
 struct udp_frame
 {
