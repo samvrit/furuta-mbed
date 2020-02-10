@@ -48,6 +48,13 @@ static void stop_ap()
     printf("\nAP stopped\r\n");
 }
 
+int low_pass_filter(struct udp_frame *frame, struct udp_frame *previous_frame)
+{
+    frame->pos_rad = (alpha_pos * frame->pos_rad) + ((1 - alpha_pos) * previous_frame->pos_rad);
+    frame->vel_rad = (alpha_vel * frame->vel_rad) + ((1 - alpha_vel) * previous_frame->vel_rad);
+    return 0;
+}
+
 int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 {
     if (buffer && frame) // check for null pointer
@@ -66,10 +73,17 @@ int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
 void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
 {
     udp_frame *frame = mpool.alloc();
+    static udp_frame *previous_frame = NULL;    // initialize to null pointer
     if (deserialize_frame((unsigned char *)recv_buf, frame) == 0)
     {
         if ((frame->pos_rad <= 628) && (frame->vel_sign == 0 || frame->vel_sign == 1))  // onlu add valid frames to queue
+        {
+            if(previous_frame)  // only go through low pass filter if previous frame has valid data
+                low_pass_filter(frame, previous_frame);
             queue.put(frame);
+            previous_frame = frame;
+        }
+            
     }
 }
 

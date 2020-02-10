@@ -2,6 +2,9 @@
 #include "OdinWiFiInterface.h"
 #include <string>
 
+const double alpha_pos = 0.1;
+const double alpha_vel = 0.1;
+
 struct udp_frame
 {
     unsigned short pos_rad;
@@ -11,6 +14,8 @@ struct udp_frame
 
 extern MemoryPool<udp_frame, 12> mpool;
 extern Queue<udp_frame, 12> queue;
+
+int low_pass_filter(struct udp_frame *frame, struct udp_frame *previous_frame);
 
 int deserialize_frame(unsigned char *buffer, struct udp_frame *frame);
 
