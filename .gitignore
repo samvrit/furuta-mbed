@@ -1,5 +1,7 @@
 BUILD/
 mbed-os/
+matlab/slprj/
+*slxc
 .vscode/
 .hg/
 .temp/
