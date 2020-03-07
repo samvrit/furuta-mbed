@@ -1,16 +1,15 @@
 K = 0.025;
-J = 0.01;
-b = 0.5;
-R = 2;
+J = 9.9e-5;
+b = 1;
+R = 1.52;    % calculated by measuring current using a multimeter in series with the motor with no load when 12.39V was applied. Measured current was 0.112A
 L = 0.05;
 
-Kp = 1;
-Ki = 1;
-Kd = 1;
+torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
 
-pid_controller = pid(Kp,Ki,Kd);
-C = tf(pid_controller);
-motor_sys = tf(b/(b*L + K*J), [1 R*b/(b*L + K*J)]);
+motor_sys = tf(1/R, [(b*L + K*J)/(R*b) 1]);
 open_loop = motor_sys*K;
+
+opts = pidtuneOptions('CrossoverFrequency',400,'PhaseMargin',90);
+[C, info] = pidtune(motor_sys, 'pid', opts);
 
 closed_loop = (C*motor_sys) / (1 + (C*motor_sys*K));
