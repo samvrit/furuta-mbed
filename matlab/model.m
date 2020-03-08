@@ -6,7 +6,7 @@ A(alpha, a, d, theta) = [cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha)
                                0          sin(alpha)              cos(alpha)              d;
                                0              0                       0                   1];
 
-m = [0.2619 0.123 0.0962];
+m = [0.2619 0.123 0.0962]; % mass of each link
 
 % Inertia matrix as obtained from SolidWorks
 J1 = [35  0  0;
