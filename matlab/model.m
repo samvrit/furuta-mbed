@@ -1,10 +1,10 @@
-syms theta alpha a d theta1 theta2 theta3
+syms theta alpha a d theta1 theta2 theta3 q1(t) q2(t) q3(t) x1 x2 x3 x4 x5 x6
 
 % transformation matrix for each row of DH parameters
-A(alpha, a, d, theta) = [cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha) a*cos(theta);
-                         sin(theta) cos(theta)*cos(alpha) -cos(theta)*sin(alpha) a*sin(theta);
-                            0          sin(alpha)              cos(alpha)              d;
-                            0              0                       0                   1];
+A(alpha, a, d, theta) = [cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha)  a*cos(theta);
+                         sin(theta) cos(theta)*cos(alpha)  -cos(theta)*sin(alpha) a*sin(theta);
+                               0          sin(alpha)              cos(alpha)              d;
+                               0              0                       0                   1];
 
 m = [0.2619 0.123 0.0962];
 
@@ -77,4 +77,58 @@ oc1 = [Tc1(1,4); Tc1(2,4); Tc1(3,4)];
 oc2 = [Tc2(1,4); Tc2(2,4); Tc2(3,4)];
 oc3 = [Tc3(1,4); Tc3(2,4); Tc3(3,4)];
 
+% jacobian matrix for linear velocity of each link
+Jcv1 = zeros(3,3);
+Jcv2 = [cross(z0, oc2 - o0), cross(z1, oc2 - o1), [0;0;0]];
+Jcv3 = [cross(z0, oc3 - o0), cross(z1, oc3 - o1), cross(z2, oc3 - o2)];
 
+% jacobian matrix for angular velocity of each link
+Jcw1 = [z0, [0;0;0], [0;0;0]];
+Jcw2 = [z0, z1, [0;0;0]];
+Jcw3 = [z0, z1, z2];
+
+% rotation matrices that transform link COMs to global coordinate frame
+R1 = Tc1(1:3, 1:3);
+R2 = Tc2(1:3, 1:3);
+R3 = Tc3(1:3, 1:3);
+
+% gravity vector
+g = [0; 0; 9.81];
+
+% generalized coordinate matrix
+q = [q1(t); q2(t); q3(t)];
+qdot = diff(q, t);
+
+% state matrix
+X = [x1; x2; x3; x4; x5];
+
+% potential energy
+P_theta = (m(1) .* (g' * oc1)) + (m(2) .* (g' * oc2)) + (m(3) .* (g' * oc3));
+P = subs(P_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
+
+% gravity matrix
+G = [diff(P_theta, theta1) ; diff(P_theta, theta2) ; diff(P_theta, theta3)];
+G = subs(G, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
+
+% mass matrix
+M_theta = (m(1) .* (Jcv1' * Jcv1)) + (m(2) .* (Jcv2' * Jcv2)) + (m(3) .* (Jcv3' * Jcv3)) + (Jcw1' * R1 * I1 * R1' * Jcw1) + (Jcw2' * R2 * I2 * R2' * Jcw2) + (Jcw3' * R3 * I3 * R3' * Jcw3);
+M = subs(M_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
+
+% total energy
+TE = P + ((1/2) .* qdot' * M * qdot);
+TE_ref = subs(TE, [q1(t), q2(t), q3(t)], [0, 0, 0]);
+
+% centrepetal/coriolis matrix
+C_theta = zeros(3,3);
+theta_vector = [theta1; theta2; theta3];
+for i=1:3
+    fprintf('i: %d\n',i);
+    for j = 1:3
+        fprintf('j: %d\n',j);
+        for k = 1:3
+            fprintf('k: %d\n',k);
+            C_theta(i,j) = C_theta(i,j) + (0.5 * (diff(M_theta(i,j), theta_vector(k)) + diff(M_theta(i,k), theta_vector(j)) - diff(M_theta(k,j), theta_vector(i))));
+        end
+    end
+end
+C = subs(C_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
