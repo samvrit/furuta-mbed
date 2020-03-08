@@ -1,4 +1,4 @@
-syms theta alpha a d theta1 theta2 theta3 q1(t) q2(t) q3(t) x1 x2 x3 x4 x5 x6
+syms theta alpha a d theta1 theta2 theta3 q1(t) q2(t) q3(t) x1 x2 x3 x4 x5 x6 tau
 
 % transformation matrix for each row of DH parameters
 A(alpha, a, d, theta) = [cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha)  a*cos(theta);
@@ -99,9 +99,6 @@ g = [0; 0; 9.81];
 q = [q1(t); q2(t); q3(t)];
 qdot = diff(q, t);
 
-% state matrix
-X = [x1; x2; x3; x4; x5];
-
 % potential energy
 P_theta = (m(1) .* (g' * oc1)) + (m(2) .* (g' * oc2)) + (m(3) .* (g' * oc3));
 P = subs(P_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
@@ -119,16 +116,41 @@ TE = P + ((1/2) .* qdot' * M * qdot);
 TE_ref = subs(TE, [q1(t), q2(t), q3(t)], [0, 0, 0]);
 
 % centrepetal/coriolis matrix
-C_theta = zeros(3,3);
+C_theta = sym(zeros(3,3));
 theta_vector = [theta1; theta2; theta3];
 for i=1:3
-    fprintf('i: %d\n',i);
     for j = 1:3
-        fprintf('j: %d\n',j);
         for k = 1:3
-            fprintf('k: %d\n',k);
-            C_theta(i,j) = C_theta(i,j) + (0.5 * (diff(M_theta(i,j), theta_vector(k)) + diff(M_theta(i,k), theta_vector(j)) - diff(M_theta(k,j), theta_vector(i))));
+            C_theta(i,j) = C_theta(i,j) + ((1/2) * (diff(M_theta(i,j), theta_vector(k)) + diff(M_theta(i,k), theta_vector(j)) - diff(M_theta(k,j), theta_vector(i))));
         end
     end
 end
 C = subs(C_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
+
+% dynamics
+X = [x1; x2; x3; x4; x5; x6];
+u = [tau; 0; 0];
+accel = inv(M) * (u - (C * qdot) - G);
+accel = subs(accel, [q(1), q(2), q(3), qdot(1), qdot(2), qdot(3)], [X(1), X(2), X(3), X(4), X(5), X(6)]);
+
+equil = sym(zeros(3,1));
+for i = 1:3
+    equil(i) = subs(accel(i), [X(1), X(2), X(3), X(4), X(5), X(6), tau], [0, 0, 0, 0, 0, 0, 0]);
+end
+
+op = [0;0;pi;0;0;0];
+A_matrix = zeros(6,6);
+for i = 1:3
+    A_matrix(i, i+3) = 1;
+    for j = 1:6
+        A_matrix(i+3, j) = subs(diff(accel(i), X(j)), [X(1) X(2) X(3) X(4) X(5) X(6) tau], [op(1) op(2) op(3) op(4) op(5) op(6) 0]);
+    end
+end
+
+B_matrix = zeros(6,1);
+for i = 1:3
+    B_matrix(i+3) = subs(diff(accel(i), tau), [X(1) X(2) X(3) X(4) X(5) X(6) tau], [op(1) op(2) op(3) op(4) op(5) op(6) 0]);
+end
+
+disp(A_matrix)
+disp(B_matrix)
