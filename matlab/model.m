@@ -108,8 +108,10 @@ G = [diff(P_theta, theta1) ; diff(P_theta, theta2) ; diff(P_theta, theta3)];
 G = subs(G, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
 
 % mass matrix
+tic
 M_theta = (m(1) .* (Jcv1' * Jcv1)) + (m(2) .* (Jcv2' * Jcv2)) + (m(3) .* (Jcv3' * Jcv3)) + (Jcw1' * R1 * I1 * R1' * Jcw1) + (Jcw2' * R2 * I2 * R2' * Jcw2) + (Jcw3' * R3 * I3 * R3' * Jcw3);
 M = subs(M_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
+time_M = toc;
 
 % total energy
 TE = P + ((1/2) .* qdot' * M * qdot);
@@ -128,17 +130,21 @@ end
 C = subs(C_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
 
 % dynamics
-X = [x1; x2; x3; x4; x5; x6];
-u = [tau; 0; 0];
-accel = inv(M) * (u - (C * qdot) - G);
+X = [x1; x2; x3; x4; x5; x6];   % state vector
+u = [tau; 0; 0];    % control vector
+tic
+accel = inv(M) * (u - (C * qdot) - G);  % acceleration equation
+time_accel = toc;
 accel = subs(accel, [q(1), q(2), q(3), qdot(1), qdot(2), qdot(3)], [X(1), X(2), X(3), X(4), X(5), X(6)]);
 
+% check for equilibrium
 equil = sym(zeros(3,1));
 for i = 1:3
     equil(i) = subs(accel(i), [X(1), X(2), X(3), X(4), X(5), X(6), tau], [0, 0, 0, 0, 0, 0, 0]);
 end
 
-op = [0;0;pi;0;0;0];
+% compute A and B matrices at operating point
+op = [0;0;0;0;0;0];
 A_matrix = zeros(6,6);
 for i = 1:3
     A_matrix(i, i+3) = 1;
@@ -152,5 +158,7 @@ for i = 1:3
     B_matrix(i+3) = subs(diff(accel(i), tau), [X(1) X(2) X(3) X(4) X(5) X(6) tau], [op(1) op(2) op(3) op(4) op(5) op(6) 0]);
 end
 
+% display outputs
 disp(A_matrix)
 disp(B_matrix)
+fprintf('Time to calc M: %f | Time to calc accel: %f\n', time_M, time_accel);
