@@ -1,4 +1,4 @@
-run_model = false;
+run_model = true;
 
 if run_model
     syms theta alpha a d theta1 theta2 theta3 q1(t) q2(t) q3(t) x1 x2 x3 x4 x5 x6 tau
@@ -163,7 +163,12 @@ if run_model
     
     fprintf('Time to calc M: %f | Time to calc accel: %f\n', time_M, time_accel);
 else
-    load Matrices.mat
+    if isfile('Matrices.mat')
+        load Matrices.mat
+    else
+        fprintf('Matrices.mat file does not exist. Run this script again with run_model = true to generate Matrices.mat\n');
+        return
+    end
 end
 
 % LQR calculations
