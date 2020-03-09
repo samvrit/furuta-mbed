@@ -1,0 +1,686 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<SimscapeMultibodyImportXML version="2.0" xmlns="urn:mathworks:SimscapeMultibody:import" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Created by="" on="03/08/20||22:33:16" using="Simscape Multibody Link Version 6.0" from="SolidWorks 25.5.0"/>
+<ModelUnits mass="kilogram" length="millimeter"/>
+<DataUnits mass="kilogram" length="meter"/>
+<RootAssembly name="Complete_assembly" uid="Complete_assembly" version="128">
+<AssemblyFile name="Complete_assembly.SLDASM" type="SolidWorks Assembly"/>
+<InstanceTree>
+<Instance name="Assembly_link2-2" uid="Assembly_link2-2" entityUid="Assembly_link2" rigid="true">
+<Transform>
+<Rotation>1 -3.4914415589998517e-15 0 3.4914415590036757e-15 0.99999999998391076 -5.6726063350887016e-06 0 5.6726063350887016e-06 0.99999999998391076</Rotation>
+<Translation>0.068635485579654543 0.28760298613785928 0.19458426795772266</Translation>
+</Transform>
+<Instance name="bearing-6mm-1" uid="bearing-6mm-1" entityUid="bearing-6mm*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>-9.0205620750793969e-16 0.0057249999999990364 0.29999999999999988</Translation>
+</Transform>
+</Instance>
+<Instance name="bearing-6mm-2" uid="bearing-6mm-2" entityUid="bearing-6mm*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>-9.0205620750793969e-16 0.029924999999999036 0.29999999999999999</Translation>
+</Transform>
+</Instance>
+<Instance name="position-sensor-pcb-1" uid="position-sensor-pcb-1" entityUid="position-sensor-pcb*:*Default">
+<Transform>
+<Rotation>-1 6.9829626776982495e-15 0 0 -1.0474444154097515e-14 1 6.9829626776742839e-15 1 1.0474444154097515e-14</Rotation>
+<Translation>0.0095300203199993189 -0.011275000000003088 0.30000002031999973</Translation>
+</Transform>
+</Instance>
+<Instance name="link-2-1" uid="link-2-1" entityUid="link-2*:*Default">
+<Transform>
+<Rotation>-1 0 -6.9829626776982495e-15 0 1 0 6.9829626776742839e-15 0 -1</Rotation>
+<Translation>-1.9567680809018384e-15 0.015325000000000033 0</Translation>
+</Transform>
+</Instance>
+<Instance name="bearing-mount-1-1" uid="bearing-mount-1-1" entityUid="bearing-mount-1*:*Default">
+<Transform>
+<Rotation>-3.4914813388431337e-15 3.4914813388551158e-15 1 1 0 3.491481338843133e-15 0 1 -3.491481338831151e-15</Rotation>
+<Translation>-9.4368957093138306e-16 0.015325000000000033 0.29999999999999988</Translation>
+</Transform>
+</Instance>
+<Instance name="pcb-standoffs-1" uid="pcb-standoffs-1" entityUid="pcb-standoffs*:*Default">
+<Transform>
+<Rotation>-3.4914813388431337e-15 -1 0 1 -3.4914813388431337e-15 0 0 0 1</Rotation>
+<Translation>-0.0095300000000008503 -0.011275000000000091 0.29999999999999993</Translation>
+</Transform>
+</Instance>
+<Instance name="pcb-standoffs-2" uid="pcb-standoffs-2" entityUid="pcb-standoffs*:*Default">
+<Transform>
+<Rotation>-3.4914813388431337e-15 -1 0 1 -3.4914813388431337e-15 0 0 0 1</Rotation>
+<Translation>0.0095299999999991503 -0.011274999999999979 0.29999999999999982</Translation>
+</Transform>
+</Instance>
+<Instance name="pin-encoder-3" uid="pin-encoder-3" entityUid="pin-encoder*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>-1.8596235662471372e-15 -0.014749999999999985 0</Translation>
+</Transform>
+</Instance>
+<Instance name="coupling-6mm-1" uid="coupling-6mm-1" entityUid="coupling-6mm*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>-1.8735013540549517e-15 -0.0063500000000000223 0</Translation>
+</Transform>
+</Instance>
+<Instance name="hub-2" uid="hub-2" grounded="true" entityUid="hub*:*Default">
+<Transform>
+<Rotation>1 0 0 0 1.0474444154097515e-14 1 0 -1 1.0474444154097515e-14</Rotation>
+<Translation>-1.8735013540549517e-15 0.0029500000000000082 0</Translation>
+</Transform>
+</Instance>
+<Instance name="pin-encoder-2" uid="pin-encoder-2" entityUid="pin-encoder*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>-1.8735013540549517e-15 0.012149999999999994 0</Translation>
+</Transform>
+</Instance>
+</Instance>
+<Instance name="Assembly_base-1" uid="Assembly_base-1" grounded="true" entityUid="Assembly_base" rigid="true">
+<Transform>
+<Rotation>1 0 0 0 1 0 0 0 1</Rotation>
+<Translation>0 0 0</Translation>
+</Transform>
+<Instance name="bearing-1" uid="bearing-1" entityUid="bearing*:*Default">
+<Transform>
+<Rotation>1 1.0462547703255712e-14 0 0 0.0033900013277754324 -0.99999425392899033 -1.0462548095036422e-14 0.99999425392899033 0.0033900013277754324</Rotation>
+<Translation>0.069424277181131325 -0.012403822103818617 0.12046392762221914</Translation>
+</Transform>
+</Instance>
+<Instance name="mount-sides-1" uid="mount-sides-1" grounded="true" entityUid="mount-sides*:*Default">
+<Transform>
+<Rotation>3.4914516301302887e-15 1.047445391938682e-14 -1 -0.99999999999597788 -2.8363031591493107e-06 -3.4914813388429878e-15 -2.8363031591493107e-06 0.99999999999597788 1.0474444016529402e-14</Rotation>
+<Translation>0.019424277181130153 0.010239547510084324 0.014570313894557818</Translation>
+</Transform>
+</Instance>
+<Instance name="mount-top-1" uid="mount-top-1" entityUid="mount-top*:*Default">
+<Transform>
+<Rotation>-3.5269696556670283e-15 1.0462547703255712e-14 1 0.99999425392899033 0.0033900013277754324 3.4914813388429874e-15 -0.0033900013277754324 0.99999425392899033 -1.0474444016529402e-14</Rotation>
+<Translation>0.069424277181131366 -0.012397042101163068 0.12246391613007711</Translation>
+</Transform>
+</Instance>
+<Instance name="mount-motor-1" uid="mount-motor-1" entityUid="mount-motor*:*Default">
+<Transform>
+<Rotation>1 1.0667256469493959e-14 3.0873738800168438e-15 3.0874343911138351e-15 -5.6726063386352531e-06 -0.99999999998391076 -1.0667238955865689e-14 0.99999999998391076 -5.6726063386352531e-06</Rotation>
+<Translation>0.068635485579652336 -0.012396270745883578 0.063582566177928554</Translation>
+</Transform>
+</Instance>
+<Instance name="mount-sides-2" uid="mount-sides-2" entityUid="mount-sides*:*Default">
+<Transform>
+<Rotation>-3.7855652242167556e-15 1.0726198363810124e-14 1 0.99999999998391076 -5.6726063383576974e-06 3.7856260696566734e-15 5.6726063383576974e-06 0.99999999998391076 -1.0726176889616263e-14</Rotation>
+<Translation>0.11863548557965195 -0.035031671959790782 0.014570022019590814</Translation>
+</Transform>
+</Instance>
+<Instance name="encoder-mount-1-1" uid="encoder-mount-1-1" entityUid="encoder-mount-1*:*Default">
+<Transform>
+<Rotation>-3.5148915353080497e-15 1.0462547703255712e-14 1 0.99999425392899033 0.0033900013277754324 3.4794032878858282e-15 -0.0033900013277754324 0.99999425392899033 -1.0474403071685346e-14</Rotation>
+<Translation>0.069424277181131422 -0.012380092094524191 0.12746388739972211</Translation>
+</Transform>
+</Instance>
+<Instance name="motor-1" uid="motor-1" entityUid="motor*:*Default">
+<Transform>
+<Rotation>1 0 1.0667256469493952e-14 0 0.99999999998391098 -5.6726063386352548e-06 -1.0667256469581164e-14 5.6726063386352548e-06 0.99999999998391098</Rotation>
+<Translation>0.068635485579651698 -0.01239591904429058 0.001582566178926078</Translation>
+</Transform>
+</Instance>
+</Instance>
+<Instance name="Assembly_link1-1" uid="Assembly_link1-1" entityUid="Assembly_link1" rigid="true">
+<Transform>
+<Rotation>1 0 7.1757751306508159e-15 0 0.99999999998391076 -5.672606338635254e-06 -7.1757751307610182e-15 5.672606338635254e-06 0.99999999998391076</Rotation>
+<Translation>0.068635485579653654 -0.012397013857313878 0.19458256617582087</Translation>
+</Transform>
+<Instance name="pcb-standoffs-1" uid="pcb-standoffs-1" entityUid="pcb-standoffs*:*Default">
+<Transform>
+<Rotation>-3.4914813388185576e-15 -1 0 1 -3.4914813388677091e-15 0 0 0 1</Rotation>
+<Translation>-0.0095300000000008295 0.25879999999999981 0</Translation>
+</Transform>
+</Instance>
+<Instance name="pcb-standoffs-2" uid="pcb-standoffs-2" entityUid="pcb-standoffs*:*Default">
+<Transform>
+<Rotation>-3.4914813388185576e-15 -1 0 1 -3.4914813388677091e-15 0 0 0 1</Rotation>
+<Translation>0.0095299999999991641 0.25879999999999986 0</Translation>
+</Transform>
+</Instance>
+<Instance name="bearing-6mm-1" uid="bearing-6mm-1" entityUid="bearing-6mm*:*Default">
+<Transform>
+<Rotation>0 -1 -3.4914813388185572e-15 1.3175089274772289e-16 -3.4914813388677087e-15 1 -1 0 1.3175089274772289e-16</Rotation>
+<Translation>-8.7430063189231078e-16 0.27079999999999987 0</Translation>
+</Transform>
+</Instance>
+<Instance name="bearing-6mm-2" uid="bearing-6mm-2" entityUid="bearing-6mm*:*Default">
+<Transform>
+<Rotation>0 -1 -3.4914813388185572e-15 1.3175089274772289e-16 -3.4914813388677087e-15 1 -1 0 1.3175089274772289e-16</Rotation>
+<Translation>-9.5756735873919752e-16 0.29499999999999987 0</Translation>
+</Transform>
+</Instance>
+<Instance name="coupling-6mm-8mm-1" uid="coupling-6mm-8mm-1" entityUid="coupling-6mm-8mm*:*Default">
+<Transform>
+<Rotation>-3.4914813388185576e-15 1 -3.4914813388431334e-15 1 3.4914813388677095e-15 0 0 -3.4914813388431349e-15 -1</Rotation>
+<Translation>0 0 -0.09799999999999999</Translation>
+</Transform>
+</Instance>
+<Instance name="bearing-mount-1-1" uid="bearing-mount-1-1" entityUid="bearing-mount-1*:*Default">
+<Transform>
+<Rotation>-3.4914813388185576e-15 3.4914813388431334e-15 1 1 0 3.4914813388677095e-15 0 1 -3.4914813388431349e-15</Rotation>
+<Translation>-9.298117831235686e-16 0.28539999999999982 0</Translation>
+</Transform>
+</Instance>
+<Instance name="link-1-1" uid="link-1-1" grounded="true" entityUid="link-1*:*Default">
+<Transform>
+<Rotation>-3.4914813388185576e-15 3.4914813388431334e-15 1 1 0 3.4914813388677095e-15 0 1 -3.4914813388431349e-15</Rotation>
+<Translation>0 0 -0.031</Translation>
+</Transform>
+</Instance>
+<Instance name="shaft-collar-8mm-1" uid="shaft-collar-8mm-1" entityUid="shaft-collar-8mm*:*Default">
+<Transform>
+<Rotation>-3.4914813388185576e-15 3.4914813388431334e-15 1 1 0 3.4914813388677095e-15 0 1 -3.4914813388431349e-15</Rotation>
+<Translation>0 0 -0.049999999999999989</Translation>
+</Transform>
+</Instance>
+<Instance name="shaft-1-1" uid="shaft-1-1" entityUid="shaft-1*:*Default">
+<Transform>
+<Rotation>-3.4914813388185576e-15 3.4914813388431334e-15 1 1 0 3.4914813388677095e-15 0 1 -3.4914813388431349e-15</Rotation>
+<Translation>0 0 -0.10999999999999999</Translation>
+</Transform>
+</Instance>
+<Instance name="position-sensor-pcb-1" uid="position-sensor-pcb-1" entityUid="position-sensor-pcb*:*Default">
+<Transform>
+<Rotation>-1 3.4914734999852507e-15 -3.4914813388185576e-15 -3.4914813388677091e-15 0 1 3.4914734999852507e-15 1 0</Rotation>
+<Translation>0.0095300203199991385 0.25879999999999981 2.0319999988194226e-08</Translation>
+</Transform>
+</Instance>
+</Instance>
+<Instance name="Assembly_link3-1" uid="Assembly_link3-1" entityUid="Assembly_link3" rigid="true">
+<Transform>
+<Rotation>1 -6.9829228978429842e-15 0 6.9829228978445643e-15 0.99999999998391076 -5.6726063315421493e-06 0 5.6726063315421493e-06 0.99999999998391076</Rotation>
+<Translation>0.068635485579652239 0.31752628435547936 0.49458443770563937</Translation>
+</Transform>
+<Instance name="link-3-1" uid="link-3-1" entityUid="link-3*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>0 0.018500000000000016 0</Translation>
+</Transform>
+</Instance>
+<Instance name="hub-1" uid="hub-1" grounded="true" entityUid="hub*:*Default">
+<Transform>
+<Rotation>1 0 0 0 1.0474444154097515e-14 1 0 -1 1.0474444154097515e-14</Rotation>
+<Translation>0 0.0029500000000000082 0</Translation>
+</Transform>
+</Instance>
+<Instance name="pin-encoder-2" uid="pin-encoder-2" entityUid="pin-encoder*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>0 -0.014749999999999985 0</Translation>
+</Transform>
+</Instance>
+<Instance name="pin-encoder-1" uid="pin-encoder-1" entityUid="pin-encoder*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>0 0.012149999999999994 0</Translation>
+</Transform>
+</Instance>
+<Instance name="coupling-6mm-1" uid="coupling-6mm-1" entityUid="coupling-6mm*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914816670434876e-15 -1 0 1 -3.4914816670434876e-15</Rotation>
+<Translation>0 -0.0063500000000000223 0</Translation>
+</Transform>
+</Instance>
+</Instance>
+</InstanceTree>
+<Constraints>
+<Coincident name="Coincident1">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Assembly_base-1</Uid>
+<Uid>motor-1</Uid>
+</InstancePath>
+<Position>0 0 0.082000000000000017</Position>
+<Axis>0 0 1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Assembly_link1-1</Uid>
+<Uid>coupling-6mm-8mm-1</Uid>
+</InstancePath>
+<Position>0 0 0.013000000000000012</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric1">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Assembly_base-1</Uid>
+<Uid>motor-1</Uid>
+</InstancePath>
+<Position>0 0 0.082000000000000017</Position>
+<Axis>0 0 -1.0000000000000002</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Assembly_link1-1</Uid>
+<Uid>coupling-6mm-8mm-1</Uid>
+</InstancePath>
+<Position>0 0 0.013000000000000012</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Coincident3">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Assembly_link1-1</Uid>
+<Uid>bearing-mount-1-1</Uid>
+</InstancePath>
+<Position>0.0082500000000000351 -0.018999999999999989 -0.012499999999999997</Position>
+<Axis>-1 0 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Assembly_link2-2</Uid>
+<Uid>coupling-6mm-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric3">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Assembly_link1-1</Uid>
+<Uid>bearing-6mm-2</Uid>
+</InstancePath>
+<Position>0 0 0.0050000000000000044</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Assembly_link2-2</Uid>
+<Uid>pin-encoder-2</Uid>
+</InstancePath>
+<Position>0 0 0.026000000000000023</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Coincident4">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Assembly_link2-2</Uid>
+<Uid>bearing-mount-1-1</Uid>
+</InstancePath>
+<Position>0.0082500000000000351 -0.019000000000000017 -0.012499999999999997</Position>
+<Axis>-1 0 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Assembly_link3-1</Uid>
+<Uid>coupling-6mm-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric4">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Assembly_link2-2</Uid>
+<Uid>bearing-6mm-2</Uid>
+</InstancePath>
+<Position>0 0 0.0050000000000000044</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Assembly_link3-1</Uid>
+<Uid>pin-encoder-1</Uid>
+</InstancePath>
+<Position>0 0 0.026000000000000023</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+</Constraints>
+</RootAssembly>
+<Assemblies>
+<Assembly name="Assembly_link2" uid="Assembly_link2" version="163">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="Assembly_link2.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+<Assembly name="Assembly_base" uid="Assembly_base" version="141">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="Assembly_base.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+<Assembly name="Assembly_link1" uid="Assembly_link1" version="169">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="Assembly_link1.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+<Assembly name="Assembly_link3" uid="Assembly_link3" version="126">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="Assembly_link3.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+</Assemblies>
+<Parts>
+<Part name="bearing" uid="bearing*:*Default" version="106">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="bearing.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0023090706003884979</Mass>
+<CenterOfMass>0 0.0035000000000000001 0</CenterOfMass>
+<Inertia>8.8514373014892372e-08 1.5817133612661207e-07 8.8514373014892412e-08 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="bearing_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="bearing-6mm" uid="bearing-6mm*:*Default" version="111">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="bearing-6mm.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0042001740477044767</Mass>
+<CenterOfMass>0 0 0.0025000000000000005</CenterOfMass>
+<Inertia>6.4233667645525517e-08 6.4233667645525504e-08 1.1096661009228238e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="bearing-6mm_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.89803921568627454" b="0.89803921568627454" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.89803921568627454" b="0.89803921568627454" a="1"/>
+<Specular r="0.62862745098039219" g="0.62862745098039219" b="0.62862745098039219" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="bearing-mount-1" uid="bearing-mount-1*:*Default" version="562">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="bearing-mount-1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.037156508519097589</Mass>
+<CenterOfMass>5.1755731072656773e-05 -0.011795027714745041 3.1428178947330095e-10</CenterOfMass>
+<Inertia>7.5337743433414072e-06 6.1664633778184869e-06 9.4168754823947853e-06 -1.8131497132975704e-13 7.569211951471457e-15 -2.2682568740502338e-08</Inertia>
+</MassProperties>
+<GeometryFile name="bearing-mount-1_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="coupling-6mm" uid="coupling-6mm*:*Default" version="117">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="coupling-6mm.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0064412466875633225</Mass>
+<CenterOfMass>0 0 0.0079500000000000005</CenterOfMass>
+<Inertia>2.3836477491996829e-07 2.3836477491996829e-07 2.0821329917548443e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="coupling-6mm_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="coupling-6mm-8mm" uid="coupling-6mm-8mm*:*Default" version="115">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="coupling-6mm-8mm.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.018661060362323376</Mass>
+<CenterOfMass>0 0 0.012748181818181818</CenterOfMass>
+<Inertia>1.4868354735622945e-06 1.4868354735622945e-06 1.0431363096535474e-06 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="coupling-6mm-8mm_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="encoder-mount-1" uid="encoder-mount-1*:*Default" version="187">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="encoder-mount-1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0055873811456433079</Mass>
+<CenterOfMass>0 0.002592517340174134 0</CenterOfMass>
+<Inertia>1.1021646234887426e-06 1.3988100450590841e-06 3.3238376776973798e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="encoder-mount-1_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="0.5" g="0.5" b="0.5" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="hub" uid="hub*:*Default" version="121">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="hub.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0070390367916700197</Mass>
+<CenterOfMass>0 6.5695749304146844e-08 0.0060714044706874741</CenterOfMass>
+<Inertia>3.0000728337099925e-07 2.9999849938121141e-07 5.3671178188649457e-07 -2.9068444562028467e-13 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="hub_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="link-1" uid="link-1*:*Default" version="269">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="link-1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.16298677130509001</Mass>
+<CenterOfMass>0.14176425715370938 7.902937526513799e-11 -3.5388266138146433e-11</CenterOfMass>
+<Inertia>8.8013446003434599e-06 0.0013653440675932954 0.0013582847260169917 -1.1743979961175819e-15 -6.3907267459703991e-13 1.4392043322532591e-12</Inertia>
+</MassProperties>
+<GeometryFile name="link-1_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="link-2" uid="link-2*:*Default" version="179">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="link-2.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.04921136784927059</Mass>
+<CenterOfMass>-1.5875176394885964e-09 -3.1038552918482053e-10 -0.13283239490295515</CenterOfMass>
+<Inertia>0.00034020853585051136 0.00034050048087386436 6.2380019809597354e-07 1.6296635713978039e-12 8.246641710999884e-12 -4.3500657322461037e-14</Inertia>
+</MassProperties>
+<GeometryFile name="link-2_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="link-3" uid="link-3*:*Default" version="125">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="link-3.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.078942324918215762</Mass>
+<CenterOfMass>2.9200830014125405e-10 0.21965434062244055 0.0031750002142307168</CenterOfMass>
+<Inertia>0.0013994173185905899 9.2768616098855416e-07 0.0013998141536338494 3.0676129778317896e-12 4.6748386730856477e-14 3.6467264823093667e-12</Inertia>
+</MassProperties>
+<GeometryFile name="link-3_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="motor" uid="motor*:*Default" version="112">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="motor.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.058348800355123243</Mass>
+<CenterOfMass>0 0 0.03043708609271523</CenterOfMass>
+<Inertia>2.2798717500119212e-05 2.2798717500119212e-05 8.8422100511665758e-06 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="motor_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="mount-motor" uid="mount-motor*:*Default" version="404">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="mount-motor.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.22342550520847593</Mass>
+<CenterOfMass>0 0.00052275366621635632 3.4182538845153907e-05</CenterOfMass>
+<Inertia>0.00020725843212082088 0.00041002797037741068 0.0002060823320443097 -7.4634755504738212e-09 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="mount-motor_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="mount-sides" uid="mount-sides*:*Default" version="327">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="mount-sides.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.76663696850134366</Mass>
+<CenterOfMass>0.022635679242411822 -0.037090126225257709 0.0047625000000000011</CenterOfMass>
+<Inertia>0.0057174278629261114 0.00064273318988247057 0.0063485687831226836 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="mount-sides_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="mount-top" uid="mount-top*:*Default" version="266">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="mount-top.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.25948003319176943</Mass>
+<CenterOfMass>0 -2.5329378298368299e-05 0</CenterOfMass>
+<Inertia>0.00022363642616443459 0.00044424801662785107 0.00022497485092523676 0 0 6.4804730265858696e-09</Inertia>
+</MassProperties>
+<GeometryFile name="mount-top_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="pcb-standoffs" uid="pcb-standoffs*:*Default" version="107">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="pcb-standoffs.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0018142697574481056</Mass>
+<CenterOfMass>0.006000000000000001 0 0</CenterOfMass>
+<Inertia>5.669592992025331e-09 2.4606033585389935e-08 2.4606033585389935e-08 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="pcb-standoffs_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.77647058823529413" g="0.75686274509803919" b="0.73725490196078436" a="1"/>
+<Diffuse r="0.77647058823529413" g="0.75686274509803919" b="0.73725490196078436" a="1"/>
+<Specular r="0.38823529411764707" g="0.3784313725490196" b="0.36862745098039218" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="pin-encoder" uid="pin-encoder*:*Default" version="107">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="pin-encoder.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0019848582385380317</Mass>
+<CenterOfMass>0 0 0.012999999999999999</CenterOfMass>
+<Inertia>1.1627961180768629e-07 1.1627961180768629e-07 8.9318620734211459e-09 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="pin-encoder_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="position-sensor-pcb" uid="position-sensor-pcb*:*Default" version="184">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="position-sensor-pcb.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0024743905653210265</Mass>
+<CenterOfMass>0.0095543112087728352 -0.0096333089228937303 -0.00059818336989241039</CenterOfMass>
+<Inertia>2.8613032564874878e-07 1.530500211083397e-07 4.305331340803872e-07 -3.0671505259169614e-09 4.3921707776229491e-10 4.1684440454895956e-10</Inertia>
+</MassProperties>
+<GeometryFile name="position-sensor-pcb_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="shaft-1" uid="shaft-1*:*Default" version="113">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="shaft-1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.010178760197630929</Mass>
+<CenterOfMass>0 0.037499999999999999 0</CenterOfMass>
+<Inertia>4.8120088834300225e-06 8.1430081581047421e-08 4.8120088834300225e-06 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="shaft-1_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="shaft-collar-8mm" uid="shaft-collar-8mm*:*Default" version="111">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="shaft-collar-8mm.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0091361441357208154</Mass>
+<CenterOfMass>0 0.0074999999999999989 0</CenterOfMass>
+<Inertia>7.6335096316433028e-07 1.1128216379108118e-06 6.9207607983601205e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="shaft-collar-8mm_Default_sldprt.STL" type="STL"/>
+<VisualProperties>
+<Ambient r="0.25098039215686274" g="0.25098039215686274" b="0.25098039215686274" a="1"/>
+<Diffuse r="0.25098039215686274" g="0.25098039215686274" b="0.25098039215686274" a="1"/>
+<Specular r="0.12549019607843137" g="0.12549019607843137" b="0.12549019607843137" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+</Parts>
+</SimscapeMultibodyImportXML>
