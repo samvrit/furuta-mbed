@@ -1,6 +1,7 @@
 BUILD/
 mbed-os/
 matlab/slprj/
+matlab/solidworks_model/slprj/
 *.slxc
 *.asv
 *.mat
