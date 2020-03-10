@@ -9,18 +9,18 @@ if run_model
                                    0          sin(alpha)              cos(alpha)              d;
                                    0              0                       0                   1];
 
-    m = [0.2619 0.123 0.0962]; % mass of each link
+    m = [0.2526 0.1183 0.1]; % mass of each link
 
     % Inertia matrix as obtained from SolidWorks
-    J1 = [35  0  0;
-          0  2.3 5.2;
-          0  5.2 32.8] .* 1e-4;
-    J2 = [17  0  0;
-          0 16.8 0.4;
-          0  0.4 0.2] .* 1e-4;
-    J3 = [21  0  0;
-          0  20.8 0.6;
-          0  0.6  0.1] .* 1e-4;
+    J1 = [33    0   0;
+          0     2   5;
+          0     5  32] .* 1e-4;
+    J2 = [16.8  0   0;
+          0    16.6 0.5;
+          0     0.5 0.2] .* 1e-4;
+    J3 = [21    0   0;
+          0    20.9 0.6;
+          0     0.6 0.1] .* 1e-4;
 
     % Similarity transformation to tranform to the same reference frame
     I1 = rotx(-90)' * J1 * rotx(-90);
@@ -28,20 +28,20 @@ if run_model
     I3 = rotx(-90)' * roty(-90)' * J3 * roty(-90) * rotx(-90);
 
     % measurements from SolidWorks
-    dc(1) = 0; dc(2) = 0.148; dc(3) = 0.009;
-    ac(1) = 0; ac(2) = 0.185; ac(3) = 0.18;
+    dc(1) = 0; dc(2) = 0.1493; dc(3) = 0.009;
+    ac(1) = 0; ac(2) = 0.1823; ac(3) = 0.18;
     d(1) = 0; d(2) = 0.3; d(3) = 0.015;
     a(1) = 0; a(2) = 0.3; a(3) = 0.45;
 
     % DH parameters for center of mass and end of links
-    dhcom = [-pi/2, 0,     0,       theta1; 
-               0,   0,     dc(2),   0; 
-               0,   ac(2), 0.0075,  theta2 - (pi/2);
-               0,   ac(3), dc(3),   theta3];
+    dhcom = [-pi/2, 0,      0,       theta1; 
+               0,   0,      dc(2),   0; 
+              pi,   ac(2),  0.0116,  theta2 - (pi/2);
+               0,   ac(3), -dc(3),   theta3];
     dh = [-pi/2, 0,     0,       theta1; 
             0,   0,     d(2),    0; 
-            0,   a(2),  0.0269,  theta2 - (pi/2);
-            0,   a(3),  d(3),    theta3];
+           pi,   a(2),  0.0238,  theta2 - (pi/2);
+            0,   a(3), -d(3),    theta3];
 
     % transformation matrix for each link-end seperately
     A1 = A(dh(1,1), dh(1,2), dh(1,3), dh(1,4)) * A(dh(2,1), dh(2,2), dh(2,3), dh(2,4));
@@ -172,7 +172,7 @@ else
 end
 
 % LQR calculations
-Q = diag([10 400000 4000 1000 10000 1000]);
+Q = diag([10 400 400 10 100 100]);
 R = 1;
 
 [K, P] = lqr(A_matrix, B_matrix, Q, R);
