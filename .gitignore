@@ -9,3 +9,5 @@ matlab/solidworks_model/slprj/
 .vscode/
 .hg/
 .temp/
+*.mbed
+
