@@ -1,4 +1,4 @@
-run_model = true;
+run_model = false;
 
 if run_model
     syms theta alpha a d theta1 theta2 theta3 q1(t) q2(t) q3(t) x1 x2 x3 x4 x5 x6 tau
