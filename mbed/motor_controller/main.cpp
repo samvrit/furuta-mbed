@@ -5,14 +5,23 @@ PwmOut motor_pwm(PA_5);
 
 DigitalOut inA(PA_7);
 DigitalOut inB(PA_8);
+DigitalOut motor_enable(PB_8);
 
 AnalogIn currentSense(PA_6);
+
+InterruptIn button(BUTTON1);
+
+void flip() {
+    motor_enable = !motor_enable;
+}
 
 
 int main()
 {
+    button.rise(&flip);
     inA = 1;
     inB = 0;
+    motor_enable = 0;
     while(true)
     {
         for(int i = 0; i <= 9; i++)
