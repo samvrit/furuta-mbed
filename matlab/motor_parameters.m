@@ -18,9 +18,27 @@ arm_length = 0.447; %m
 % Determine K using linear regression
 K = current_data \ ((1e-3 * 9.81 * arm_length) .* mass_data);
 
+%% Experimental Transfer function
+% Experiment setup:
+% - Connect current sensor in series with motor and battery
+% - Connect one channel of oscilloscope to the current sensor output
+% - Connect another channel of oscilloscope to the battery terminals
+% - Setup a rising edge trigger for the battery channel
+% - This will give the step response for the current/voltage transfer
+% function, which is a first order transfer function
+% - measure rising time, gain and delay if any
+
+rising_time = 232.5e-6; % seconds
+battery_step_amplitude = 8.5; % volts
+current_amplitude_at_steady_state = 1.375; % amperes
+gain = current_amplitude_at_steady_state / battery_step_amplitude;
+
+motor_tf = tf(gain, [rising_time 1]);
+disp(motor_tf)
+
 J = 9.9e-5;
 b = 1;
-R = 1.52;    % calculated by measuring current using a multimeter in series with the motor with no load when 12.39V was applied. Measured current was 0.112A
+R = 28.9;
 L = 0.05;
 
 torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
