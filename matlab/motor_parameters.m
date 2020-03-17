@@ -28,12 +28,12 @@ K = current_data \ ((1e-3 * 9.81 * arm_length) .* mass_data);
 % function, which is a first order transfer function
 % - measure rising time, gain and delay if any
 
-rising_time = 232.5e-6; % seconds
-battery_step_amplitude = 8.5; % volts
-current_amplitude_at_steady_state = 1.375; % amperes
+rising_time = 535e-6; % seconds
+battery_step_amplitude = 12.66; % volts
+current_amplitude_at_steady_state = 7.2125; % amperes
 gain = current_amplitude_at_steady_state / battery_step_amplitude;
 
-motor_tf = tf(gain, [rising_time 1]);
+motor_tf = tf(gain, [rising_time 1], 'InputDelay', 430e-6);
 disp(motor_tf)
 
 J = 9.9e-5;
@@ -46,7 +46,7 @@ torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
 motor_sys = tf(1/R, [(b*L + K*J)/(R*b) 1]);
 open_loop = motor_sys*K;
 
-opts = pidtuneOptions('CrossoverFrequency',400,'PhaseMargin',90);
-[C, info] = pidtune(motor_sys, 'pid', opts);
+opts = pidtuneOptions('CrossoverFrequency',152,'PhaseMargin',90);
+[C, info] = pidtune(motor_tf, 'pid', opts);
 
 closed_loop = (C*motor_sys) / (1 + (C*motor_sys*K));
