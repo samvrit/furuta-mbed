@@ -2,6 +2,7 @@
 #include "rtos.h"
 
 #define PI 3.14F
+#define MICROSECOND 0.000001F
 
 #define CURRENT_LPF_CUTOFF_FREQ_HZ 200U
 #define CURRENT_SENSE_OFFSET 0.15F
@@ -13,6 +14,9 @@
 
 #define DUTY_CYCLE_LOWER_BOUND 0.0F
 #define DUTY_CYCLE_UPPER_BOUND 1.0F
+
+#define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
+#define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += ((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND)
 
 PwmOut motor_pwm(PA_5);
 DigitalOut inA(PA_7);
@@ -31,18 +35,6 @@ void flip(void)
     inB = 0;
     motor_enable = !motor_enable;
 }
-
-void apply_lpf(float * output, float * input, int dt, uint cutoff_freq)
-{
-    float lpf_gain = (2.0 * PI * (float)cutoff_freq * (float)dt * 0.000001);
-    *output += (*input - *output) * lpf_gain;
-}
-
-float saturate(float input, float lower_limit, float upper_limit)
-{
-    return input > upper_limit ? upper_limit : ( input < lower_limit ? lower_limit : input);
-}
-
 
 int main()
 {
@@ -70,14 +62,14 @@ int main()
             currentSenseRaw = currentSense.read();  // read from ADC
             currentSenseRaw -= CURRENT_SENSE_OFFSET;    // adjust for offset
             currentSenseRaw *= (MAX_CURRENT_SENSE / (1.0 - CURRENT_SENSE_OFFSET));  // scale the range
-            apply_lpf(&currentSenseLPF, &currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
+            LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
 
             torqueFeedback = MOTOR_CONSTANT_KT * currentSenseLPF;   // calculate output torque (tau = Kt * i)
             torqueError = torqueCommand - torqueFeedback;   // compute error signal
             torqueErrorIntegral += torqueError; // compute integral of error signal
 
             duty_cycle = (KP * torqueError) + (KI * torqueErrorIntegral);   // PI controller
-            duty_cycle = saturate(duty_cycle, DUTY_CYCLE_LOWER_BOUND, DUTY_CYCLE_UPPER_BOUND);  // saturate duty cycle
+            duty_cycle = SATURATE(duty_cycle, DUTY_CYCLE_LOWER_BOUND, DUTY_CYCLE_UPPER_BOUND);  // saturate duty cycle
             motor_pwm.write(duty_cycle);    // set duty cycle
         }
         
