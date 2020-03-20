@@ -1,5 +1,4 @@
 #include "mbed.h"
-#include "rtos.h"
 
 #define PI 3.14F
 #define MICROSECOND 0.000001F
@@ -18,6 +17,7 @@
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += ((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND)
 
+DigitalOut led(LED1);
 PwmOut motor_pwm(PA_5);
 DigitalOut inA(PA_7);
 DigitalOut inB(PA_8);
@@ -27,7 +27,12 @@ InterruptIn button(BUTTON1);
 
 Timer t;
 
-bool motor_enable = false;
+RawSerial torque(PA_0, PA_1);
+
+volatile bool motor_enable = false;
+volatile float torqueCommand = 0.02;
+volatile bool torqueCommandAvailable = false;
+volatile char rx_buffer[5];
 
 void flip(void)
 {
@@ -36,8 +41,34 @@ void flip(void)
     motor_enable = !motor_enable;
 }
 
+void rx_irq(void)
+{
+    led = !led;
+    int i = 0;
+    while(torque.readable())
+    {
+        rx_buffer[i] = torque.getc();
+        if(rx_buffer[i] == '\r')
+        {
+            torqueCommandAvailable = true;
+            break;
+        }
+        else
+        {
+            i++;
+        }
+    }
+    
+}
+
+
 int main()
 {
+    torque.baud(115200);
+    torque.attach(&rx_irq, RawSerial::RxIrq);
+
+    torque.printf("Hello World!\n");
+
     button.rise(&flip);
     inA = 0;
     inB = 0;
@@ -46,7 +77,6 @@ int main()
     float currentSenseLPF = 0.0;
     float currentSenseRaw = 0.0;
     float torqueFeedback = 0.0;
-    float torqueCommand = 0.02;
     float torqueError = 0.0;
     float torqueErrorIntegral = 0.0;
     int dt = 0;
@@ -56,6 +86,13 @@ int main()
     while(true)
     {
         t.start();
+
+        if(torqueCommandAvailable)
+        {
+            torque.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+            torqueCommandAvailable = false;
+        }
+            
 
         if(motor_enable)
         {
