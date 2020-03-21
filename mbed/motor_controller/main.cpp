@@ -30,9 +30,14 @@ Timer t;
 RawSerial torque(PA_0, PA_1);
 
 volatile bool motor_enable = false;
-volatile float torqueCommand = 0.02;
 volatile bool torqueCommandAvailable = false;
-volatile char rx_buffer[5];
+volatile char rx_buffer[sizeof(float) + 1];
+volatile int rx_count;
+
+volatile union uart_packet_t {
+    float torqueCommand;
+    char packet[sizeof(float)];
+} uart_packet;
 
 void flip(void)
 {
@@ -44,18 +49,18 @@ void flip(void)
 void rx_irq(void)
 {
     led = !led;
-    int i = 0;
     while(torque.readable())
     {
-        rx_buffer[i] = torque.getc();
-        if(rx_buffer[i] == '\r')
+        rx_buffer[rx_count] = torque.getc();
+        if(rx_buffer[rx_count] == '\r')
         {
             torqueCommandAvailable = true;
+            rx_count = 0;
             break;
         }
         else
         {
-            i++;
+            rx_count++;
         }
     }
     
@@ -76,6 +81,7 @@ int main()
     float duty_cycle = 0.0;
     float currentSenseLPF = 0.0;
     float currentSenseRaw = 0.0;
+    float torqueCommand = 0.02;
     float torqueFeedback = 0.0;
     float torqueError = 0.0;
     float torqueErrorIntegral = 0.0;
@@ -90,6 +96,12 @@ int main()
         if(torqueCommandAvailable)
         {
             torque.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+            for(int i = 0; i <= 4; i++)
+            {
+                uart_packet.packet[i] = rx_buffer[i];
+            }
+            torque.printf("New torque command: %f\n", uart_packet.torqueCommand);
+            torqueCommand = uart_packet.torqueCommand;
             torqueCommandAvailable = false;
         }
             
