@@ -18,6 +18,7 @@
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += ((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND)
 
 DigitalOut led(LED1);
+DigitalOut motor_enable(PA_9);
 PwmOut motor_pwm(PA_5);
 DigitalOut inA(PA_7);
 DigitalOut inB(PA_8);
@@ -27,7 +28,7 @@ InterruptIn button(BUTTON1);
 
 Timer t;
 
-RawSerial torque(PA_0, PA_1);
+RawSerial torque_input(PA_0, PA_1);
 
 volatile bool motor_enable = false;
 volatile bool torqueCommandAvailable = false;
@@ -49,9 +50,9 @@ void flip(void)
 void rx_irq(void)
 {
     led = !led;
-    while(torque.readable())
+    while(torque_input.readable())
     {
-        rx_buffer[rx_count] = torque.getc();
+        rx_buffer[rx_count] = torque_input.getc();
         if(rx_buffer[rx_count] == '\r')
         {
             torqueCommandAvailable = true;
@@ -69,10 +70,10 @@ void rx_irq(void)
 
 int main()
 {
-    torque.baud(115200);
-    torque.attach(&rx_irq, RawSerial::RxIrq);
+    torque_input.baud(115200);
+    torque_input.attach(&rx_irq, RawSerial::RxIrq);
 
-    torque.printf("Hello World!\n");
+    torque_input.printf("Hello World!\n");
 
     button.rise(&flip);
     inA = 0;
@@ -95,12 +96,12 @@ int main()
 
         if(torqueCommandAvailable)
         {
-            torque.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+            torque_input.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
             for(int i = 0; i <= 4; i++)
             {
                 uart_packet.packet[i] = rx_buffer[i];
             }
-            torque.printf("New torque command: %f\n", uart_packet.torqueCommand);
+            torque_input.printf("New torque command: %f\n", uart_packet.torqueCommand);
             torqueCommand = uart_packet.torqueCommand;
             torqueCommandAvailable = false;
         }
