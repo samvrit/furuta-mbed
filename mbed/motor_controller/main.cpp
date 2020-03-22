@@ -8,8 +8,8 @@
 #define MAX_CURRENT_SENSE 7.6F
 #define MOTOR_CONSTANT_KT 0.2525F
 
-#define KP 6.57F
-#define KI 11503.0F
+#define KP 23.16F
+#define KI 814.62F
 
 #define DUTY_CYCLE_LOWER_BOUND 0.01F
 #define DUTY_CYCLE_UPPER_BOUND 0.99F
