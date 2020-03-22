@@ -11,18 +11,18 @@
 #define KP 6.57F
 #define KI 11503.0F
 
-#define DUTY_CYCLE_LOWER_BOUND 0.0F
-#define DUTY_CYCLE_UPPER_BOUND 1.0F
+#define DUTY_CYCLE_LOWER_BOUND 0.01F
+#define DUTY_CYCLE_UPPER_BOUND 0.99F
 
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += ((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND)
 
 DigitalOut led(LED1);
-DigitalOut motor_enable(PA_9);
+DigitalOut motor_enable(PA_8);
 PwmOut motor_pwm(PA_5);
-DigitalOut inA(PA_7);
-DigitalOut inB(PA_8);
-AnalogIn currentSense(PA_0);
+DigitalOut inA(PA_6);
+DigitalOut inB(PA_7);
+AnalogIn currentSense(PA_4);
 
 InterruptIn button(BUTTON1);
 
@@ -30,7 +30,7 @@ Timer t;
 
 RawSerial torque_input(PA_0, PA_1);
 
-volatile bool motor_enable = false;
+volatile bool motor_enabled = false;
 volatile bool torqueCommandAvailable = false;
 volatile char rx_buffer[sizeof(float) + 1];
 volatile int rx_count;
@@ -42,9 +42,8 @@ volatile union uart_packet_t {
 
 void flip(void)
 {
-    inA = !inA;
-    inB = 0;
     motor_enable = !motor_enable;
+    motor_enabled = !motor_enabled;
 }
 
 void rx_irq(void)
@@ -76,7 +75,7 @@ int main()
     torque_input.printf("Hello World!\n");
 
     button.rise(&flip);
-    inA = 0;
+    inA = 1;
     inB = 0;
 
     float duty_cycle = 0.0;
@@ -107,7 +106,7 @@ int main()
         }
             
 
-        if(motor_enable)
+        if(motor_enabled)
         {
             currentSenseRaw = currentSense.read();  // read from ADC
             currentSenseRaw -= CURRENT_SENSE_OFFSET;    // adjust for offset
@@ -120,6 +119,9 @@ int main()
 
             duty_cycle = (KP * torqueError) + (KI * torqueErrorIntegral);   // PI controller
             duty_cycle = SATURATE(duty_cycle, DUTY_CYCLE_LOWER_BOUND, DUTY_CYCLE_UPPER_BOUND);  // saturate duty cycle
+
+            inA = torqueCommand < 0 ? 0 : 1;
+            inB = !inA;
             motor_pwm.write(duty_cycle);    // set duty cycle
         }
         
