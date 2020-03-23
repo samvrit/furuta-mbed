@@ -114,7 +114,7 @@ int main()
             LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
 
             torqueFeedback = MOTOR_CONSTANT_KT * currentSenseLPF;   // calculate output torque (tau = Kt * i)
-            torqueError = torqueCommand - torqueFeedback;   // compute error signal
+            torqueError = abs(torqueCommand) - torqueFeedback;   // compute error signal
             torqueErrorIntegral += torqueError; // compute integral of error signal
 
             duty_cycle = (KP * torqueError) + (KI * torqueErrorIntegral);   // PI controller
