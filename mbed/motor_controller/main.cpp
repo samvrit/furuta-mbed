@@ -3,7 +3,7 @@
 #define PI 3.14F
 #define MICROSECOND 0.000001F
 
-#define CURRENT_LPF_CUTOFF_FREQ_HZ 200U     // cutoff frequency for low pass filter
+#define CURRENT_LPF_CUTOFF_FREQ_HZ 3500U    // cutoff frequency for low pass filter
 #define CURRENT_SENSE_OFFSET 0.15F          // ADC value when 0 current is present
 #define MAX_CURRENT_SENSE 7.6F              // current value when ADC is at max value
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
