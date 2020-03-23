@@ -15,7 +15,7 @@
 #define DUTY_CYCLE_UPPER_BOUND 0.99F
 
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
-#define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += ((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND)
+#define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
 
 DigitalOut motor_enable(PA_8);              // 3.3V power source for gate driver IC
 PwmOut motor_pwm(PA_5);                     // PWM for gate driver IC
