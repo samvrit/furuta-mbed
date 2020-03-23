@@ -111,7 +111,7 @@ int main()
         {
             currentSenseRaw = currentSense.read();  // read from ADC
             currentSenseRaw -= CURRENT_SENSE_OFFSET;    // adjust for offset
-            currentSenseRaw *= (MAX_CURRENT_SENSE / (1.0 - CURRENT_SENSE_OFFSET));  // scale the range
+            currentSenseRaw *= (MAX_CURRENT_SENSE / (1.0 - CURRENT_SENSE_OFFSET));  // scale the range to get value in amperes
             LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
 
             torqueFeedback = MOTOR_CONSTANT_KT * currentSenseLPF;   // calculate output torque (tau = Kt * i)
