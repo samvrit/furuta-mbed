@@ -2,7 +2,7 @@
 #include "PwmIn.h"
 
 #define PI 3.14F
-#define ROTATION_PER_PULSE (2.0F * PI / 64.0)
+#define ROTATION_PER_PULSE (2.0F * PI / 64.0)   // radians per pulse
 
 #define ABS(input) ((input) = (input) < 0 ? -(input) : (input))
 
