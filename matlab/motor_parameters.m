@@ -40,7 +40,7 @@ motor_tf = tf(gain, [rising_time 1], 'InputDelay', 420e-6);
 disp(motor_tf)
 
 J = 0.0032; % moment of inertia of load (link 1) in kg m^2
-b = 0.0097; % V/(rad/s) obtained by regression analysis
+b = 0.2915; % V/(rad/s) obtained by regression analysis
 R = 1/gain;
 L = R*rising_time;
 
@@ -49,7 +49,7 @@ torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
 motor_sys = tf(1/R, [(b*L + Kt*J)/(R*b) 1], 'InputDelay', 420e-6);
 open_loop = motor_sys*Kt;
 
-opts = pidtuneOptions('CrossoverFrequency',2e3,'PhaseMargin',90);
+opts = pidtuneOptions('CrossoverFrequency',1750,'PhaseMargin',60);
 [C, info] = pidtune(motor_sys*Kt, 'PI', opts);
 
 disp(C.Kp)
