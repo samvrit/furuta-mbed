@@ -20,7 +20,7 @@ arm_length = 0.447; %m
 % arm_length = 0.447; %m
 
 % Determine K using linear regression
-K = current_data \ ((1e-3 * 9.81 * arm_length) .* mass_data);
+Kt = current_data \ ((1e-3 * 9.81 * arm_length) .* mass_data);
 %% Experimental Transfer function
 % Experiment setup:
 % - Connect current sensor in series with motor and battery
@@ -44,16 +44,16 @@ b = 0.0097; % V/(rad/s) obtained by regression analysis
 R = 1/gain;
 L = R*rising_time;
 
-torque_ref = timeseries([0.1 0.2 -0.5 -0.3 0.4], [0.1 0.2 0.4 0.8 0.9]);
+torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
 
-motor_sys = tf(1/R, [(b*L + K*J)/(R*b) 1]);
-open_loop = motor_sys*K;
+motor_sys = tf(1/R, [(b*L + Kt*J)/(R*b) 1], 'InputDelay', 420e-6);
+open_loop = motor_sys*Kt;
 
-opts = pidtuneOptions('CrossoverFrequency',400,'PhaseMargin',90);
-[C, info] = pidtune(motor_sys*K, 'PI', opts);
+opts = pidtuneOptions('CrossoverFrequency',2e3,'PhaseMargin',90);
+[C, info] = pidtune(motor_sys*Kt, 'PI', opts);
 
 disp(C.Kp)
 disp(C.Ki)
 disp(C.Kd)
 
-closed_loop = (C*motor_sys) / (1 + (C*motor_sys*K));
+closed_loop = (C*motor_sys) / (1 + (C*motor_sys*Kt));
