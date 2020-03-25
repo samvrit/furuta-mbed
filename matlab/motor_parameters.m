@@ -39,8 +39,8 @@ gain = current_amplitude_at_steady_state / battery_step_amplitude;
 motor_tf = tf(gain, [rising_time 1], 'InputDelay', 420e-6);
 disp(motor_tf)
 
-J = 0.0032; % moment of inertia of load (link 1)
-b = 1;
+J = 0.0032; % moment of inertia of load (link 1) in kg m^2
+b = 0.0097; % V/(rad/s) obtained by regression analysis
 R = 1/gain;
 L = R*rising_time;
 
@@ -49,7 +49,7 @@ torque_ref = timeseries([0.1 0.2 -0.5 -0.3 0.4], [0.1 0.2 0.4 0.8 0.9]);
 motor_sys = tf(1/R, [(b*L + K*J)/(R*b) 1]);
 open_loop = motor_sys*K;
 
-opts = pidtuneOptions('CrossoverFrequency',2.01e3,'PhaseMargin',76);
+opts = pidtuneOptions('CrossoverFrequency',400,'PhaseMargin',90);
 [C, info] = pidtune(motor_sys*K, 'PI', opts);
 
 disp(C.Kp)
