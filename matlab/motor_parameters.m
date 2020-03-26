@@ -56,4 +56,4 @@ disp(C.Kp)
 disp(C.Ki)
 disp(C.Kd)
 
-closed_loop = (C*motor_sys) / (1 + (C*motor_sys*Kt));
+closed_loop = (C*open_loop) / (1 + (C*open_loop));
