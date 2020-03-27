@@ -94,10 +94,10 @@ int main()
         if(flags.dutyCycleCommandAvailable)
         {
             NVIC_DisableIRQ(UART4_IRQn);    // disable UART interrupt while processing new information
-            dutyCycleInput.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+            dutyCycleInput.printf("Duty cycle command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
             memcpy((void *)&uartPacket.buffer, (void *)&rx_buffer, sizeof(float));  // write buffer contents into union variable
             memset((void *)&rx_buffer, 0, sizeof(float) + 1);   // clear rx buffer
-            dutyCycleInput.printf("New torque command: %f\n", uartPacket.value);
+            dutyCycleInput.printf("New duty cycle command: %f\n", uartPacket.value);
             dutyCycle = uartPacket.value;
             flags.dutyCycleCommandAvailable = false;
 
