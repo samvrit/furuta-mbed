@@ -7,7 +7,7 @@
 
 #define CURRENT_LPF_CUTOFF_FREQ_HZ 3500U    // cutoff frequency for low pass filter
 #define CURRENT_SENSE_OFFSET 0.091F         // ADC value when 0 current is present
-#define CURRENT_SENSE_SCALING_FACTOR 13.73F // current value when ADC is at max value
+#define CURRENT_SENSE_SCALING_FACTOR 13.73F // calculated by considering rate of change of voltage w.r.t. current, as well as voltage divider circuit (5V -> 3V)
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
 
 #define KP 38.93F                           // proportional gain for PI controller
