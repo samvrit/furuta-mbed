@@ -1,15 +1,17 @@
+/*=======================INCLUDES========================*/
 #include "mbed.h"
 
+/*=======================DEFINES========================*/
 #define PI 3.14F
 #define MICROSECOND 0.000001F
 
 #define CURRENT_LPF_CUTOFF_FREQ_HZ 3500U    // cutoff frequency for low pass filter
-#define CURRENT_SENSE_OFFSET 0.15F          // ADC value when 0 current is present
-#define MAX_CURRENT_SENSE 7.6F              // current value when ADC is at max value
+#define CURRENT_SENSE_OFFSET 0.091F         // ADC value when 0 current is present
+#define CURRENT_SENSE_SCALING_FACTOR 13.73F // current value when ADC is at max value
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
 
-#define KP 23.16F                           // proportional gain for PID
-#define KI 814.62F                          // integral gain for PID
+#define KP 38.93F                           // proportional gain for PI controller
+#define KI 1192.6F                          // integral gain for PI controller
 
 #define DUTY_CYCLE_LOWER_BOUND 0.01F
 #define DUTY_CYCLE_UPPER_BOUND 0.99F
@@ -18,45 +20,54 @@
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
 #define ABS(input) ((input) = (input) < 0 ? -(input) : (input))
 
-DigitalOut motor_enable(PA_8);              // 3.3V power source for gate driver IC
-PwmOut motor_pwm(PA_5);                     // PWM for gate driver IC
+/*=======================PERIPHERALS========================*/
+DigitalOut motorEnable(PA_8);               // 3.3V power source for gate driver IC
+PwmOut motorPWM(PA_5);                      // PWM for gate driver IC
 DigitalOut inA(PA_6);                       // direction pin A
 DigitalOut inB(PA_7);                       // direction pin B
 AnalogIn currentSense(PA_4);                // current sense analog input
 
-InterruptIn button(BUTTON1);                // button for motor enable/disable
+InterruptIn buttonPress(BUTTON1);                // button for motor enable/disable
 
 Timer t;                                    // timer for calculating code execution rate
 
-RawSerial torque_input(PA_0, PA_1);         // serial communication for getting torque commands
+RawSerial torqueInput(PA_0, PA_1);         // serial communication for getting torque commands
 
-volatile bool motor_enabled = false;        // flag for when motor is enabled using button
-volatile bool torqueCommandAvailable = false;   // flag for when new torque command is available
+/*=======================STRUCTS & UNIONS========================*/
+// use a union to decode float packet received through UART
+typedef union {
+    float value;
+    char buffer[sizeof(float)];
+} uartPacket_t;
+
+typedef struct {
+    bool motorEnabled = false;              // flag for when motor is enabled using button
+    bool torqueCommandAvailable = false;    // flag for when new torque command is available
+} flags_t;
+
+/*=======================VOLATILES========================*/
 volatile char rx_buffer[sizeof(float) + 1]; // receive buffer for UART packet containing torque command
 volatile int rx_count;                      // index for receive buffer byte array
+volatile flags_t flags;
+volatile uartPacket_t uartPacket;
 
-// use a union to decode float packet received through UART
-volatile union uart_packet_t {
-    float torqueCommand;
-    char packet[sizeof(float)];
-} uart_packet;
-
+/*=======================INTERRUPT HANDLERS========================*/
 // Interrupt service routine for when user button is pressed for enabling/disabling motor driver
 void flip(void)
 {
-    motor_enable = !motor_enable;   // 3.3V power source for gate driver IC
-    motor_enabled = !motor_enabled;
+    motorEnable = !motorEnable;   // 3.3V power source for gate driver IC
+    flags.motorEnabled != flags.motorEnabled;
 }
 
 // Interrupt service routine for UART RX
 void rx_irq(void)
 {
-    while(torque_input.readable())
+    while(torqueInput.readable())
     {
-        rx_buffer[rx_count] = torque_input.getc();  // fill available byte into buffer
+        rx_buffer[rx_count] = torqueInput.getc();  // fill available byte into buffer
         if(rx_buffer[rx_count] == '\r')             // look for carriage return
         {
-            torqueCommandAvailable = true;
+            flags.torqueCommandAvailable = true;
             rx_count = 0;                           // reset buffer index
             break;
         }
@@ -67,19 +78,19 @@ void rx_irq(void)
     }
 }
 
-
+/*=======================MAIN========================*/
 int main()
 {
-    torque_input.baud(115200);                          // set UART baud rate
-    torque_input.attach(&rx_irq, RawSerial::RxIrq);
+    torqueInput.baud(115200);                          // set UART baud rate
+    torqueInput.attach(&rx_irq, RawSerial::RxIrq);
 
-    torque_input.printf("Hello World!\n");
+    torqueInput.printf("Hello World!\n");
 
-    button.rise(&flip);
+    buttonPress.rise(&flip);
     inA = 1;
     inB = 0;
 
-    float duty_cycle = 0.0;
+    float dutyCycle = 0.0;
     float currentSenseLPF = 0.0;
     float currentSenseRaw = 0.0;
     float torqueCommand = 0.02;
@@ -88,47 +99,44 @@ int main()
     float torqueErrorIntegral = 0.0;
     int dt = 0;
 
-    motor_pwm.period_us(100.0); // set PWM frequency to 100 microseconds (10 kHz)
+    motorPWM.period_us(100.0); // set PWM frequency to 100 microseconds (10 kHz)
     
     while(true)
     {
         t.start();
 
-        if(torqueCommandAvailable)
+        if(flags.torqueCommandAvailable)
         {
-            torque_input.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
-            for(int i = 0; i <= 4; i++)
-            {
-                uart_packet.packet[i] = rx_buffer[i];
-            }
-            torque_input.printf("New torque command: %f\n", uart_packet.torqueCommand);
-            torqueCommand = uart_packet.torqueCommand;
-            torqueCommandAvailable = false;
+            NVIC_DisableIRQ(UART4_IRQn);    // disable UART interrupt while processing new information
+            torqueInput.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+            memcpy((void *)&uartPacket.buffer, (void *)&rx_buffer, sizeof(float));  // write buffer contents into union variable
+            memset((void *)&rx_buffer, 0, sizeof(float) + 1);   // clear rx buffer
+            torqueInput.printf("New torque command: %f\n", uartPacket.value);
+            torqueCommand = uartPacket.value;
+            flags.torqueCommandAvailable = false;
+            NVIC_EnableIRQ(UART4_IRQn);     // enable UART interrupt after processing new torque command
         }
             
-
-        if(motor_enabled)
+        if(flags.motorEnabled)
         {
-            currentSenseRaw = currentSense.read();  // read from ADC
-            currentSenseRaw -= CURRENT_SENSE_OFFSET;    // adjust for offset
-            currentSenseRaw *= (MAX_CURRENT_SENSE / (1.0 - CURRENT_SENSE_OFFSET));  // scale the range to get value in amperes
+            currentSenseRaw = (currentSense.read() - CURRENT_SENSE_OFFSET) * CURRENT_SENSE_SCALING_FACTOR; // current sense in amperes
             LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
 
             torqueFeedback = MOTOR_CONSTANT_KT * currentSenseLPF;   // calculate output torque (tau = Kt * i)
             torqueError = ABS(torqueCommand) - torqueFeedback;   // compute error signal
             torqueErrorIntegral += torqueError; // compute integral of error signal
 
-            duty_cycle = (KP * torqueError) + (KI * torqueErrorIntegral);   // PI controller
-            duty_cycle = SATURATE(duty_cycle, DUTY_CYCLE_LOWER_BOUND, DUTY_CYCLE_UPPER_BOUND);  // saturate duty cycle
+            dutyCycle = (KP * torqueError) + (KI * torqueErrorIntegral);   // PI controller
+            dutyCycle = SATURATE(dutyCycle, DUTY_CYCLE_LOWER_BOUND, DUTY_CYCLE_UPPER_BOUND);  // saturate duty cycle
 
             inA = torqueCommand < 0 ? 0 : 1;    // set direction
             inB = !inA;
-            motor_pwm.write(duty_cycle);    // set duty cycle
+            motorPWM.write(dutyCycle);    // set duty cycle
         }
         
         dt = t.read_us();
 
-        printf("%d,%f,%f,%f\r\n", dt, currentSenseLPF, torqueFeedback, duty_cycle);
+        printf("%d,%f,%f,%f\r\n", dt, currentSenseLPF, torqueFeedback, dutyCycle);
 
         t.reset();
     }
