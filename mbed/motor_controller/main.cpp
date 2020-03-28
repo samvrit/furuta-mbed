@@ -110,10 +110,10 @@ int main()
         if(flags.torqueCommandAvailable)
         {
             torqueInput.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
-            //NVIC_DisableIRQ(UART4_IRQn);    // disable UART interrupt while processing new information
+            NVIC_DisableIRQ(UART4_IRQn);    // disable UART interrupt while processing new information
             memcpy((void *)&uartPacket.buffer, (void *)&rx_buffer, sizeof(float));  // write buffer contents into union variable
             memset((void *)&rx_buffer, 0, sizeof(float) + 1);   // clear rx buffer
-            //NVIC_EnableIRQ(UART4_IRQn);     // enable UART interrupt after processing new torque command
+            NVIC_EnableIRQ(UART4_IRQn);     // enable UART interrupt after processing new torque command
             torqueInput.printf("New torque command: %f\n", uartPacket.value);
             torqueCommand = uartPacket.value;
             flags.torqueCommandAvailable = false;
