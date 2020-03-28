@@ -25,9 +25,10 @@ DigitalOut motorEnable(PA_8);               // 3.3V power source for gate driver
 PwmOut motorPWM(PA_5);                      // PWM for gate driver IC
 DigitalOut inA(PA_6);                       // direction pin A
 DigitalOut inB(PA_7);                       // direction pin B
-AnalogIn currentSense(PA_4);                // current sense analog input
+AnalogIn currentSenseExternal(PA_4);        // current sense analog input
+AnalogIn currentSenseDriver(PB_0);          // current sense from the motor driver
 
-InterruptIn buttonPress(BUTTON1);                // button for motor enable/disable
+InterruptIn buttonPress(BUTTON1, PullDown);                // button for motor enable/disable
 
 Timer t;                                    // timer for calculating code execution rate
 
@@ -56,7 +57,7 @@ volatile uartPacket_t uartPacket;
 void flip(void)
 {
     motorEnable = !motorEnable;   // 3.3V power source for gate driver IC
-    flags.motorEnabled != flags.motorEnabled;
+    flags.motorEnabled = !flags.motorEnabled;
 }
 
 // Interrupt service routine for UART RX
@@ -87,6 +88,7 @@ int main()
     torqueInput.printf("Hello World!\n");
 
     buttonPress.rise(&flip);
+
     inA = 1;
     inB = 0;
 
@@ -107,19 +109,19 @@ int main()
 
         if(flags.torqueCommandAvailable)
         {
-            NVIC_DisableIRQ(UART4_IRQn);    // disable UART interrupt while processing new information
             torqueInput.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+            //NVIC_DisableIRQ(UART4_IRQn);    // disable UART interrupt while processing new information
             memcpy((void *)&uartPacket.buffer, (void *)&rx_buffer, sizeof(float));  // write buffer contents into union variable
             memset((void *)&rx_buffer, 0, sizeof(float) + 1);   // clear rx buffer
+            //NVIC_EnableIRQ(UART4_IRQn);     // enable UART interrupt after processing new torque command
             torqueInput.printf("New torque command: %f\n", uartPacket.value);
             torqueCommand = uartPacket.value;
             flags.torqueCommandAvailable = false;
-            NVIC_EnableIRQ(UART4_IRQn);     // enable UART interrupt after processing new torque command
         }
             
         if(flags.motorEnabled)
         {
-            currentSenseRaw = (currentSense.read() - CURRENT_SENSE_OFFSET) * CURRENT_SENSE_SCALING_FACTOR; // current sense in amperes
+            currentSenseRaw = (currentSenseExternal.read() - CURRENT_SENSE_OFFSET) * CURRENT_SENSE_SCALING_FACTOR; // current sense in amperes
             LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
 
             torqueFeedback = MOTOR_CONSTANT_KT * currentSenseLPF;   // calculate output torque (tau = Kt * i)
@@ -136,7 +138,7 @@ int main()
         
         dt = t.read_us();
 
-        printf("%d,%f,%f,%f\r\n", dt, currentSenseLPF, torqueFeedback, dutyCycle);
+        printf("%d,%f,%f,%f,%f\r\n", dt, currentSenseLPF, currentSenseDriver.read()*23.57, torqueFeedback, dutyCycle);
 
         t.reset();
     }
