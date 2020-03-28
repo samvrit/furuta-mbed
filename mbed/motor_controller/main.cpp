@@ -108,8 +108,6 @@ int main()
     
     while(true)
     {
-        t.start();
-
         if(flags.torqueCommandAvailable)
         {
             torqueInput.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
@@ -124,6 +122,8 @@ int main()
             
         if(flags.motorEnabled)
         {
+            t.start();
+
             currentSenseRaw = ABS(currentSenseExternal.read() - CURRENT_SENSE_OFFSET) * CURRENT_SENSE_SCALING_FACTOR; // current sense in amperes
             currentSenseRaw = SATURATE(currentSenseRaw, CURRENT_SENSE_LOWER_BOUND, CURRENT_SENSE_UPPER_BOUND);
             LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
@@ -138,13 +138,13 @@ int main()
             inA = torqueCommand < 0 ? 0 : 1;    // set direction
             inB = !inA;
             motorPWM.write(dutyCycle);    // set duty cycle
+
+            dt = t.read_us();
+            printf("%d,%f,%f,%f,%f\r\n", dt, currentSenseLPF, currentSenseDriver.read()*23.57, torqueFeedback, dutyCycle);
+            t.reset();
         }
         
-        dt = t.read_us();
-
-        printf("%d,%f,%f,%f,%f\r\n", dt, currentSenseLPF, currentSenseDriver.read()*23.57, torqueFeedback, dutyCycle);
-
-        t.reset();
+        
     }
 
     return 0; 
