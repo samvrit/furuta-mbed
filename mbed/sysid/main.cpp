@@ -7,6 +7,8 @@
 #define ROTATION_PER_PULSE (2.0F * PI / 16.0F)  // radians per pulse
 #define GEARBOX_RATIO 30.0F
 
+#define MOTOR_PWM_FREQUENCY_US 100.0F
+
 #define ABS(input) ((input) < 0 ? -(input) : (input))
 
 /*=======================PERIPHERALS========================*/
@@ -87,7 +89,7 @@ int main()
     float backEmfV = 0.0;
     float backEmfConstant = 0.0;
 
-    motorPWM.period_us(100.0); // set PWM frequency to 100 microseconds (10 kHz)
+    motorPWM.period_us(MOTOR_PWM_FREQUENCY_US); // set PWM frequency to 100 microseconds (10 kHz)
 
     while(true)
     {

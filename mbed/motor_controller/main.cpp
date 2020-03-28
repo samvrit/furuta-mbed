@@ -15,6 +15,7 @@
 
 #define DUTY_CYCLE_LOWER_BOUND 0.01F
 #define DUTY_CYCLE_UPPER_BOUND 0.99F
+#define MOTOR_PWM_FREQUENCY_US 100.0F
 
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
@@ -101,7 +102,7 @@ int main()
     float torqueErrorIntegral = 0.0;
     int dt = 0;
 
-    motorPWM.period_us(100.0); // set PWM frequency to 100 microseconds (10 kHz)
+    motorPWM.period_us(MOTOR_PWM_FREQUENCY_US); // set PWM frequency to 100 microseconds (10 kHz)
     
     while(true)
     {
