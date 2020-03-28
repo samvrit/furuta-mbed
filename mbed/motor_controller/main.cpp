@@ -10,15 +10,15 @@
 #define CURRENT_SENSE_SCALING_FACTOR 13.73F // calculated by considering rate of change of voltage w.r.t. current, as well as voltage divider circuit (5V -> 3V)
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
 
-#define KP 38.93F                           // proportional gain for PI controller
-#define KI 1192.6F                          // integral gain for PI controller
+#define KP 121.01F                          // proportional gain for PI controller
+#define KI 100590.0F                        // integral gain for PI controller
 
 #define DUTY_CYCLE_LOWER_BOUND 0.01F
 #define DUTY_CYCLE_UPPER_BOUND 0.99F
 
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
-#define ABS(input) ((input) = (input) < 0 ? -(input) : (input))
+#define ABS(input) ((input) < 0 ? -(input) : (input))
 
 /*=======================PERIPHERALS========================*/
 DigitalOut motorEnable(PA_8);               // 3.3V power source for gate driver IC

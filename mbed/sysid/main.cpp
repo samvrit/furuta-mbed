@@ -7,7 +7,7 @@
 #define ROTATION_PER_PULSE (2.0F * PI / 16.0F)  // radians per pulse
 #define GEARBOX_RATIO 30.0F
 
-#define ABS(input) ((input) = (input) < 0 ? -(input) : (input))
+#define ABS(input) ((input) < 0 ? -(input) : (input))
 
 /*=======================PERIPHERALS========================*/
 DigitalOut motorEnable(PA_8);              // 3.3V power source for gate driver IC
