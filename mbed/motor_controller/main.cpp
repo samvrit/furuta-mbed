@@ -8,6 +8,8 @@
 #define CURRENT_LPF_CUTOFF_FREQ_HZ 3500U    // cutoff frequency for low pass filter
 #define CURRENT_SENSE_OFFSET 0.091F         // ADC value when 0 current is present
 #define CURRENT_SENSE_SCALING_FACTOR 13.73F // calculated by considering rate of change of voltage w.r.t. current, as well as voltage divider circuit (5V -> 3V)
+#define CURRENT_SENSE_LOWER_BOUND 0.0F
+#define CURRENT_SENSE_UPPER_BOUND 10.0F
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
 
 #define KP 121.01F                          // proportional gain for PI controller
@@ -123,6 +125,7 @@ int main()
         if(flags.motorEnabled)
         {
             currentSenseRaw = ABS(currentSenseExternal.read() - CURRENT_SENSE_OFFSET) * CURRENT_SENSE_SCALING_FACTOR; // current sense in amperes
+            currentSenseRaw = SATURATE(currentSenseRaw, CURRENT_SENSE_LOWER_BOUND, CURRENT_SENSE_UPPER_BOUND);
             LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, dt, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
 
             torqueFeedback = MOTOR_CONSTANT_KT * currentSenseLPF;   // calculate output torque (tau = Kt * i)
