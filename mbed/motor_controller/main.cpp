@@ -15,9 +15,9 @@
 #define KP 121.01F                          // proportional gain for PI controller
 #define KI 100590.0F                        // integral gain for PI controller
 
-#define DUTY_CYCLE_LOWER_BOUND 0.01F
-#define DUTY_CYCLE_UPPER_BOUND 0.99F
-#define MOTOR_PWM_FREQUENCY_US 100.0F
+#define DUTY_CYCLE_LOWER_BOUND 0.0F
+#define DUTY_CYCLE_UPPER_BOUND 1.0F
+#define MOTOR_PWM_FREQUENCY_US 50.0F
 
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
@@ -140,7 +140,7 @@ int main()
             motorPWM.write(dutyCycle);    // set duty cycle
 
             dt = t.read_us();
-            printf("%d,%f,%f,%f,%f\r\n", dt, currentSenseLPF, currentSenseDriver.read()*23.57, torqueFeedback, dutyCycle);
+            //printf("%d,%f,%f,%f,%f\r\n", dt, currentSenseLPF, currentSenseDriver.read()*23.57, torqueFeedback, dutyCycle);
             t.reset();
         }
         
