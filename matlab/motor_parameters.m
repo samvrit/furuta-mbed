@@ -46,7 +46,7 @@ torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
 motor_sys = tf(1/R, [(b*L + Kt*J)/(R*b) 1], 'InputDelay', 40e-6);
 open_loop = motor_sys*Kt;
 
-opts = pidtuneOptions('CrossoverFrequency',9000,'PhaseMargin',65);
+opts = pidtuneOptions('CrossoverFrequency',9000,'PhaseMargin',90);
 [C, info] = pidtune(open_loop, 'PI', opts);
 
 disp(C.Kp)
