@@ -31,26 +31,23 @@ Kt = current_data \ ((1e-3 * 9.81 * arm_length) .* mass_data);
 % function, which is a first order transfer function
 % - measure rising time, gain and delay if any
 
-rising_time = 1.615e-3; % seconds
-battery_step_amplitude = 12.12; % volts
-current_amplitude_at_steady_state = 7.0; % amperes
+rising_time = 1.3e-3; % seconds
+battery_step_amplitude = 12.27; % volts
+current_amplitude_at_steady_state = 8.46; % amperes
 gain = current_amplitude_at_steady_state / battery_step_amplitude;
-
-motor_tf = tf(gain, [rising_time 1], 'InputDelay', 62e-6);
-disp(motor_tf)
 
 J = 0.0032; % moment of inertia of load (link 1) in kg m^2
 b = 0.2915; % V/(rad/s) obtained by regression analysis
 R = 1/gain;
-L = R*rising_time;
+L = R*rising_time;  % at no load, rise time = L/R
 
 torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
 
-motor_sys = tf(1/R, [(b*L + Kt*J)/(R*b) 1], 'InputDelay', 62e-6);
+motor_sys = tf(1/R, [(b*L + Kt*J)/(R*b) 1], 'InputDelay', 40e-6);
 open_loop = motor_sys*Kt;
 
-opts = pidtuneOptions('CrossoverFrequency',5540,'PhaseMargin',65);
-[C, info] = pidtune(motor_sys*Kt, 'PI', opts);
+opts = pidtuneOptions('CrossoverFrequency',9000,'PhaseMargin',65);
+[C, info] = pidtune(open_loop, 'PI', opts);
 
 disp(C.Kp)
 disp(C.Ki)
