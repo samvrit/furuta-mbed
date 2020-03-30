@@ -12,8 +12,8 @@
 #define CURRENT_SENSE_UPPER_BOUND 10.0F
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
 
-#define KP 121.01F                          // proportional gain for PI controller
-#define KI 100590.0F                        // integral gain for PI controller
+#define KP 166.08F                          // proportional gain for PI controller
+#define KI 26161.30F                        // integral gain for PI controller
 
 #define DUTY_CYCLE_LOWER_BOUND 0.0F
 #define DUTY_CYCLE_UPPER_BOUND 1.0F
@@ -110,12 +110,11 @@ int main()
     {
         if(flags.torqueCommandAvailable)
         {
-            torqueInput.printf("Torque command available! %02X %02X %02X %02X \n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
             NVIC_DisableIRQ(UART4_IRQn);    // disable UART interrupt while processing new information
             memcpy((void *)&uartPacket.buffer, (void *)&rx_buffer, sizeof(float));  // write buffer contents into union variable
             memset((void *)&rx_buffer, 0, sizeof(float) + 1);   // clear rx buffer
             NVIC_EnableIRQ(UART4_IRQn);     // enable UART interrupt after processing new torque command
-            torqueInput.printf("New torque command: %f\n", uartPacket.value);
+            torqueInput.printf("New torque command: %f, dt: %f\n", uartPacket.value, dt);
             torqueCommand = uartPacket.value;
             flags.torqueCommandAvailable = false;
         }
