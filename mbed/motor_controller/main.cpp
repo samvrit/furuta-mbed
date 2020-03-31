@@ -1,18 +1,14 @@
 /*=======================INCLUDES========================*/
 #include "mbed.h"
-#ifdef MBED_CONF_APP_USE_SPEED_THRESHOLD
 #include "PwmIn.h"
-#endif // MBED_CONF_APP_USE_SPEED_THRESHOLD
 
 /*=======================DEFINES========================*/
 #define PI 3.14F
 #define MICROSECOND 0.000001F
 
-#ifdef MBED_CONF_APP_USE_SPEED_THRESHOLD
 #define GEARBOX_RATIO 30.0F
-#define ROTATION_PER_PULSE (2.0F * PI * GEARBOX_RATIO / 16.0F)  // radians per pulse
-#define MOTOR_SPEED_THRESHOLD_RAD_S 10.0
-#endif //MBED_CONF_APP_USE_SPEED_THRESHOLD
+#define ROTATION_PER_PULSE (2.0F * PI / (16.0F * GEARBOX_RATIO))  // radians per pulse
+#define MOTOR_SPEED_THRESHOLD_RAD_S 50000.0F
 
 #define CURRENT_LPF_CUTOFF_FREQ_HZ 3500U    // cutoff frequency for low pass filter
 #define CURRENT_SENSE_OFFSET 0.091F         // ADC value when 0 current is present
@@ -39,9 +35,7 @@ DigitalOut inA(PA_6);                       // direction pin A
 DigitalOut inB(PA_7);                       // direction pin B
 AnalogIn currentSenseExternal(PA_4);        // current sense analog input
 AnalogIn currentSenseDriver(PB_0);          // current sense from the motor driver
-#ifdef MBED_CONF_APP_USE_SPEED_THRESHOLD
 PwmIn encoder(PB_6);                        // encoder input
-#endif //MBED_CONF_APP_USE_SPEED_THRESHOLD
 
 InterruptIn buttonPress(BUTTON1, PullDown);                // button for motor enable/disable
 
@@ -71,7 +65,6 @@ volatile uartPacket_t uartPacket;
 // Interrupt service routine for when user button is pressed for enabling/disabling motor driver
 void flip(void)
 {
-    motorEnable = !motorEnable;   // 3.3V power source for gate driver IC
     flags.motorEnabled = !flags.motorEnabled;
 }
 
@@ -116,10 +109,8 @@ int main()
     float torqueErrorIntegral = 0.0;
     int executionRate_ms = 0;
 
-#ifdef MBED_CONF_APP_USE_SPEED_THRESHOLD
     float motorSpeed = 0.0;
-    float dt = 0.0;
-#endif //MBED_CONF_APP_USE_SPEED_THRESHOLD
+    float dt = 1;
 
     motorPWM.period_us(MOTOR_PWM_FREQUENCY_US); // set PWM frequency to 100 microseconds (10 kHz)
     
@@ -131,15 +122,16 @@ int main()
             memcpy((void *)&uartPacket.buffer, (void *)&rx_buffer, sizeof(float));  // write buffer contents into union variable
             memset((void *)&rx_buffer, 0, sizeof(float) + 1);   // clear rx buffer
             NVIC_EnableIRQ(UART4_IRQn);     // enable UART interrupt after processing new torque command
-            torqueInput.printf("New torque command: %f\n", uartPacket.value);
+            torqueInput.printf("New torque command: %f, dt: %d, motor speed: %f\n", uartPacket.value, executionRate_ms, motorSpeed);
             torqueCommand = uartPacket.value;
             flags.torqueCommandAvailable = false;
         }
-            
-        if(flags.motorEnabled)
+        
+        if(flags.motorEnabled && (motorSpeed < MOTOR_SPEED_THRESHOLD_RAD_S))
         {
             t.start();
-
+            motorEnable = 1;   // 3.3V power source for gate driver IC
+            
             currentSenseRaw = ABS(currentSenseExternal.read() - CURRENT_SENSE_OFFSET) * CURRENT_SENSE_SCALING_FACTOR; // current sense in amperes
             currentSenseRaw = SATURATE(currentSenseRaw, CURRENT_SENSE_LOWER_BOUND, CURRENT_SENSE_UPPER_BOUND);
             LOW_PASS_FILTER(currentSenseLPF, currentSenseRaw, executionRate_ms, CURRENT_LPF_CUTOFF_FREQ_HZ); // apply low pass filter
@@ -151,20 +143,22 @@ int main()
             dutyCycle = (KP * torqueError) + (KI * torqueErrorIntegral);   // PI controller
             dutyCycle = SATURATE(dutyCycle, DUTY_CYCLE_LOWER_BOUND, DUTY_CYCLE_UPPER_BOUND);  // saturate duty cycle
 
-#ifdef MBED_CONF_APP_USE_SPEED_THRESHOLD
-            // ensure that the motor speed is below threshold
-            // dt = encoder.period();
-            // motorSpeed = ROTATION_PER_PULSE / dt;
-            // dutyCycle = motorSpeed > MOTOR_SPEED_THRESHOLD_RAD_S ? 0 : dutyCycle;
-#endif //MBED_CONF_APP_USE_SPEED_THRESHOLD
-
             inA = torqueCommand < 0 ? 0 : 1;    // set direction
             inB = !inA;
             motorPWM.write(dutyCycle);    // set duty cycle
 
+            dt = encoder.period();                  // find time difference between two encoder pulses
+            if(dt != 0.0)
+            {
+                motorSpeed = ROTATION_PER_PULSE / dt;   // update motor speed
+            }
+            
             executionRate_ms = t.read_us();
-            //printf("%d,%f,%f,%f,%f\r\n", dt, currentSenseLPF, currentSenseDriver.read()*23.57, torqueFeedback, dutyCycle);
             t.reset();
+        }
+        else
+        {
+            motorEnable = 0;    // disable 3.3V source to motor driver
         }
         
         

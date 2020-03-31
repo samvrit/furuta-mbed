@@ -1,11 +1,10 @@
 {
-    "macros":
-    [
-        "USE_SPEED_THRESHOLD=1"
-    ],
     "target_overrides": {
         "*": {
             "platform.stdio-baud-rate": 115200
+        },
+        "NUCLEO_L476RG" : {
+            "target.clock_source": "USE_PLL_HSE_EXTC|USE_PLL_HSI"
         }
     }
 }
