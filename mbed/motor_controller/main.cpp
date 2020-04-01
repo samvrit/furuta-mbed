@@ -148,10 +148,7 @@ int main()
             motorPWM.write(dutyCycle);    // set duty cycle
 
             dt = encoder.period();                  // find time difference between two encoder pulses
-            if(dt != 0.0)
-            {
-                motorSpeed = ROTATION_PER_PULSE / dt;   // update motor speed
-            }
+            motorSpeed = (dt == 0.0) ? 0.0 : (ROTATION_PER_PULSE / dt); // don't divide by zero
             
             executionRate_ms = t.read_us();
             t.reset();
