@@ -66,6 +66,8 @@
 #define RESULTS_BUFFER_SIZE     3
 #define EX_ADC_RESOLUTION       12
 
+#define EPWM1_TIMER_TBPRD       1000U
+
 // 12 for 12-bit conversion resolution, which support (ADC_MODE_SINGLE_ENDED)
 // Sample on single pin with VREFLO
 // Or 16 for 16-bit conversion resolution, which support (ADC_MODE_DIFFERENTIAL)
@@ -117,13 +119,28 @@ void main(void)
     //
     Interrupt_register(INT_ADCA1, &adcA1ISR);
 
+
+    GPIO_setPadConfig(0, GPIO_PIN_TYPE_STD);
+    GPIO_setPinConfig(GPIO_0_EPWM1A);
+
     //
-    // Set up the ADC and the ePWM and initialize the SOC
+    // Disable sync(Freeze clock to PWM as well)
+    //
+    SysCtl_disablePeripheral(SYSCTL_PERIPH_CLK_TBCLKSYNC);
+
+    initEPWM();
+
+    //
+    // Enable sync and clock to PWM
+    //
+    SysCtl_enablePeripheral(SYSCTL_PERIPH_CLK_TBCLKSYNC);
+
+
+    //
+    // Set up the ADC and initialize the SOC
     //
     initADC();
-    initEPWM();
     initADCSOC();
-
     //
     // Initialize results buffer
     //
@@ -131,9 +148,9 @@ void main(void)
     {
         adcAResults[index] = 0;
     }
-
-    index = 0;
-    bufferFull = 0;
+//
+//    index = 0;
+//    bufferFull = 0;
 
     //
     // Enable ADC interrupt
@@ -154,23 +171,23 @@ void main(void)
         //
         // Start ePWM1, enabling SOCA and putting the counter in up-count mode
         //
-        EPWM_enableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
-        EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP);
+        //EPWM_enableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
+        //EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP);
 
         //
         // Wait while ePWM1 causes ADC conversions which then cause interrupts.
         // When the results buffer is filled, the bufferFull flag will be set.
-        //
-        while(bufferFull == 0)
-        {
-        }
-        bufferFull = 0;     // Clear the buffer full flag
+//        //
+//        while(bufferFull == 0)
+//        {
+//        }
+//        bufferFull = 0;     // Clear the buffer full flag
 
         //
         // Stop ePWM1, disabling SOCA and freezing the counter
         //
-        EPWM_disableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
-        EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_STOP_FREEZE);
+        //EPWM_disableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
+        //EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_STOP_FREEZE);
 
         //
         // Software breakpoint. At this point, conversion results are stored in
@@ -178,7 +195,7 @@ void main(void)
         //
         // Hit run again to get updated conversions.
         //
-        ESTOP0;
+        //ESTOP0;
     }
 }
 
@@ -218,6 +235,41 @@ void initADC(void)
 //
 void initEPWM(void)
 {
+
+    EPWM_setTimeBasePeriod(EPWM1_BASE, EPWM1_TIMER_TBPRD);
+    EPWM_setPhaseShift(EPWM1_BASE, 0U);
+    EPWM_setTimeBaseCounter(EPWM1_BASE, 0U);
+
+    EPWM_setCounterCompareValue(EPWM1_BASE,
+                                EPWM_COUNTER_COMPARE_A,
+                                995U);
+
+    EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP_DOWN);
+
+    EPWM_disablePhaseShiftLoad(EPWM1_BASE);
+    EPWM_setClockPrescaler(EPWM1_BASE,
+                           EPWM_CLOCK_DIVIDER_1,
+                           EPWM_HSCLOCK_DIVIDER_1);
+
+    //
+    // Set up shadowing
+    //
+    EPWM_setCounterCompareShadowLoadMode(EPWM1_BASE,
+                                         EPWM_COUNTER_COMPARE_A,
+                                         EPWM_COMP_LOAD_ON_CNTR_ZERO_PERIOD);
+
+    //
+    // Set actions
+    //
+    EPWM_setActionQualifierAction(EPWM1_BASE,
+                                  EPWM_AQ_OUTPUT_A,
+                                  EPWM_AQ_OUTPUT_HIGH,
+                                  EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
+    EPWM_setActionQualifierAction(EPWM1_BASE,
+                                  EPWM_AQ_OUTPUT_A,
+                                  EPWM_AQ_OUTPUT_LOW,
+                                  EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
+
     //
     // Disable SOCA
     //
@@ -229,14 +281,8 @@ void initEPWM(void)
     EPWM_setADCTriggerSource(EPWM1_BASE, EPWM_SOC_A, EPWM_SOC_TBCTR_ZERO_OR_PERIOD);
     EPWM_setADCTriggerEventPrescale(EPWM1_BASE, EPWM_SOC_A, 2U);
 
-    //
-    // Set the compare A value to 2048 and the period to 4096
-    //
-    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, 0x0800);
-    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_B, 0x0800);
-    EPWM_setTimeBasePeriod(EPWM1_BASE, 0x1000);
 
-    EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP_DOWN);
+    EPWM_enableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
 }
 
 //
