@@ -79,12 +79,27 @@ uint16_t adcAResults[RESULTS_BUFFER_SIZE];   // Buffer for results
 uint16_t index;                              // Index into result buffer
 volatile uint16_t bufferFull;                // Flag to indicate buffer is full
 
+uint16_t rDataA[4];
+
+typedef union {
+    float32_t value;
+    uint16_t buffer[sizeof(float32_t)];
+} uartPacket_t;
+
+volatile uartPacket_t uartPacket;
+
+volatile float32_t torqueCommand = 0.0;
+
+volatile uint16_t dutyCycle = 0U;
+
 //
 // Function Prototypes
 //
 void initADC(void);
 void initEPWM(void);
 void initADCSOC(void);
+void initSCIBFIFO(void);
+__interrupt void scibRXFIFOISR(void);
 __interrupt void adcA1ISR(void);
 
 //
@@ -118,10 +133,31 @@ void main(void)
     // found within this file.
     //
     Interrupt_register(INT_ADCA1, &adcA1ISR);
+    Interrupt_register(INT_SCIB_RX, scibRXFIFOISR);
+
+    initSCIBFIFO();
 
 
     GPIO_setPadConfig(0, GPIO_PIN_TYPE_STD);
     GPIO_setPinConfig(GPIO_0_EPWM1A);
+
+    //
+    // GPIO28 is the SCI Rx pin.
+    //
+    GPIO_setMasterCore(19, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_19_SCIRXDB);
+    GPIO_setDirectionMode(19, GPIO_DIR_MODE_IN);
+    GPIO_setPadConfig(19, GPIO_PIN_TYPE_STD);
+    GPIO_setQualificationMode(19, GPIO_QUAL_ASYNC);
+
+    //
+    // GPIO18 is the SCI Tx pin.
+    //
+    GPIO_setMasterCore(18, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_18_SCITXDB);
+    GPIO_setDirectionMode(18, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(18, GPIO_PIN_TYPE_STD);
+    GPIO_setQualificationMode(18, GPIO_QUAL_ASYNC);
 
     //
     // Disable sync(Freeze clock to PWM as well)
@@ -148,14 +184,12 @@ void main(void)
     {
         adcAResults[index] = 0;
     }
-//
-//    index = 0;
-//    bufferFull = 0;
 
     //
     // Enable ADC interrupt
     //
     Interrupt_enable(INT_ADCA1);
+    Interrupt_enable(INT_SCIB_RX);
 
     //
     // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
@@ -168,34 +202,7 @@ void main(void)
     //
     while(1)
     {
-        //
-        // Start ePWM1, enabling SOCA and putting the counter in up-count mode
-        //
-        //EPWM_enableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
-        //EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP);
 
-        //
-        // Wait while ePWM1 causes ADC conversions which then cause interrupts.
-        // When the results buffer is filled, the bufferFull flag will be set.
-//        //
-//        while(bufferFull == 0)
-//        {
-//        }
-//        bufferFull = 0;     // Clear the buffer full flag
-
-        //
-        // Stop ePWM1, disabling SOCA and freezing the counter
-        //
-        //EPWM_disableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
-        //EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_STOP_FREEZE);
-
-        //
-        // Software breakpoint. At this point, conversion results are stored in
-        // adcAResults.
-        //
-        // Hit run again to get updated conversions.
-        //
-        //ESTOP0;
     }
 }
 
@@ -320,6 +327,74 @@ void initADCSOC(void)
 }
 
 //
+// initSCIAFIFO - Configure SCIA FIFO
+//
+void initSCIBFIFO()
+{
+    //
+    // 8 char bits, 1 stop bit, no parity. Baud rate is 9600.
+    //
+    SCI_setConfig(SCIB_BASE, DEVICE_LSPCLK_FREQ, 115200, (SCI_CONFIG_WLEN_8 |
+                                                        SCI_CONFIG_STOP_ONE |
+                                                        SCI_CONFIG_PAR_NONE));
+    SCI_enableModule(SCIB_BASE);
+    SCI_resetChannels(SCIB_BASE);
+    SCI_enableFIFO(SCIB_BASE);
+
+    //
+    // RX and TX FIFO Interrupts Enabled
+    //
+    //SCI_enableInterrupt(SCIB_BASE, (SCI_INT_RXFF | SCI_INT_TXFF));
+    SCI_enableInterrupt(SCIB_BASE, SCI_INT_RXFF);
+    SCI_disableInterrupt(SCIB_BASE, SCI_INT_RXERR);
+
+    SCI_setFIFOInterruptLevel(SCIB_BASE, SCI_FIFO_TX4, SCI_FIFO_RX4);
+    SCI_performSoftwareReset(SCIB_BASE);
+
+    SCI_resetTxFIFO(SCIB_BASE);
+    SCI_resetRxFIFO(SCIB_BASE);
+
+#ifdef AUTOBAUD
+    //
+    // Perform an autobaud lock.
+    // SCI expects an 'a' or 'A' to lock the baud rate.
+    //
+    SCI_lockAutobaud(SCIB_BASE);
+#endif
+}
+
+//
+// sciaRXFIFOISR - SCIA Receive FIFO ISR
+//
+__interrupt void scibRXFIFOISR(void)
+{
+
+    SCI_readCharArray(SCIB_BASE, rDataA, 4);
+
+    uartPacket.buffer[0] = (rDataA[1] << 8) | rDataA[0];
+    uartPacket.buffer[1] = (rDataA[3] << 8) | rDataA[2];
+
+    torqueCommand = uartPacket.value;
+
+    dutyCycle = EPWM1_TIMER_TBPRD - ((uint16_t)(torqueCommand * 10.0));
+
+    EPWM_setCounterCompareValue(EPWM1_BASE,
+                                EPWM_COUNTER_COMPARE_A,
+                                dutyCycle);
+
+    SCI_clearOverflowStatus(SCIB_BASE);
+
+    SCI_clearInterruptStatus(SCIB_BASE, SCI_INT_RXFF);
+
+    //
+    // Issue PIE ack
+    //
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);
+
+    Example_PassCount++;
+}
+
+//
 // ADC A Interrupt 1 ISR
 //
 __interrupt void adcA1ISR(void)
@@ -357,3 +432,5 @@ __interrupt void adcA1ISR(void)
     //
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
 }
+
+
