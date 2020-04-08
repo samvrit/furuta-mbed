@@ -56,9 +56,6 @@ extern "C" {
 #define ROTATION_PER_PULSE (2.0F * PI / (16.0F * GEARBOX_RATIO))  // radians per pulse
 #define MOTOR_SPEED_THRESHOLD_RAD_S 50000.0F
 
-#define CURRENT_LPF_CUTOFF_FREQ_HZ 3500U    // cutoff frequency for low pass filter
-#define CURRENT_SENSE_OFFSET 0.091F
-
 #define ADC_SCALING_FACTOR                  ((1 << ADC_RESOLUTION) / 3.3F)
 #define VOLTAGE_DIVIDER_RATIO               0.67F         // R2 = 6.8kOhms, R1 = 3.3kOhms
 #define CURR_SENSE_VOLT_PER_AMP             0.4F          // 400mV per ampere
