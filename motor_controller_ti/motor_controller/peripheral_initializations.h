@@ -2,7 +2,7 @@
  * initializations.h
  *
  *  Created on: Apr 8, 2020
- *      Author: sasrinivas
+ *      Author: Samvrit Srinivas
  */
 
 #ifndef PERIPHERAL_INITIALIZATIONS_H_

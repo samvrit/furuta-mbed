@@ -2,10 +2,10 @@
  * initializations.c
  *
  *  Created on: Apr 8, 2020
- *      Author: sasrinivas
+ *      Author: Samvrit Srinivas
  */
 
-#include <peripheral_initializations.h>
+#include "peripheral_initializations.h"
 #include "cla_shared.h"
 
 // CLA_configClaMemory - Configure CLA memory sections
@@ -49,16 +49,11 @@ void CLA_configClaMemory(void)
 // CLA_initCpu1Cla1 - Initialize CLA1 task vectors and end-of-task interrupts
 void CLA_initCpu1Cla1(void)
 {
-    /* Compute all CLA task vectors
-       On Type-1 CLAs the MVECT registers accept full 16-bit task addresses as
-       opposed to offsets used on older Type-0 CLAs */
     EALLOW;
-    CLA_mapTaskVector(CLA1_BASE,CLA_MVECT_1,(uint16_t)&Cla1Task1);
+    CLA_mapTaskVector(CLA1_BASE,CLA_MVECT_1,(uint16_t)&Cla1Task1);  // map task vector to the task to be performed
 
-    /* Enable the IACK instruction to start a task on CLA in software
-       for all  8 CLA tasks. Also, globally enable all 8 tasks (or a
-       subset of tasks) by writing to their respective bits in the
-       MIER register */
+    /* Enable the IACK instruction to start a task on CLA in software.
+       Also, globally enable task 1 */
     CLA_enableIACK(CLA1_BASE);
     CLA_enableTasks(CLA1_BASE, CLA_TASKFLAG_1);
 }
@@ -69,7 +64,7 @@ void initADC(void)
 
     ADC_setPrescaler(ADCA_BASE, ADC_CLK_DIV_4_0);   // Set ADCCLK divider to /4
 
-    // Set resolution and signal mode (see #defines above) and load corresponding trims.
+    // Set resolution and signal mode and load corresponding trims.
 #if(ADC_RESOLUTION == 12)
     ADC_setMode(ADCA_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
 #elif(ADC_RESOLUTION == 16)
@@ -91,7 +86,7 @@ void initEPWM(void)
     EPWM_setPhaseShift(EPWM1_BASE, 0U);
     EPWM_setTimeBaseCounter(EPWM1_BASE, 0U);
 
-    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, 500U);
+    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, EPWM1_TIMER_TBPRD); // initialize duty cycle to be 0
 
     EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP_DOWN);
 
@@ -100,7 +95,7 @@ void initEPWM(void)
 
     EPWM_setCounterCompareShadowLoadMode(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, EPWM_COMP_LOAD_ON_CNTR_ZERO_PERIOD);
 
-    // Set actions
+    // Set actions: 1) set output high when counter is counting up and counter = CMPA, 2) set output low when counter is counting down and counter = CMPA
     EPWM_setActionQualifierAction(EPWM1_BASE, EPWM_AQ_OUTPUT_A, EPWM_AQ_OUTPUT_HIGH, EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
     EPWM_setActionQualifierAction(EPWM1_BASE, EPWM_AQ_OUTPUT_A, EPWM_AQ_OUTPUT_LOW, EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
 
@@ -127,11 +122,12 @@ void initADCSOC(void)
        ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN1, 64);
 #endif
 
-    // Set SOC0 to set the interrupt 1 flag. Enable the interrupt and make sure its flag is cleared.
+    // Set SOC1 to set the interrupt 1 flag. Enable the interrupt and make sure its flag is cleared.
     ADC_setInterruptSource(ADCA_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER1);
     ADC_enableInterrupt(ADCA_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
 
+    // Setup post-processing block 1 to process SOC1 of ADCA and subtract the sensor offset
     ADC_setupPPB(ADCA_BASE, ADC_PPB_NUMBER1, ADC_SOC_NUMBER1);
     ADC_setPPBCalibrationOffset(ADCA_BASE, ADC_PPB_NUMBER1, (int16_t)CURR_SENSE_OFFSET);
 }
