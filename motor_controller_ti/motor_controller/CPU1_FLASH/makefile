@@ -12,6 +12,7 @@ GEN_CMDS__FLAG :=
 ORDERED_OBJS += \
 "./current_control.obj" \
 "./main.obj" \
+"./peripheral_initializations.obj" \
 "./device/F2837xD_CodeStartBranch.obj" \
 "./device/device.obj" \
 "../2837xD_FLASH_CLA_lnk_cpu1.cmd" \
@@ -160,8 +161,8 @@ motor_controller.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "current_control.obj" "main.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" 
-	-$(RM) "main.d" "device\device.d" 
+	-$(RM) "current_control.obj" "main.obj" "peripheral_initializations.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" 
+	-$(RM) "main.d" "peripheral_initializations.d" "device\device.d" 
 	-$(RM) "current_control.d" 
 	-$(RM) "device\F2837xD_CodeStartBranch.d" 
 	-@echo 'Finished clean'

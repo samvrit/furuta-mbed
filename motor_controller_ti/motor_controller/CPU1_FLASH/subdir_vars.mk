@@ -15,29 +15,35 @@ LIB_SRCS += \
 C:/ti/c2000/C2000Ware_3_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib 
 
 C_SRCS += \
-../main.c 
+../main.c \
+../peripheral_initializations.c 
 
 CLA_DEPS += \
 ./current_control.d 
 
 C_DEPS += \
-./main.d 
+./main.d \
+./peripheral_initializations.d 
 
 OBJS += \
 ./current_control.obj \
-./main.obj 
+./main.obj \
+./peripheral_initializations.obj 
 
 OBJS__QUOTED += \
 "current_control.obj" \
-"main.obj" 
+"main.obj" \
+"peripheral_initializations.obj" 
 
 C_DEPS__QUOTED += \
-"main.d" 
+"main.d" \
+"peripheral_initializations.d" 
 
 CLA_DEPS__QUOTED += \
 "current_control.d" 
 
 C_SRCS__QUOTED += \
-"../main.c" 
+"../main.c" \
+"../peripheral_initializations.c" 
 
 
