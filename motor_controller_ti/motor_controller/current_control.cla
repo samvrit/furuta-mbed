@@ -1,15 +1,4 @@
 //#############################################################################
-// \file f2837x/F2837x_internal_testcases/CLA/asin/asin.cla
-//
-// \brief  Arc Sine Example
-// \author Vishal Coelho
-// \date   Apr 8, 2013
-//
-//
-//  Group:             C2000
-//  Target Family:    F2837xD
-//
-//#############################################################################
 // $TI Release: F2837xD Support Library v3.09.00.00 $
 // $Release Date: Thu Mar 19 07:35:24 IST 2020 $
 // $Copyright:
@@ -45,28 +34,10 @@
 // $
 //#############################################################################
 
-//
-// Included Files
-//
+/*==================INCLUDES==================*/
 #include <cla_shared.h>
 
-//
-// Defines
-//
-
-//
-// Globals
-//
-// Note that the globals defined in the .cla source are global to the cla source
-// file.  i.e. they may be shared across tasks. All of the data shared between
-// the CLA and the C28x CPU must be defined in the C (or C++) code, and not the
-// CLA code.  
-//
-
-//
-// Function Definitions
-//
-//Task 1 : Calculate duty cycle
+/*==================TASKS==================*/
 __interrupt void Cla1Task1 ( void )
 {
     float torqueFeedback, error, dutyCycle, voltage;
@@ -81,12 +52,8 @@ __interrupt void Cla1Task1 ( void )
 
     dutyCycle = (voltage / MOTOR_SUPPLY_VOLTAGE) * EPWM1_TIMER_TBPRD;
 
-    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)(dutyCycle / 2.0F);     // counter is symmetric, so divide duty cycle by 2 to get CMPA value
+    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)dutyCycle;
 
     claOutputs.direction = claInputs.torqueCommand < 0.0 ? 0 : 1;
     claOutputs.CMPA = newCMPA;
 }
-
-//
-// End of file
-//

@@ -1,11 +1,5 @@
-#ifndef _CLA_ASIN_SHARED_H_
-#define _CLA_ASIN_SHARED_H_
-//#############################################################################
-//
-// FILE:   cla_ex1_asin_shared.h
-//
-// TITLE:  CLA arcsine example header file.
-//
+#ifndef _CLA_SHARED_H_
+#define _CLA_SHARED_H_
 //#############################################################################
 // $TI Release: F2837xD Support Library v3.09.00.00 $
 // $Release Date: Thu Mar 19 07:35:24 IST 2020 $
@@ -42,18 +36,16 @@
 // $
 //#############################################################################
 
-//
-// Included Files
-//
+/*==================INCLUDES==================*/
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//
-// Defines
-//
+/*==================DEFINES==================*/
+#define ADC_RESOLUTION          12
+#define EPWM1_TIMER_TBPRD       1000U
 
 #define PI 3.14F
 #define MICROSECOND 0.000001F
@@ -67,7 +59,7 @@ extern "C" {
 #define CURRENT_LPF_CUTOFF_FREQ_HZ 3500U    // cutoff frequency for low pass filter
 #define CURRENT_SENSE_OFFSET 0.091F
 
-#define ADC_SCALING_FACTOR                  (4095.0F / 3.3F)
+#define ADC_SCALING_FACTOR                  ((1 << ADC_RESOLUTION) / 3.3F)
 #define VOLTAGE_DIVIDER_RATIO               0.67F         // R2 = 6.8kOhms, R1 = 3.3kOhms
 #define CURR_SENSE_VOLT_PER_AMP             0.4F          // 400mV per ampere
 #define CURR_SENSE_OFFSET_V                 0.5F          // 500mV offset
@@ -75,32 +67,16 @@ extern "C" {
 #define CURR_SENSE_SCALING_FACTOR_INVERSE   (CURR_SENSE_VOLT_PER_AMP * VOLTAGE_DIVIDER_RATIO * ADC_SCALING_FACTOR)
 #define CURR_SENSE_SCALING_FACTOR           (1.0F / CURR_SENSE_SCALING_FACTOR_INVERSE)
 
-
-#define CURRENT_SENSE_SCALING_FACTOR 13.73F // calculated by considering rate of change of voltage w.r.t. current, as well as voltage divider circuit (5V -> 3V)
-#define CURRENT_SENSE_LOWER_BOUND 0.0F
-#define CURRENT_SENSE_UPPER_BOUND 10.0F
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
 
 #define KP 166.08F                          // proportional gain for PI controller
 #define KI 26161.30F                        // integral gain for PI controller
 
-#define DUTY_CYCLE_LOWER_BOUND 0.0F
-#define DUTY_CYCLE_UPPER_BOUND 1.0F
-
-#define EX_ADC_RESOLUTION       12
-#define EPWM1_TIMER_TBPRD       1000U
-
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
 #define ABS(input) ((input) < 0 ? -(input) : (input))
 
-//
-// Globals
-//
-
-//
-//Task 1 (C) Variables
-//
+/*==================CLA VARIABLES==================*/
 typedef struct {
     float currentAmperes;
     float torqueCommand;
@@ -112,17 +88,9 @@ typedef struct {
 
 extern claInputs_S claInputs;
 extern claOutputs_S claOutputs;
-extern float y[];                       //Result vector
-extern float fVal1, fVal2;              //Holds the input argument to the task
-extern float fResult1, fResult2;        //The arsine of the input argument
-extern float errorIntegral;
+extern float errorIntegral; // This variable will have to retain its value between iterations, and since CLA cannot declare static variables, this is declared as a shared variable
 
-// Function Prototypes
-//
-// The following are symbols defined in the CLA assembly code
-// Including them in the shared header file makes them
-// .global and the main CPU can make use of them.
-//
+/*==================FUNCTION PROTOTYPES==================*/
 __interrupt void Cla1Task1();
 
 #ifdef __cplusplus
