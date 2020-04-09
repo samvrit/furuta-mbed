@@ -13,7 +13,7 @@
 #include "device.h"
 
 /*==================FUNCTION PROTOTYPES==================*/
-void CLA_runTest(void);
+void CLA_runTask(void);
 void CLA_configClaMemory(void);
 void CLA_initCpu1Cla1(void);
 void initADC(void);

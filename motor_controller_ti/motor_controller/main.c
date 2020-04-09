@@ -56,6 +56,7 @@ volatile uartPacket_t uartPacket;
 volatile float32_t currentSenseA = 0.0; // current sense from ADC, scaled to obtain value in amperes
 volatile float32_t torqueCommand = 0.0; // torque command as otained from SCI
 volatile uint32_t CAN_errorFlag = 0;
+volatile bool motorEnableFlag = true;
 
 /*==================CLA VARIABLE DEFINITIONS==================*/
 #ifdef __cplusplus
@@ -81,6 +82,7 @@ __interrupt void scibRXFIFOISR(void);
 __interrupt void adcA1ISR(void);
 __interrupt void cla1Isr1();
 __interrupt void canISR();
+interrupt void xint1_isr(void);
 
 /*==================MAIN==================*/
 void main(void)
@@ -95,12 +97,23 @@ void main(void)
     Interrupt_register(INT_SCIB_RX, scibRXFIFOISR);
     Interrupt_register(INT_CLA1_1, &cla1Isr1);  // Configure the vectors for the end-of-task interrupt for task 1
     Interrupt_register(INT_CANB0, &canISR);
+    Interrupt_register(INT_XINT1, &xint1_isr);
 
     initSCIBFIFO();
 
-    // GPIO 0 is configured as EPWM1
+    // GPIO 0 is configured as EPWM1 for duty cycle to the motor driver
     GPIO_setPadConfig(0, GPIO_PIN_TYPE_STD);
     GPIO_setPinConfig(GPIO_0_EPWM1A);
+
+    // GPIO 1 is configured as a digital output for motor direction
+    GPIO_setPadConfig(1, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(1, GPIO_DIR_MODE_OUT);
+    GPIO_setPinConfig(GPIO_1_GPIO1);
+
+    // GPIO 2 is configured as a digital output for motor driver's Vref
+    GPIO_setPadConfig(2, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(2, GPIO_DIR_MODE_OUT);
+    GPIO_setPinConfig(GPIO_2_GPIO2);
 
     // GPIO 12 is configured as CAN TX B
     GPIO_setPadConfig(12, GPIO_PIN_TYPE_STD);
@@ -124,6 +137,14 @@ void main(void)
     GPIO_setPadConfig(18, GPIO_PIN_TYPE_STD);
     GPIO_setQualificationMode(18, GPIO_QUAL_ASYNC);
 
+    // GPIO 66 is used as external interrupt for enabling/disabling motor driver
+    GPIO_setDirectionMode(66, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(66, GPIO_QUAL_SYNC);  // sync to SYSCLKOUT
+    GPIO_setInterruptPin(66,GPIO_INT_XINT1);
+
+    GPIO_setInterruptType(GPIO_INT_XINT1, GPIO_INT_TYPE_FALLING_EDGE);
+    GPIO_enableInterrupt(GPIO_INT_XINT1);
+
     SysCtl_disablePeripheral(SYSCTL_PERIPH_CLK_TBCLKSYNC);  // Disable sync(Freeze clock to PWM as well)
     initEPWM();
     SysCtl_enablePeripheral(SYSCTL_PERIPH_CLK_TBCLKSYNC);   // Enable sync and clock to PWM
@@ -135,8 +156,7 @@ void main(void)
     CAN_initModule(CANB_BASE);
     CAN_setBitRate(CANB_BASE, DEVICE_SYSCLK_FREQ, 500000, 20);
 
-    // Enable CANB interrupts
-    CAN_enableInterrupt(CANB_BASE, CAN_INT_IE0 | CAN_INT_ERROR | CAN_INT_STATUS);
+    CAN_enableInterrupt(CANB_BASE, CAN_INT_IE0 | CAN_INT_ERROR | CAN_INT_STATUS);   // Enable CANB interrupts
 
     // Initialize CLA variables
     adcResultRaw = 0.0;
@@ -153,6 +173,7 @@ void main(void)
     Interrupt_enable(INT_ADCA1);
     Interrupt_enable(INT_SCIB_RX);
     Interrupt_enable(INT_CANB0);
+    Interrupt_enable(INT_XINT1);
 
     CAN_enableGlobalInterrupt(CANB_BASE, CAN_GLOBAL_INT_CANINT0);
 
@@ -165,11 +186,20 @@ void main(void)
 
     for(;;)
     {
-        CLA_runTest();
+        if(motorEnableFlag)
+        {
+            GPIO_writePin(2, 1);
+            CLA_runTask();
+        }
+        else
+        {
+            GPIO_writePin(2, 0);
+        }
+
     }
 }
 
-void CLA_runTest(void)
+void CLA_runTask(void)
 {
     claInputs.currentAmperes = currentSenseA;
     claInputs.torqueCommand = torqueCommand;
@@ -221,14 +251,14 @@ __interrupt void cla1Isr1 ()
 {
 
     EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, claOutputs.CMPA);
+    GPIO_writePin(1, claOutputs.direction);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP11); // Acknowledge the end-of-task interrupt for task 1
 
     // asm(" ESTOP0");
 }
 
-__interrupt void
-canISR(void)
+__interrupt void canISR(void)
 {
     uint32_t status;
 
@@ -276,4 +306,11 @@ canISR(void)
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);  // Acknowledge this interrupt located in group 9
 }
 
+// External interrupt ISR
+interrupt void xint1_isr(void)
+{
+    motorEnableFlag = !motorEnableFlag;
 
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);  // Acknowledge this interrupt to get more from group 1
+
+}
