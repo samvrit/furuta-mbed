@@ -44,7 +44,8 @@
 
 /*==================VARIABLES==================*/
 uint16_t adcResultRaw;
-uint16_t rDataA[4];
+uint16_t rDataA[COMM_MSG_RECV_DATA_LENGTH];
+
 
 typedef union {
     float32_t value;
@@ -54,6 +55,7 @@ typedef union {
 volatile uartPacket_t uartPacket;
 volatile float32_t currentSenseA = 0.0; // current sense from ADC, scaled to obtain value in amperes
 volatile float32_t torqueCommand = 0.0; // torque command as otained from SCI
+volatile uint32_t CAN_errorFlag = 0;
 
 /*==================CLA VARIABLE DEFINITIONS==================*/
 #ifdef __cplusplus
@@ -78,6 +80,7 @@ float errorIntegral;
 __interrupt void scibRXFIFOISR(void);
 __interrupt void adcA1ISR(void);
 __interrupt void cla1Isr1();
+__interrupt void canISR();
 
 /*==================MAIN==================*/
 void main(void)
@@ -91,12 +94,21 @@ void main(void)
     Interrupt_register(INT_ADCA1, &adcA1ISR);
     Interrupt_register(INT_SCIB_RX, scibRXFIFOISR);
     Interrupt_register(INT_CLA1_1, &cla1Isr1);  // Configure the vectors for the end-of-task interrupt for task 1
+    Interrupt_register(INT_CANB0, &canISR);
 
     initSCIBFIFO();
 
     // GPIO 0 is configured as EPWM1
     GPIO_setPadConfig(0, GPIO_PIN_TYPE_STD);
     GPIO_setPinConfig(GPIO_0_EPWM1A);
+
+    // GPIO 12 is configured as CAN TX B
+    GPIO_setPadConfig(12, GPIO_PIN_TYPE_STD);
+    GPIO_setPinConfig(GPIO_12_CANTXB);
+
+    // GPIO 17 is configured as CAN RX B
+    GPIO_setPadConfig(17, GPIO_PIN_TYPE_STD);
+    GPIO_setPinConfig(GPIO_17_CANRXB);
 
     // GPIO28 is the SCI Rx pin.
     GPIO_setMasterCore(19, GPIO_CORE_CPU1);
@@ -119,6 +131,13 @@ void main(void)
     initADC();
     initADCSOC();
 
+    // Initialize CANB module
+    CAN_initModule(CANB_BASE);
+    CAN_setBitRate(CANB_BASE, DEVICE_SYSCLK_FREQ, 500000, 20);
+
+    // Enable CANB interrupts
+    CAN_enableInterrupt(CANB_BASE, CAN_INT_IE0 | CAN_INT_ERROR | CAN_INT_STATUS);
+
     // Initialize CLA variables
     adcResultRaw = 0.0;
     errorIntegral = 0.0;
@@ -133,6 +152,12 @@ void main(void)
     Interrupt_enable(INT_CLA1_1);   // Enable CLA interrupts at the group and subgroup levels
     Interrupt_enable(INT_ADCA1);
     Interrupt_enable(INT_SCIB_RX);
+    Interrupt_enable(INT_CANB0);
+
+    CAN_enableGlobalInterrupt(CANB_BASE, CAN_GLOBAL_INT_CANINT0);
+
+    //CANB setup message object
+    CAN_setupMessageObject(CANB_BASE, CAN_RX_MSG_OBJ_ID, 0x1, CAN_MSG_FRAME_STD, CAN_MSG_OBJ_TYPE_RX, 0, CAN_MSG_OBJ_RX_INT_ENABLE, COMM_MSG_RECV_DATA_LENGTH);
 
     // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
     EINT;
@@ -201,4 +226,54 @@ __interrupt void cla1Isr1 ()
 
     // asm(" ESTOP0");
 }
+
+__interrupt void
+canISR(void)
+{
+    uint32_t status;
+
+    status = CAN_getInterruptCause(CANB_BASE);  // Read the CAN interrupt status to find the cause of the interrupt
+
+    // If the cause is a controller status interrupt, then get the status
+    if(status == CAN_INT_INT0ID_STATUS)
+    {
+        /* Read the controller status.  This will return a field of status
+         * error bits that can indicate various errors.  Error processing
+         * is not done in this example for simplicity.  Refer to the
+         * API documentation for details about the error status bits.
+         * The act of reading this status will clear the interrupt. */
+        status = CAN_getStatus(CANB_BASE);
+
+        // Check to see if an error occurred.
+        if(((status  & ~(CAN_STATUS_TXOK | CAN_STATUS_RXOK)) != 7) && ((status  & ~(CAN_STATUS_TXOK | CAN_STATUS_RXOK)) != 0))
+        {
+            CAN_errorFlag = 1;  // Set a flag to indicate some errors may have occurred.
+        }
+    }
+
+    // Check if the cause is the receive message object 2
+    else if(status == CAN_RX_MSG_OBJ_ID)
+    {
+        CAN_readMessage(CANB_BASE, CAN_RX_MSG_OBJ_ID, rDataA);   // Get the received message
+
+        // Arrange the data to suit the word length of the F28379D
+        uartPacket.buffer[0] = (rDataA[1] << 8) | rDataA[0];
+        uartPacket.buffer[1] = (rDataA[3] << 8) | rDataA[2];
+
+        CAN_clearInterruptStatus(CANB_BASE, CAN_RX_MSG_OBJ_ID);     // Clear the message object interrupt
+        CAN_errorFlag = 0;  // Since the message was received, clear any error flags.
+    }
+
+    // If something unexpected caused the interrupt, this would handle it.
+    else
+    {
+        // Handle unexpected interrupt
+    }
+
+    CAN_clearGlobalInterruptStatus(CANB_BASE, CAN_GLOBAL_INT_CANINT0);  // Clear the global interrupt flag for the CAN interrupt line
+
+
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);  // Acknowledge this interrupt located in group 9
+}
+
 

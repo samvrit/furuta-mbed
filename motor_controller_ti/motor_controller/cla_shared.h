@@ -69,6 +69,9 @@ extern "C" {
 #define KP 166.08F                          // proportional gain for PI controller
 #define KI 26161.30F                        // integral gain for PI controller
 
+#define CAN_RX_MSG_OBJ_ID               2
+#define COMM_MSG_RECV_DATA_LENGTH       4
+
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
 #define ABS(input) ((input) < 0 ? -(input) : (input))
