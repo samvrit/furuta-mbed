@@ -57,6 +57,6 @@ __interrupt void Cla1Task1 ( void )
 //    claOutputs.direction = claInputs.torqueCommand < 0.0 ? 0 : 1;
 //    claOutputs.CMPA = newCMPA;
 
-    claOutputs.CMPA = (uint16_t)claInputs.torqueCommand;
+    claOutputs.CMPA = (uint16_t)ABS(claInputs.torqueCommand);
     claOutputs.direction = claInputs.torqueCommand < 0 ? 0 : 1;
 }
