@@ -40,20 +40,23 @@
 /*==================TASKS==================*/
 __interrupt void Cla1Task1 ( void )
 {
-    float torqueFeedback, error, dutyCycle, voltage;
-    uint16_t newCMPA;
+//    float torqueFeedback, error, dutyCycle, voltage;
+//    uint16_t newCMPA;
+//
+//    torqueFeedback = MOTOR_CONSTANT_KT * claInputs.currentAmperes;
+//    error = ABS(claInputs.torqueCommand) - torqueFeedback;
+//    errorIntegral += error;
+//
+//    voltage = (KP * error) + (KI * errorIntegral);
+//    voltage = SATURATE(voltage, 0.0F, MOTOR_SUPPLY_VOLTAGE);
+//
+//    dutyCycle = (voltage / MOTOR_SUPPLY_VOLTAGE) * EPWM1_TIMER_TBPRD;
+//
+//    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)dutyCycle;
 
-    torqueFeedback = MOTOR_CONSTANT_KT * claInputs.currentAmperes;
-    error = ABS(claInputs.torqueCommand) - torqueFeedback;
-    errorIntegral += error;
+//    claOutputs.direction = claInputs.torqueCommand < 0.0 ? 0 : 1;
+//    claOutputs.CMPA = newCMPA;
 
-    voltage = (KP * error) + (KI * errorIntegral);
-    voltage = SATURATE(voltage, 0.0F, MOTOR_SUPPLY_VOLTAGE);
-
-    dutyCycle = (voltage / MOTOR_SUPPLY_VOLTAGE) * EPWM1_TIMER_TBPRD;
-
-    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)dutyCycle;
-
-    claOutputs.direction = claInputs.torqueCommand < 0.0 ? 0 : 1;
-    claOutputs.CMPA = newCMPA;
+    claOutputs.CMPA = (uint16_t)claInputs.torqueCommand;
+    claOutputs.direction = claInputs.torqueCommand < 0 ? 0 : 1;
 }
