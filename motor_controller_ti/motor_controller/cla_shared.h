@@ -47,6 +47,9 @@ extern "C" {
 #define ADC_RESOLUTION          12
 #define EPWM1_TIMER_TBPRD       1000U
 
+#define MOTOR_DRIVER_DIRECTION_PIN  1U
+#define MOTOR_DRIVER_SLEEP_PIN      2U
+
 #define PI 3.14F
 #define MICROSECOND 0.000001F
 

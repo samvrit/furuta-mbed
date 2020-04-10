@@ -116,13 +116,13 @@ void main(void)
     GPIO_setPinConfig(GPIO_0_EPWM1A);
 
     // GPIO 1 is configured as a digital output for motor direction
-    GPIO_setPadConfig(1, GPIO_PIN_TYPE_PULLUP);
-    GPIO_setDirectionMode(1, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(MOTOR_DRIVER_DIRECTION_PIN, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(MOTOR_DRIVER_DIRECTION_PIN, GPIO_DIR_MODE_OUT);
     GPIO_setPinConfig(GPIO_1_GPIO1);
 
-    // GPIO 2 is configured as a digital output for motor driver's Vref
-    GPIO_setPadConfig(2, GPIO_PIN_TYPE_PULLUP);
-    GPIO_setDirectionMode(2, GPIO_DIR_MODE_OUT);
+    // GPIO 2 is configured as a digital output for motor driver sleep (active LOW, hence configured as open-drain)
+    GPIO_setPadConfig(MOTOR_DRIVER_SLEEP_PIN, GPIO_PIN_TYPE_OD);
+    GPIO_setDirectionMode(MOTOR_DRIVER_SLEEP_PIN, GPIO_DIR_MODE_OUT);
     GPIO_setPinConfig(GPIO_2_GPIO2);
 
     // GPIO 12 is configured as CAN TX B
@@ -203,12 +203,12 @@ void main(void)
     {
         if(motorEnableFlag)
         {
-            GPIO_writePin(2, 1);
+            GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 1);   // disable sleep state (if previously set) of the motor driver
             CLA_runTask();
         }
         else
         {
-            GPIO_writePin(2, 0);
+            GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 0);   // enable sleep state of the motor driver
         }
 
     }
@@ -266,9 +266,8 @@ __interrupt void adcA1ISR(void)
 // cla1Isr1 - CLA1 ISR 1
 __interrupt void cla1Isr1 ()
 {
-
     EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, claOutputs.CMPA);
-    GPIO_writePin(1, claOutputs.direction);
+    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, claOutputs.direction);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP11); // Acknowledge the end-of-task interrupt for task 1
 
