@@ -20,6 +20,7 @@ void initADC(void);
 void initEPWM(void);
 void initADCSOC(void);
 void initSCIBFIFO(void);
+void initEQEP(void);
 
 
 

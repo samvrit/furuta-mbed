@@ -23,6 +23,8 @@ PAGE 0 :
    RAMD1            : origin = 0x00B800,   length = 0x000800
    /* RAMLS4      	    : origin = 0x00A000, length = 0x000800 */
    /* RAMLS5           : origin = 0x00A800, length = 0x000800 */
+   RAMLS0          	: origin = 0x008000,   length = 0x000800
+   RAMLS1_LS2       : origin = 0x008800,   length = 0x001000
    RAMLS4_5         : origin = 0x00A000,   length = 0x001000
    RESET           	: origin = 0x3FFFC0,   length = 0x000002
 
@@ -143,6 +145,10 @@ SECTIONS
    .bss_cla		    : > RAMLS1,       PAGE = 1
    .const_cla	    : > RAMLS1,       PAGE = 1
 #endif //CLA_C
+
+   /* Allocate IQ math areas: */
+   IQmath			: > RAMLS0,     PAGE = 0            /* Math Code */
+   IQmathTables		: > RAMLS1_LS2, PAGE = 0
 }
 
 /*

@@ -12,9 +12,11 @@ CLA_SRCS += \
 ../current_control.cla 
 
 LIB_SRCS += \
+C:/ti/c2000/C2000Ware_3_01_00_00/libraries/math/IQmath/c28/lib/IQmath_fpu32.lib \
 C:/ti/c2000/C2000Ware_3_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib 
 
 C_SRCS += \
+../eqep_module.c \
 ../main.c \
 ../peripheral_initializations.c 
 
@@ -22,20 +24,24 @@ CLA_DEPS += \
 ./current_control.d 
 
 C_DEPS += \
+./eqep_module.d \
 ./main.d \
 ./peripheral_initializations.d 
 
 OBJS += \
 ./current_control.obj \
+./eqep_module.obj \
 ./main.obj \
 ./peripheral_initializations.obj 
 
 OBJS__QUOTED += \
 "current_control.obj" \
+"eqep_module.obj" \
 "main.obj" \
 "peripheral_initializations.obj" 
 
 C_DEPS__QUOTED += \
+"eqep_module.d" \
 "main.d" \
 "peripheral_initializations.d" 
 
@@ -43,6 +49,7 @@ CLA_DEPS__QUOTED += \
 "current_control.d" 
 
 C_SRCS__QUOTED += \
+"../eqep_module.c" \
 "../main.c" \
 "../peripheral_initializations.c" 
 

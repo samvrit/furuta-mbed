@@ -211,6 +211,10 @@ SECTIONS
                        LOAD_SIZE(_Cla1ConstLoadSize),
                        PAGE = 0
 #endif //CLA_C
+
+	/* Allocate IQ math areas: */
+   IQmath			: > FLASHB, PAGE = 0, ALIGN(8)            /* Math Code */
+   IQmathTables		: > FLASHC, PAGE = 0, ALIGN(8)
 }
 
 /*

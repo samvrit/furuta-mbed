@@ -37,15 +37,25 @@
 /*==================INCLUDES==================*/
 #include "cla_shared.h"
 #include "peripheral_initializations.h"
+#include "IQmathLib.h"
+#include "eqep_module.h"
 
 /*==================DEFINES==================*/
 #define WAITSTEP     asm(" RPT #255 || NOP")
 
+#define EQEP_BASE_FREQ       10000  // Base/max frequency is 10 kHz
+#define FREQ_SCALER_PR  (((DEVICE_SYSCLK_FREQ / 128) * 8) / (2 * EQEP_BASE_FREQ))
 
 /*==================VARIABLES==================*/
 uint16_t adcResultRaw;
 uint16_t rDataA[COMM_MSG_RECV_DATA_LENGTH];
 
+FreqCal_Object freq =
+{
+    FREQ_SCALER_PR,  // freqScalerPR
+    EQEP_BASE_FREQ,       // baseFreq
+    0, 0, 0, 0    // Initialize outputs to zero
+};
 
 typedef union {
     float32_t value;
@@ -129,6 +139,11 @@ void main(void)
     GPIO_setDirectionMode(19, GPIO_DIR_MODE_IN);
     GPIO_setPadConfig(19, GPIO_PIN_TYPE_STD);
     GPIO_setQualificationMode(19, GPIO_QUAL_ASYNC);
+
+    // GPIO20 is the EQEP1A for encoder feedback
+    GPIO_setPinConfig(GPIO_20_EQEP1A);
+    GPIO_setPadConfig(20, GPIO_PIN_TYPE_STD);
+
 
     // GPIO18 is the SCI Tx pin.
     GPIO_setMasterCore(18, GPIO_CORE_CPU1);
@@ -233,6 +248,8 @@ __interrupt void adcA1ISR(void)
 
     adcResultRaw = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);    // Add the latest result to the buffer
     currentSenseA = ((float)adcResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
+
+    FreqCal_calculate(&freq);   // calculate EQEP frequency
 
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);   // Clear the interrupt flag
 
