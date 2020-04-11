@@ -16,9 +16,6 @@
 #define PRD_VAL   (TB_CLK / (PWM_CLK * 2))  // Calculate value period value
                                             // for up-down count mode
 
-
-
-
 typedef struct
 {
     uint32_t freqScalerPR;  // Parameter: Scaler converting 1/N cycles to a

@@ -199,10 +199,13 @@ void main(void)
     EINT;
     ERTM;
 
+    initEQEP();
+
     for(;;)
     {
         if(motorEnableFlag)
         {
+            FreqCal_calculate(&freq);   // calculate EQEP frequency
             GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 1);   // disable sleep state (if previously set) of the motor driver
             CLA_runTask();
         }
@@ -248,8 +251,6 @@ __interrupt void adcA1ISR(void)
 
     adcResultRaw = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);    // Add the latest result to the buffer
     currentSenseA = ((float)adcResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
-
-    FreqCal_calculate(&freq);   // calculate EQEP frequency
 
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);   // Clear the interrupt flag
 
