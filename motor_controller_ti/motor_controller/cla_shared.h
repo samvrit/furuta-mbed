@@ -50,13 +50,10 @@ extern "C" {
 #define MOTOR_DRIVER_DIRECTION_PIN  1U
 #define MOTOR_DRIVER_SLEEP_PIN      2U
 
-#define PI 3.14F
-#define MICROSECOND 0.000001F
-
 #define MOTOR_SUPPLY_VOLTAGE    12.0F
 #define PWM_DUTY_CYCLE_SCALER   (EPWM1_TIMER_TBPRD / MOTOR_SUPPLY_VOLTAGE)
 
-#define MOTOR_SPEED_THRESHOLD_HZ            10000U
+#define MOTOR_SPEED_THRESHOLD_HZ            10000U  // Hz (encoder pulses)
 
 #define ADC_SCALING_FACTOR                  ((1 << ADC_RESOLUTION) / 3.3F)
 #define VOLTAGE_DIVIDER_RATIO               0.67F         // R2 = 6.8kOhms, R1 = 3.3kOhms
