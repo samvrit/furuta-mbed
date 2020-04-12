@@ -1,0 +1,1 @@
+"./current_control.obj" "./eqep_module.obj" "./main.obj" "./peripheral_initializations.obj" "./device/F2837xD_CodeStartBranch.obj" "./device/device.obj" "../2837xD_FLASH_CLA_lnk_cpu1.cmd" "C:/ti/c2000/C2000Ware_3_01_00_00/libraries/math/IQmath/c28/lib/IQmath_fpu32.lib" "C:/ti/c2000/C2000Ware_3_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib" -llibc.a 
