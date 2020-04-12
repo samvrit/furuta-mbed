@@ -222,7 +222,6 @@ void CLA_runTask(void)
     claInputs.currentAmperes = currentSenseA;
     claInputs.torqueCommand = torqueCommand;
     CLA_forceTasks(CLA1_BASE,CLA_TASKFLAG_1);   // run task 1 in CLA 1 core
-    WAITSTEP;
 }
 
 // sciaRXFIFOISR - SCIA Receive FIFO ISR

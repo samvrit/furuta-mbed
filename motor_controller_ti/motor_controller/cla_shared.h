@@ -56,7 +56,7 @@ extern "C" {
 #define MOTOR_SUPPLY_VOLTAGE    12.0F
 #define PWM_DUTY_CYCLE_SCALER   (EPWM1_TIMER_TBPRD / MOTOR_SUPPLY_VOLTAGE)
 
-#define MOTOR_SPEED_THRESHOLD_HZ            2000U
+#define MOTOR_SPEED_THRESHOLD_HZ            10000U
 
 #define ADC_SCALING_FACTOR                  ((1 << ADC_RESOLUTION) / 3.3F)
 #define VOLTAGE_DIVIDER_RATIO               0.67F         // R2 = 6.8kOhms, R1 = 3.3kOhms
