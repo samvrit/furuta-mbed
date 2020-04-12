@@ -56,9 +56,7 @@ extern "C" {
 #define MOTOR_SUPPLY_VOLTAGE    12.0F
 #define PWM_DUTY_CYCLE_SCALER   (EPWM1_TIMER_TBPRD / MOTOR_SUPPLY_VOLTAGE)
 
-#define GEARBOX_RATIO 30.0F
-#define ROTATION_PER_PULSE (2.0F * PI / (16.0F * GEARBOX_RATIO))  // radians per pulse
-#define MOTOR_SPEED_THRESHOLD_RAD_S 50000.0F
+#define MOTOR_SPEED_THRESHOLD_HZ            2000U
 
 #define ADC_SCALING_FACTOR                  ((1 << ADC_RESOLUTION) / 3.3F)
 #define VOLTAGE_DIVIDER_RATIO               0.67F         // R2 = 6.8kOhms, R1 = 3.3kOhms

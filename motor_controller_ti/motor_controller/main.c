@@ -203,7 +203,7 @@ void main(void)
 
     for(;;)
     {
-        if(motorEnableFlag)
+        if(motorEnableFlag && (freq.freqHzPR < MOTOR_SPEED_THRESHOLD_HZ))
         {
             FreqCal_calculate(&freq);   // calculate EQEP frequency
             GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 1);   // disable sleep state (if previously set) of the motor driver
