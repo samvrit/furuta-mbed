@@ -21,6 +21,18 @@ arm_length = 0.447; %m
 
 % Determine K using linear regression
 Kt = current_data \ ((1e-3 * 9.81 * arm_length) .* mass_data);
+
+%% Frictional damping coefficient calculation
+% Experiment description:
+% At no load and steady state, the mechanical dynamics become b = (Kt*i / angular_velocity)
+% Hence, freely run the motor and record the winding current and angular
+% velocity using the encoder data on a scope
+pulses_per_revolution = 480; % 16 rising edges * gear ratio (30)
+pulse_interval = 331e-6; % delta t in seconds between two rising edges
+average_current = 265e-3; % amperes
+angular_velocity = (2*pi)/((pulses_per_revolution)*pulse_interval); % rad/s
+b = (Kt * average_current) / angular_velocity;
+
 %% Experimental Transfer function
 % Experiment setup:
 % - Connect current sensor in series with motor and battery
@@ -37,11 +49,10 @@ current_amplitude_at_steady_state = 8.46; % amperes
 gain = current_amplitude_at_steady_state / battery_step_amplitude;
 
 J = 0.0032; % moment of inertia of load (link 1) in kg m^2
-b = 0.2915; % V/(rad/s) obtained by regression analysis
 R = 1/gain;
 L = R*rising_time;  % at no load, rise time = L/R
 
-torque_ref = timeseries([0.01 0.02 -0.05 -0.03 0.04], [0.1 0.2 0.4 0.8 0.9]);
+torque_ref = timeseries([-1 1 -1 1 -1], [0.1 0.2 0.4 0.8 0.9]);
 
 motor_sys = tf(1/R, [(b*L + Kt*J)/(R*b) 1], 'InputDelay', 40e-6);
 open_loop = motor_sys*Kt;
