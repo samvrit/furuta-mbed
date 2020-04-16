@@ -72,3 +72,4 @@ closed_loop_tf = (C*torque_tf) / (1 + (C*torque_tf));
 %% Simulation parameters
 motor_supply_voltage = 12;
 torque_ref = timeseries([-0.1 0.1 -0.1 0.1 -0.1], [0.1 0.2 0.4 0.8 0.9]);
+zero_order_hold_adc = 20e-6; % seconds -- this is the ADC sampling period
