@@ -50,18 +50,25 @@ gain = current_amplitude_at_steady_state / battery_step_amplitude;
 
 J = 0.0032; % moment of inertia of load (link 1) in kg m^2
 R = 1/gain;
+Kv = 0.2915; % measured using actual data and regression analysis
 L = R*rising_time;  % at no load, rise time = L/R
 
-torque_ref = timeseries([-1 1 -1 1 -1], [0.1 0.2 0.4 0.8 0.9]);
+%% Motor transfer function
+num = (Kt/L).*[1 (b/J)];
+den = [1 ((R*J + b*L)/(L*J)) ((R*b + Kv*Kt)/(L*J))];
+torque_tf = tf(num, den);
 
-motor_sys = tf(1/R, [(b*L + Kt*J)/(R*b) 1], 'InputDelay', 40e-6);
-open_loop = motor_sys*Kt;
-
-opts = pidtuneOptions('CrossoverFrequency',9000,'PhaseMargin',90);
-[C, info] = pidtune(open_loop, 'PI', opts);
+%% PI Controller
+opts = pidtuneOptions('CrossoverFrequency',1.23e4,'PhaseMargin',88);
+[C, info] = pidtune(torque_tf, 'PI', opts);
 
 disp(C.Kp)
 disp(C.Ki)
 disp(C.Kd)
+disp(info)
 
-closed_loop = (C*open_loop) / (1 + (C*open_loop));
+closed_loop_tf = (C*torque_tf) / (1 + (C*torque_tf));
+
+%% Simulation parameters
+motor_supply_voltage = 12;
+torque_ref = timeseries([-0.1 0.1 -0.1 0.1 -0.1], [0.1 0.2 0.4 0.8 0.9]);
