@@ -2,13 +2,15 @@ run_model = false;
 
 if run_model
     syms theta alpha a d theta1 theta2 theta3 q1(t) q2(t) q3(t) x1 x2 x3 x4 x5 x6 tau
-
+    
     % transformation matrix for each row of DH parameters
+    fprintf('Initializing DH parameter matrix\n');
     A(alpha, a, d, theta) = [cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha)  a*cos(theta);
                              sin(theta) cos(theta)*cos(alpha)  -cos(theta)*sin(alpha) a*sin(theta);
                                    0          sin(alpha)              cos(alpha)              d;
                                    0              0                       0                   1];
 
+    fprintf('Initializing solid model parameters\n');
     m = [0.2526 0.1183 0.1]; % mass of each link
 
     % Inertia matrix as obtained from SolidWorks
@@ -44,6 +46,7 @@ if run_model
             0,   a(3), -d(3),    theta3];
 
     % transformation matrix for each link-end seperately
+    fprintf('Computing DH parameters and performing coordinate transformations\n');
     A1 = A(dh(1,1), dh(1,2), dh(1,3), dh(1,4)) * A(dh(2,1), dh(2,2), dh(2,3), dh(2,4));
     A2 = A(dh(3,1), dh(3,2), dh(3,3), dh(3,4));
     A3 = A(dh(4,1), dh(4,2), dh(4,3), dh(4,4));
@@ -103,24 +106,29 @@ if run_model
     qdot = diff(q, t);
 
     % potential energy
+    fprintf('Computing potential energy matrix\n');
     P_theta = (m(1) .* (g' * oc1)) + (m(2) .* (g' * oc2)) + (m(3) .* (g' * oc3));
     P = subs(P_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
 
     % gravity matrix
+    fprintf('Computing gravity matrix\n');
     G = [diff(P_theta, theta1) ; diff(P_theta, theta2) ; diff(P_theta, theta3)];
     G = subs(G, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
 
     % mass matrix
+    fprintf('Computing mass matrix\n');
     tic
     M_theta = (m(1) .* (Jcv1' * Jcv1)) + (m(2) .* (Jcv2' * Jcv2)) + (m(3) .* (Jcv3' * Jcv3)) + (Jcw1' * R1 * I1 * R1' * Jcw1) + (Jcw2' * R2 * I2 * R2' * Jcw2) + (Jcw3' * R3 * I3 * R3' * Jcw3);
     M = subs(M_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
     time_M = toc;
 
     % total energy
+    fprintf('Computing total energy\n');
     TE = P + ((1/2) .* qdot' * M * qdot);
     TE_ref = subs(TE, [q1(t), q2(t), q3(t)], [0, 0, 0]);
 
     % centrepetal/coriolis matrix
+    fprintf('Computing centrepetal/coriolis matrix\n');
     C_theta = sym(zeros(3,3));
     theta_vector = [theta1; theta2; theta3];
     for i=1:3
@@ -133,6 +141,7 @@ if run_model
     C = subs(C_theta, [theta1, theta2, theta3], [q(1), q(2), q(3)]);
 
     % dynamics
+    fprintf('Computing acceleration equations\n');
     X = [x1; x2; x3; x4; x5; x6];   % state vector
     u = [tau; 0; 0];    % control vector
     tic
@@ -141,12 +150,14 @@ if run_model
     accel = subs(accel, [q(1), q(2), q(3), qdot(1), qdot(2), qdot(3)], [X(1), X(2), X(3), X(4), X(5), X(6)]);
 
     % check for equilibrium
+    fprintf('Checking for equilibrium\n');
     equil = sym(zeros(3,1));
     for i = 1:3
         equil(i) = subs(accel(i), [X(1), X(2), X(3), X(4), X(5), X(6), tau], [0, 0, 0, 0, 0, 0, 0]);
     end
 
     % compute A and B matrices at operating point
+    fprintf('Computing A matrix\n');
     op = [0;0;0;0;0;0];
     A_matrix = zeros(6,6);
     for i = 1:3
@@ -157,9 +168,13 @@ if run_model
     end
 
     B_matrix = zeros(6,1);
+    fprintf('Computing B matrix\n');
     for i = 1:3
         B_matrix(i+3) = subs(diff(accel(i), tau), [X(1) X(2) X(3) X(4) X(5) X(6) tau], [op(1) op(2) op(3) op(4) op(5) op(6) 0]);
     end
+    
+    C_matrix = eye(6);
+    D_matrix = zeros(6,1);
     
     fprintf('Time to calc M: %f | Time to calc accel: %f\n', time_M, time_accel);
 else
@@ -186,4 +201,4 @@ disp(eig_cl)
 disp(A_matrix)
 disp(B_matrix)
 disp(K)
-save('Matrices.mat', 'A_matrix', 'B_matrix', 'K');
+save('Matrices.mat', 'A_matrix', 'B_matrix', 'C_matrix', 'D_matrix', 'K');
