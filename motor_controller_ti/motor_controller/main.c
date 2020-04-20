@@ -154,6 +154,7 @@ void main(void)
 
     // GPIO 66 is used as external interrupt for enabling/disabling motor driver
     GPIO_setDirectionMode(66, GPIO_DIR_MODE_IN);
+    GPIO_setPadConfig(66, GPIO_PIN_TYPE_PULLUP);
     GPIO_setQualificationMode(66, GPIO_QUAL_SYNC);  // sync to SYSCLKOUT
     GPIO_setInterruptPin(66,GPIO_INT_XINT1);
 
