@@ -38,11 +38,11 @@ if run_model
     % DH parameters for center of mass and end of links
     dhcom = [-pi/2, 0,      0,       theta1; 
                0,   0,      dc(2),   0; 
-              pi,   ac(2),  0.0116,  theta2 - (pi/2);
+               0,   ac(2),  0.0116,  theta2 - (pi/2);
                0,   ac(3), -dc(3),   theta3];
     dh = [-pi/2, 0,     0,       theta1; 
             0,   0,     d(2),    0; 
-           pi,   a(2),  0.0238,  theta2 - (pi/2);
+            0,   a(2),  0.0238,  theta2 - (pi/2);
             0,   a(3), -d(3),    theta3];
 
     % transformation matrix for each link-end seperately
@@ -173,8 +173,10 @@ if run_model
         B_matrix(i+3) = subs(diff(accel(i), tau), [X(1) X(2) X(3) X(4) X(5) X(6) tau], [op(1) op(2) op(3) op(4) op(5) op(6) 0]);
     end
     
-    C_matrix = eye(6);
-    D_matrix = zeros(6,1);
+    C_matrix = [1 0 0 0 0 0;
+                0 1 0 0 0 0;
+                0 0 1 0 0 0];
+    D_matrix = zeros(3,1);
     
     fprintf('Time to calc M: %f | Time to calc accel: %f\n', time_M, time_accel);
 else

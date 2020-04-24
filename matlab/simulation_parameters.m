@@ -19,11 +19,6 @@ zero_order_hold_torque_command = 100e-6;
 Q_process = 1;
 R_sensor = eye(3) .* measurement_variance;
 
-% C_matrix = diag([1, 1, 1, 0, 0, 0]);
-C_matrix = [1 0 0 0 0 0;
-            0 1 0 0 0 0;
-            0 0 1 0 0 0];
-D_matrix = [0; 0; 0];
 sys_ss = ss(A_matrix, B_matrix, C_matrix, D_matrix);
 dsys = c2d(sys_ss, Ts);
 
