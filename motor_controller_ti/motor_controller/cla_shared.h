@@ -44,39 +44,42 @@ extern "C" {
 #endif
 
 /*==================DEFINES==================*/
+#define WAITSTEP     asm(" RPT #255 || NOP")
+#define CONTROL_CYCLE_TIME_US   20U // microseconds
+
 #define ADC_RESOLUTION          12
 #define EPWM1_TIMER_TBPRD       1000U
 
 #define MOTOR_DRIVER_DIRECTION_PIN  1U
 #define MOTOR_DRIVER_SLEEP_PIN      2U
+#define DEBUG_PIN                   131U
 
 #define MOTOR_SUPPLY_VOLTAGE    12.0F
 #define PWM_DUTY_CYCLE_SCALER   (EPWM1_TIMER_TBPRD / MOTOR_SUPPLY_VOLTAGE)
 
 #define MOTOR_SPEED_THRESHOLD_HZ            10000U  // Hz (encoder pulses)
 
-#define ADC_SCALING_FACTOR                  ((1 << ADC_RESOLUTION) / 3.3F)
-#define VOLTAGE_DIVIDER_RATIO               0.67F         // R2 = 6.8kOhms, R1 = 3.3kOhms
-#define CURR_SENSE_VOLT_PER_AMP             0.4F          // 400mV per ampere
-#define CURR_SENSE_OFFSET_V                 0.5F          // 500mV offset
-#define CURR_SENSE_OFFSET                   (CURR_SENSE_OFFSET_V * VOLTAGE_DIVIDER_RATIO * ADC_SCALING_FACTOR)
-#define CURR_SENSE_SCALING_FACTOR_INVERSE   (CURR_SENSE_VOLT_PER_AMP * VOLTAGE_DIVIDER_RATIO * ADC_SCALING_FACTOR)
+#define CURR_SENSE_OFFSET                   2160U
+#define CURR_SENSE_SCALING_FACTOR_INVERSE   81.9F
 #define CURR_SENSE_SCALING_FACTOR           (1.0F / CURR_SENSE_SCALING_FACTOR_INVERSE)
 
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
+#define PI                3.14F
+#define MICROSECOND       0.000001F
 
-#define KP 166.08F                          // proportional gain for PI controller
-#define KI 26161.30F                        // integral gain for PI controller
+#define KP 10.08F                          // proportional gain for PI controller
+#define KI 100.30F                        // integral gain for PI controller
 
 #define CAN_RX_MSG_OBJ_ID               2
 #define COMM_MSG_RECV_DATA_LENGTH       4
 
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
-#define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
+#define LOW_PASS_FILTER(output, input, lpf_constant) ((output) += (((input) - (output)) * (lpf_constant)))
 #define ABS(input) ((input) < 0 ? -(input) : (input))
 
 /*==================CLA VARIABLES==================*/
 typedef struct {
+    uint16_t enable;
     float currentAmperes;
     float torqueCommand;
 } claInputs_S;
