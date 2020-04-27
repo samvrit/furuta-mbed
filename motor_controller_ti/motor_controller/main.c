@@ -47,7 +47,9 @@
 #define FREQ_SCALER_PR  (((DEVICE_SYSCLK_FREQ / 128) * 8) / (2 * EQEP_BASE_FREQ))
 
 /*==================VARIABLES==================*/
+int16_t adcPPBResultRaw;
 uint16_t adcResultRaw;
+float32_t adcResultRawLPF;
 uint16_t rDataA[COMM_MSG_RECV_DATA_LENGTH];
 
 FreqCal_Object freq =
@@ -64,9 +66,12 @@ typedef union {
 
 volatile uartPacket_t uartPacket;
 volatile float32_t currentSenseA = 0.0; // current sense from ADC, scaled to obtain value in amperes
-volatile float32_t torqueCommand = 0.0; // torque command as otained from SCI
+volatile float32_t torqueCommand = 0.0; // torque command as obtained from SCI
 volatile uint32_t CAN_errorFlag = 0;
-volatile bool motorEnableFlag = true;
+volatile bool motorEnableFlag = false;
+
+float32_t torqueFeedback, error, errorInt, dutyCycle, voltage;
+uint16_t newCMPA, direction;
 
 /*==================CLA VARIABLE DEFINITIONS==================*/
 #ifdef __cplusplus
@@ -92,7 +97,9 @@ __interrupt void scibRXFIFOISR(void);
 __interrupt void adcA1ISR(void);
 __interrupt void cla1Isr1();
 __interrupt void canISR();
+__interrupt void cpuTimer0ISR(void);
 interrupt void xint1_isr(void);
+void currentControl(void);
 
 /*==================MAIN==================*/
 void main(void)
@@ -107,9 +114,14 @@ void main(void)
     Interrupt_register(INT_SCIB_RX, scibRXFIFOISR);
     Interrupt_register(INT_CLA1_1, &cla1Isr1);  // Configure the vectors for the end-of-task interrupt for task 1
     Interrupt_register(INT_CANB0, &canISR);
+    Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     Interrupt_register(INT_XINT1, &xint1_isr);
 
     initSCIBFIFO();
+    initCPUTimer();
+
+    configCPUTimer(CPUTIMER0_BASE, CONTROL_CYCLE_TIME_US);
+    CPUTimer_enableInterrupt(CPUTIMER0_BASE);
 
     // GPIO 0 is configured as EPWM1 for duty cycle to the motor driver
     GPIO_setPadConfig(0, GPIO_PIN_TYPE_STD);
@@ -144,7 +156,6 @@ void main(void)
     GPIO_setPinConfig(GPIO_20_EQEP1A);
     GPIO_setPadConfig(20, GPIO_PIN_TYPE_STD);
 
-
     // GPIO18 is the SCI Tx pin.
     GPIO_setMasterCore(18, GPIO_CORE_CPU1);
     GPIO_setPinConfig(GPIO_18_SCITXDB);
@@ -157,6 +168,11 @@ void main(void)
     GPIO_setPadConfig(66, GPIO_PIN_TYPE_PULLUP);
     GPIO_setQualificationMode(66, GPIO_QUAL_SYNC);  // sync to SYSCLKOUT
     GPIO_setInterruptPin(66,GPIO_INT_XINT1);
+
+    // GPIO 131 is configured as debug pin for function profiling
+    GPIO_setPadConfig(DEBUG_PIN, GPIO_PIN_TYPE_STD);
+    GPIO_setDirectionMode(DEBUG_PIN, GPIO_DIR_MODE_OUT);
+    GPIO_setPinConfig(GPIO_131_GPIO131);
 
     GPIO_setInterruptType(GPIO_INT_XINT1, GPIO_INT_TYPE_FALLING_EDGE);
     GPIO_enableInterrupt(GPIO_INT_XINT1);
@@ -177,6 +193,7 @@ void main(void)
     // Initialize CLA variables
     adcResultRaw = 0.0;
     errorIntegral = 0.0;
+    claInputs.enable = 0;
     claInputs.currentAmperes = 0.0;
     claInputs.torqueCommand = 0.0;
 
@@ -190,12 +207,14 @@ void main(void)
     Interrupt_enable(INT_SCIB_RX);
     Interrupt_enable(INT_CANB0);
     Interrupt_enable(INT_XINT1);
+    Interrupt_enable(INT_TIMER0);
 
     CAN_enableGlobalInterrupt(CANB_BASE, CAN_GLOBAL_INT_CANINT0);
 
     //CANB setup message object
     CAN_setupMessageObject(CANB_BASE, CAN_RX_MSG_OBJ_ID, 0x1, CAN_MSG_FRAME_STD, CAN_MSG_OBJ_TYPE_RX, 0, CAN_MSG_OBJ_RX_INT_ENABLE, COMM_MSG_RECV_DATA_LENGTH);
 
+    CPUTimer_startTimer(CPUTIMER0_BASE);
     // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
     EINT;
     ERTM;
@@ -204,25 +223,33 @@ void main(void)
 
     for(;;)
     {
-        if(motorEnableFlag && (freq.freqHzPR < MOTOR_SPEED_THRESHOLD_HZ))
-        {
-            FreqCal_calculate(&freq);   // calculate EQEP frequency
-            GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 1);   // disable sleep state (if previously set) of the motor driver
-            CLA_runTask();
-        }
-        else
-        {
-            GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 0);   // enable sleep state of the motor driver
-        }
-
+        GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, motorEnableFlag);
     }
 }
 
-void CLA_runTask(void)
+void currentControl(void)
 {
-    claInputs.currentAmperes = currentSenseA;
-    claInputs.torqueCommand = torqueCommand;
-    CLA_forceTasks(CLA1_BASE,CLA_TASKFLAG_1);   // run task 1 in CLA 1 core
+    GPIO_writePin(DEBUG_PIN, 1);
+
+    torqueFeedback = MOTOR_CONSTANT_KT * currentSenseA;  // tau = Kt * i
+    error = torqueCommand - torqueFeedback;               // compute error signal
+    errorInt += error;                                         // integrate error signal
+    errorInt = SATURATE(errorInt, -50.0F, 50.0F);
+    errorInt = motorEnableFlag ? errorInt : 0.0F;
+
+    voltage = (KP * error) + (KI * errorInt);                  // PI control equation
+    voltage = SATURATE(voltage, -MOTOR_SUPPLY_VOLTAGE, MOTOR_SUPPLY_VOLTAGE);   // saturate voltage to [-Vmotor, Vmotor]
+
+    dutyCycle = voltage * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
+
+    newCMPA = motorEnableFlag ? (EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle)) : EPWM1_TIMER_TBPRD;         // compute new Compare A register value
+    direction = dutyCycle > 0.0 ? 1 : 0;   // set direction
+
+    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, newCMPA);
+    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, direction);
+
+    WAITSTEP;
+    GPIO_writePin(DEBUG_PIN, 0);
 }
 
 // sciaRXFIFOISR - SCIA Receive FIFO ISR
@@ -248,9 +275,10 @@ __interrupt void scibRXFIFOISR(void)
 // ADC A Interrupt 1 ISR
 __interrupt void adcA1ISR(void)
 {
+    adcPPBResultRaw = ADC_readPPBResult(ADCARESULT_BASE, ADC_PPB_NUMBER1);    // Add the latest result to the buffer
+    currentSenseA = ((float32_t)adcPPBResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
 
-    adcResultRaw = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);    // Add the latest result to the buffer
-    currentSenseA = ((float)adcResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
+    currentControl();
 
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);   // Clear the interrupt flag
 
@@ -267,11 +295,10 @@ __interrupt void adcA1ISR(void)
 // cla1Isr1 - CLA1 ISR 1
 __interrupt void cla1Isr1 ()
 {
-    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, claOutputs.CMPA);
-    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, claOutputs.direction);
+//    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, claOutputs.CMPA);
+//    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, claOutputs.direction);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP11); // Acknowledge the end-of-task interrupt for task 1
-
     // asm(" ESTOP0");
 }
 
@@ -321,6 +348,14 @@ __interrupt void canISR(void)
 
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);  // Acknowledge this interrupt located in group 9
+}
+
+// cpuTimer0ISR - Counter for CpuTimer0
+__interrupt void cpuTimer0ISR(void)
+{
+
+    // Acknowledge this interrupt to receive more interrupts from group 1
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
 }
 
 // External interrupt ISR

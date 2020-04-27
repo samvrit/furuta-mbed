@@ -129,7 +129,8 @@ void initADCSOC(void)
 
     // Setup post-processing block 1 to process SOC1 of ADCA and subtract the sensor offset
     ADC_setupPPB(ADCA_BASE, ADC_PPB_NUMBER1, ADC_SOC_NUMBER1);
-    ADC_setPPBCalibrationOffset(ADCA_BASE, ADC_PPB_NUMBER1, (int16_t)CURR_SENSE_OFFSET);
+    ADC_setPPBCalibrationOffset(ADCA_BASE, ADC_PPB_NUMBER1, 0);
+    ADC_setPPBReferenceOffset(ADCA_BASE, ADC_PPB_NUMBER1, CURR_SENSE_OFFSET);
 }
 
 // initSCIAFIFO - Configure SCIA FIFO
@@ -172,3 +173,36 @@ void initEQEP(void)
     EQEP_enableModule(EQEP1_BASE);  // Enable the eQEP1 module
 }
 
+// initCPUTimers - This function initializes the timer to a known state.
+void initCPUTimer(void)
+{
+    // Initialize timer period to maximum
+    CPUTimer_setPeriod(CPUTIMER0_BASE, 0xFFFFFFFF);
+
+    // Initialize pre-scale counter to divide by 1 (SYSCLKOUT)
+    CPUTimer_setPreScaler(CPUTIMER0_BASE, 0);
+
+    // Make sure timer is stopped
+    CPUTimer_stopTimer(CPUTIMER0_BASE);
+
+    // Reload all counter register with period value
+    CPUTimer_reloadTimerCounter(CPUTIMER0_BASE);
+}
+
+// configCPUTimer - This function initializes the selected timer to the period
+void configCPUTimer(uint32_t cpuTimer, uint16_t period)
+{
+    uint32_t count = (uint32_t)(DEVICE_SYSCLK_FREQ / 1000000 * period);
+    CPUTimer_setPeriod(cpuTimer, count);
+
+    // Set pre-scale counter to divide by 1 (SYSCLKOUT):
+    CPUTimer_setPreScaler(cpuTimer, 0);
+
+    // Initializes timer control register. The timer is stopped, reloaded,
+    // free run disabled, and interrupt enabled.
+    // Additionally, the free and soft bits are set
+    CPUTimer_stopTimer(cpuTimer);
+    CPUTimer_reloadTimerCounter(cpuTimer);
+    CPUTimer_setEmulationMode(cpuTimer, CPUTIMER_EMULATIONMODE_RUNFREE);
+    CPUTimer_enableInterrupt(cpuTimer);
+}

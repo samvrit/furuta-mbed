@@ -21,6 +21,8 @@ void initEPWM(void);
 void initADCSOC(void);
 void initSCIBFIFO(void);
 void initEQEP(void);
+void initCPUTimer(void);
+void configCPUTimer(uint32_t, uint16_t);
 
 
 
