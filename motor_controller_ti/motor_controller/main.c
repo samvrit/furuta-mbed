@@ -70,8 +70,13 @@ volatile float32_t torqueCommand = 0.0; // torque command as obtained from SCI
 volatile uint32_t CAN_errorFlag = 0;
 volatile bool motorEnableFlag = false;
 
-float32_t torqueFeedback, error, errorInt, dutyCycle, voltage;
-uint16_t newCMPA, direction;
+float32_t torqueFeedback;       // tau = Kt * i
+float32_t error;                // error signal (torque reference - torque feedback)
+float32_t errorInt;             // integral of error signal
+float32_t dutyCycle;            // duty cycle of PWM signal
+float32_t vbridge;              // bridge voltage that has to be applied across the motor
+uint16_t newCMPA, direction;    // outputs for motor driver
+uint16_t motorDriverFaultCount; // indicates a fault in the motor driver
 
 /*==================CLA VARIABLE DEFINITIONS==================*/
 #ifdef __cplusplus
@@ -99,7 +104,9 @@ __interrupt void cla1Isr1();
 __interrupt void canISR();
 __interrupt void cpuTimer0ISR(void);
 interrupt void xint1_isr(void);
+interrupt void xint2_isr(void);
 void currentControl(void);
+void setMotorPWM(void);
 
 /*==================MAIN==================*/
 void main(void)
@@ -116,6 +123,7 @@ void main(void)
     Interrupt_register(INT_CANB0, &canISR);
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     Interrupt_register(INT_XINT1, &xint1_isr);
+    Interrupt_register(INT_XINT2, &xint2_isr);
 
     initSCIBFIFO();
     initCPUTimer();
@@ -136,6 +144,12 @@ void main(void)
     GPIO_setPadConfig(MOTOR_DRIVER_SLEEP_PIN, GPIO_PIN_TYPE_OD);
     GPIO_setDirectionMode(MOTOR_DRIVER_SLEEP_PIN, GPIO_DIR_MODE_OUT);
     GPIO_setPinConfig(GPIO_2_GPIO2);
+
+    // GPIO 3 is configured as a digital input for motor fault indication
+    GPIO_setPadConfig(MOTOR_DRIVER_FAULT_IN, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(MOTOR_DRIVER_FAULT_IN, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(MOTOR_DRIVER_FAULT_IN, GPIO_QUAL_SYNC);  // sync to SYSCLKOUT
+    GPIO_setInterruptPin(MOTOR_DRIVER_FAULT_IN, GPIO_INT_XINT1);
 
     // GPIO 12 is configured as CAN TX B
     GPIO_setPadConfig(12, GPIO_PIN_TYPE_STD);
@@ -176,6 +190,8 @@ void main(void)
 
     GPIO_setInterruptType(GPIO_INT_XINT1, GPIO_INT_TYPE_FALLING_EDGE);
     GPIO_enableInterrupt(GPIO_INT_XINT1);
+    GPIO_setInterruptType(GPIO_INT_XINT2, GPIO_INT_TYPE_FALLING_EDGE);
+    GPIO_enableInterrupt(GPIO_INT_XINT2);
 
     SysCtl_disablePeripheral(SYSCTL_PERIPH_CLK_TBCLKSYNC);  // Disable sync(Freeze clock to PWM as well)
     initEPWM();
@@ -190,9 +206,10 @@ void main(void)
 
     CAN_enableInterrupt(CANB_BASE, CAN_INT_IE0 | CAN_INT_ERROR | CAN_INT_STATUS);   // Enable CANB interrupts
 
-    // Initialize CLA variables
+    // Initialize variables
     adcResultRaw = 0.0;
     errorIntegral = 0.0;
+    motorDriverFaultCount = 0;
     claInputs.enable = 0;
     claInputs.currentAmperes = 0.0;
     claInputs.torqueCommand = 0.0;
@@ -207,6 +224,7 @@ void main(void)
     Interrupt_enable(INT_SCIB_RX);
     Interrupt_enable(INT_CANB0);
     Interrupt_enable(INT_XINT1);
+    Interrupt_enable(INT_XINT2);
     Interrupt_enable(INT_TIMER0);
 
     CAN_enableGlobalInterrupt(CANB_BASE, CAN_GLOBAL_INT_CANINT0);
@@ -234,22 +252,30 @@ void currentControl(void)
     torqueFeedback = MOTOR_CONSTANT_KT * currentSenseA;  // tau = Kt * i
     error = torqueCommand - torqueFeedback;               // compute error signal
     errorInt += error;                                         // integrate error signal
-    errorInt = SATURATE(errorInt, -50.0F, 50.0F);
-    errorInt = motorEnableFlag ? errorInt : 0.0F;
+    errorInt = SATURATE(errorInt, -50.0F, 5.00F);
 
-    voltage = (KP * error) + (KI * errorInt);                  // PI control equation
-    voltage = SATURATE(voltage, -MOTOR_SUPPLY_VOLTAGE, MOTOR_SUPPLY_VOLTAGE);   // saturate voltage to [-Vmotor, Vmotor]
+    vbridge = (KP * error) + (KI * errorInt);                  // PI control equation
+    vbridge = SATURATE(vbridge, -MOTOR_SUPPLY_VOLTAGE, MOTOR_SUPPLY_VOLTAGE);   // saturate voltage to [-Vmotor, Vmotor]
 
-    dutyCycle = voltage * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
+    dutyCycle = vbridge * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
 
-    newCMPA = motorEnableFlag ? (EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle)) : EPWM1_TIMER_TBPRD;         // compute new Compare A register value
-    direction = dutyCycle > 0.0 ? 1 : 0;   // set direction
+    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle);         // compute new Compare A register value
+    direction = error > 0.0 ? 1 : 0;   // set direction
 
     EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, newCMPA);
     GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, direction);
 
-    WAITSTEP;
     GPIO_writePin(DEBUG_PIN, 0);
+}
+
+void setMotorPWM(void)
+{
+    dutyCycle = torqueCommand;  // use the same variable for convenience
+    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)dutyCycle;         // compute new Compare A register value
+    direction = dutyCycle > 0.0 ? 1 : 0;   // set direction
+
+    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, newCMPA);
+    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, direction);
 }
 
 // sciaRXFIFOISR - SCIA Receive FIFO ISR
@@ -265,6 +291,10 @@ __interrupt void scibRXFIFOISR(void)
 
     torqueCommand = uartPacket.value;
 
+#if TEST_MODE
+    setMotorPWM();
+#endif // TEST_MODE
+
     SCI_clearOverflowStatus(SCIB_BASE);
 
     SCI_clearInterruptStatus(SCIB_BASE, SCI_INT_RXFF);
@@ -278,7 +308,17 @@ __interrupt void adcA1ISR(void)
     adcPPBResultRaw = ADC_readPPBResult(ADCARESULT_BASE, ADC_PPB_NUMBER1);    // Add the latest result to the buffer
     currentSenseA = ((float32_t)adcPPBResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
 
+#if !TEST_MODE
+#if USE_CLA
+    GPIO_writePin(DEBUG_PIN, 1);
+    claInputs.currentAmperes = currentSenseA;
+    claInputs.torqueCommand = torqueCommand;
+    claInputs.enable = motorEnableFlag;
+    CLA_forceTasks(CLA1_BASE, CLA_TASKFLAG_1);
+#else
     currentControl();
+#endif // USE_CLA
+#endif // TEST_MODE
 
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);   // Clear the interrupt flag
 
@@ -295,8 +335,9 @@ __interrupt void adcA1ISR(void)
 // cla1Isr1 - CLA1 ISR 1
 __interrupt void cla1Isr1 ()
 {
-//    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, claOutputs.CMPA);
-//    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, claOutputs.direction);
+    GPIO_writePin(DEBUG_PIN, 0);
+    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, claOutputs.CMPA);
+    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, claOutputs.direction);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP11); // Acknowledge the end-of-task interrupt for task 1
     // asm(" ESTOP0");
@@ -362,6 +403,14 @@ __interrupt void cpuTimer0ISR(void)
 interrupt void xint1_isr(void)
 {
     motorEnableFlag = !motorEnableFlag;
+
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);  // Acknowledge this interrupt to get more from group 1
+
+}
+
+interrupt void xint2_isr(void)
+{
+    motorDriverFaultCount++;
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);  // Acknowledge this interrupt to get more from group 1
 
