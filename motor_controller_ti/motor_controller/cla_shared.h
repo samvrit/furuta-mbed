@@ -46,12 +46,15 @@ extern "C" {
 /*==================DEFINES==================*/
 #define WAITSTEP     asm(" RPT #255 || NOP")
 #define CONTROL_CYCLE_TIME_US   20U // microseconds
+#define USE_CLA     0
+#define TEST_MODE   0
 
 #define ADC_RESOLUTION          12
 #define EPWM1_TIMER_TBPRD       1000U
 
 #define MOTOR_DRIVER_DIRECTION_PIN  1U
 #define MOTOR_DRIVER_SLEEP_PIN      2U
+#define MOTOR_DRIVER_FAULT_IN       3U
 #define DEBUG_PIN                   131U
 
 #define MOTOR_SUPPLY_VOLTAGE    12.0F
@@ -64,8 +67,6 @@ extern "C" {
 #define CURR_SENSE_SCALING_FACTOR           (1.0F / CURR_SENSE_SCALING_FACTOR_INVERSE)
 
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
-#define PI                3.14F
-#define MICROSECOND       0.000001F
 
 #define KP 10.08F                          // proportional gain for PI controller
 #define KI 100.30F                        // integral gain for PI controller

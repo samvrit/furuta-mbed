@@ -36,13 +36,11 @@
 
 /*==================INCLUDES==================*/
 #include "cla_shared.h"
-#include "gpio.h"
-#include "epwm.h"
 
 /*==================TASKS==================*/
 __interrupt void Cla1Task1 ( void )
 {
-    float32_t torqueFeedback, error, dutyCycle, voltage;
+    float torqueFeedback, error, dutyCycle, vbridge;
     uint16_t newCMPA, direction;
 
     torqueFeedback = MOTOR_CONSTANT_KT * claInputs.currentAmperes;  // tau = Kt * i
@@ -51,13 +49,13 @@ __interrupt void Cla1Task1 ( void )
     errorIntegral = SATURATE(errorIntegral, -50.0F, 50.0F);
     errorIntegral = claInputs.enable ? errorIntegral : 0.0F;
 
-    voltage = (KP * error) + (KI * errorIntegral);                  // PI control equation
-    voltage = SATURATE(voltage, -MOTOR_SUPPLY_VOLTAGE, MOTOR_SUPPLY_VOLTAGE);   // saturate voltage to [-Vmotor, Vmotor]
+    vbridge = (KP * error) + (KI * errorIntegral);                  // PI control equation
+    vbridge = SATURATE(vbridge, -MOTOR_SUPPLY_VOLTAGE, MOTOR_SUPPLY_VOLTAGE);   // saturate voltage to [-Vmotor, Vmotor]
 
-    dutyCycle = voltage * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
+    dutyCycle = vbridge * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
 
-    newCMPA = claInputs.enable ? (EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle)) : EPWM1_TIMER_TBPRD;         // compute new Compare A register value
-    direction = dutyCycle > 0.0 ? 1 : 0;   // set direction
+    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle);         // compute new Compare A register value
+    direction = error > 0.0 ? 1 : 0;   // set direction
 
     claOutputs.direction = direction;
     claOutputs.CMPA = newCMPA;
