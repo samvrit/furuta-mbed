@@ -202,7 +202,7 @@ void main(void)
 
     // Initialize CANB module
     CAN_initModule(CANB_BASE);
-    CAN_setBitRate(CANB_BASE, DEVICE_SYSCLK_FREQ, 500000, 20);
+    CAN_setBitRate(CANB_BASE, DEVICE_SYSCLK_FREQ, 1000000, 20);
 
     CAN_enableInterrupt(CANB_BASE, CAN_INT_IE0 | CAN_INT_ERROR | CAN_INT_STATUS);   // Enable CANB interrupts
 
@@ -374,6 +374,8 @@ __interrupt void canISR(void)
         // Arrange the data to suit the word length of the F28379D
         uartPacket.buffer[0] = (rDataA[1] << 8) | rDataA[0];
         uartPacket.buffer[1] = (rDataA[3] << 8) | rDataA[2];
+
+        torqueCommand = uartPacket.value;
 
         CAN_clearInterruptStatus(CANB_BASE, CAN_RX_MSG_OBJ_ID);     // Clear the message object interrupt
         CAN_errorFlag = 0;  // Since the message was received, clear any error flags.
