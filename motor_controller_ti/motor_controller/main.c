@@ -62,9 +62,9 @@ FreqCal_Object freq =
 typedef union {
     float32_t value;
     uint16_t buffer[sizeof(float32_t)];
-} uartPacket_t;
+} interfacePacket_t;
 
-volatile uartPacket_t uartPacket;
+volatile interfacePacket_t uartPacket, canPacket;
 volatile float32_t currentSenseA = 0.0; // current sense from ADC, scaled to obtain value in amperes
 volatile float32_t torqueCommand = 0.0; // torque command as obtained from SCI
 volatile uint32_t CAN_errorFlag = 0;
@@ -122,8 +122,8 @@ void main(void)
     Interrupt_register(INT_CLA1_1, &cla1Isr1);  // Configure the vectors for the end-of-task interrupt for task 1
     Interrupt_register(INT_CANB0, &canISR);
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
-    Interrupt_register(INT_XINT1, &xint1_isr);
-    Interrupt_register(INT_XINT2, &xint2_isr);
+    Interrupt_register(INT_XINT1, &xint1_isr);  // push button input
+    Interrupt_register(INT_XINT2, &xint2_isr);  // motor driver fault indication
 
     initSCIBFIFO();
     initCPUTimer();
@@ -372,10 +372,10 @@ __interrupt void canISR(void)
         CAN_readMessage(CANB_BASE, CAN_RX_MSG_OBJ_ID, rDataA);   // Get the received message
 
         // Arrange the data to suit the word length of the F28379D
-        uartPacket.buffer[0] = (rDataA[1] << 8) | rDataA[0];
-        uartPacket.buffer[1] = (rDataA[3] << 8) | rDataA[2];
+        canPacket.buffer[0] = (rDataA[1] << 8) | rDataA[0];
+        canPacket.buffer[1] = (rDataA[3] << 8) | rDataA[2];
 
-        torqueCommand = uartPacket.value;
+        torqueCommand = canPacket.value;
 
         CAN_clearInterruptStatus(CANB_BASE, CAN_RX_MSG_OBJ_ID);     // Clear the message object interrupt
         CAN_errorFlag = 0;  // Since the message was received, clear any error flags.
