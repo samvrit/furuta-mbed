@@ -1,32 +1,41 @@
 #include "mbed.h"
 #include "acquire_feedback.h"
+#include "rtos.h"
 #include <string>
 
 Thread network_thread;
 
-DigitalOut in_A(PF_1);
-DigitalOut in_B(PF_0);
-PwmOut motor_pwm(PA_10);
-
-double pwm_dc = 0.0;
+DigitalOut can_ground(PA_10, 0);
+DigitalOut can_vref(PD_8, 1);
+CAN can1(PA_11, PA_12, 1000000);
 
 Timer timer;
+Ticker ticker;
 int dt = 0;
+
+typedef union {
+    float value;
+    char buffer[sizeof(float)];
+} canPacket_t;
+
+volatile canPacket_t canPacket;
 
 int main()
 {
 
-    in_A = 1;
-    in_B = 0;
-    motor_pwm.period_us(500);
-    motor_pwm.write(pwm_dc);
+    canPacket.value = -0.5;
 
     network_thread.start(callback(sensors_receive));
+
+    ThisThread::sleep_for(2000);
+
+    printf("Sending signal: %02X %02X %02X %02X\r\n", canPacket.buffer[0], canPacket.buffer[1], canPacket.buffer[2], canPacket.buffer[3]);
+    can1.write(CANMessage(0x1, (const char *)&canPacket.buffer, sizeof(float)));
 
     while (1)
     {
         timer.start();
-        osEvent evt = queue.get();
+        osEvent evt = queue.get(0);
         if (evt.status == osEventMessage)
         {
             timer.stop();

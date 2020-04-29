@@ -1,5 +1,8 @@
 {
-    "macros": ["DEVICE_WIFI_AP=1"],
+    "macros": [
+        "DEVICE_WIFI_AP=1",
+        "__FPU_PRESENT=1"
+    ],
     "config": {
         "wifi-ssid": {
             "help": "AP SSID",
