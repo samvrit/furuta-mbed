@@ -271,7 +271,7 @@ void currentControl(void)
 void setMotorPWM(void)
 {
     dutyCycle = torqueCommand;  // use the same variable for convenience
-    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)dutyCycle;         // compute new Compare A register value
+    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle);         // compute new Compare A register value
     direction = dutyCycle > 0.0 ? 1 : 0;   // set direction
 
     EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, newCMPA);
