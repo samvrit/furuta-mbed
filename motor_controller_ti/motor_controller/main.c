@@ -50,6 +50,8 @@
 int16_t adcPPBResultRaw;
 uint16_t adcResultRaw;
 float32_t adcResultRawLPF;
+uint16_t adcMax = 0;
+uint16_t adcMin = 4096;
 uint16_t rDataA[COMM_MSG_RECV_DATA_LENGTH];
 
 FreqCal_Object freq =
@@ -305,8 +307,12 @@ __interrupt void scibRXFIFOISR(void)
 // ADC A Interrupt 1 ISR
 __interrupt void adcA1ISR(void)
 {
+    adcResultRaw = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);
     adcPPBResultRaw = ADC_readPPBResult(ADCARESULT_BASE, ADC_PPB_NUMBER1);    // Add the latest result to the buffer
     currentSenseA = ((float32_t)adcPPBResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
+
+    adcMax = adcResultRaw > adcMax ? adcResultRaw : adcMax;
+    adcMin = adcResultRaw < adcMin ? adcResultRaw : adcMin;
 
 #if !TEST_MODE
 #if USE_CLA
