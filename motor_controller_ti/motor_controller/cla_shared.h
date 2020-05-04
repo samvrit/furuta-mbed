@@ -47,7 +47,7 @@ extern "C" {
 #define WAITSTEP     asm(" RPT #255 || NOP")
 #define CONTROL_CYCLE_TIME_US   20U // microseconds
 #define USE_CLA     0
-#define TEST_MODE   0
+#define TEST_MODE   1
 
 #define ADC_RESOLUTION          12
 #define EPWM1_TIMER_TBPRD       1000U
@@ -63,7 +63,7 @@ extern "C" {
 #define MOTOR_SPEED_THRESHOLD_HZ            10000U  // Hz (encoder pulses)
 
 #define CURR_SENSE_OFFSET                   2160U
-#define CURR_SENSE_SCALING_FACTOR_INVERSE   81.9F
+#define CURR_SENSE_SCALING_FACTOR_INVERSE   151.55F
 #define CURR_SENSE_SCALING_FACTOR           (1.0F / CURR_SENSE_SCALING_FACTOR_INVERSE)
 
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
