@@ -1,6 +1,7 @@
 #include "mbed.h"
 #include "acquire_feedback.h"
 #include "AMT203.h"
+#include "furuta_model.h"
 #include "rtos.h"
 #include "arm_math.h"
 #include <string>
