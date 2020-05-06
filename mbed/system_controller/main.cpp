@@ -1,11 +1,15 @@
 #include "mbed.h"
 #include "acquire_feedback.h"
-#include "encoder_feedback.h"
+#include "AMT203.h"
 #include "rtos.h"
 #include "arm_math.h"
 #include <string>
 
 Thread network_thread;
+
+SPI encoder_spi(D11, D12, D13); // MOSI, MISO, CLK
+DigitalOut cs(D10); // chip select for encoder
+AMT203 encoder(&encoder_spi, &cs);
 
 CAN can1(PA_11, PA_12, 1000000);
 
@@ -39,7 +43,7 @@ int main()
     {
         timer.start();
 
-        float position = get_position();
+        float position = encoder.get_position_minus_pi_to_plus_pi();
         
         ThisThread::sleep_for(5000);
 
