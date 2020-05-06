@@ -8,8 +8,8 @@
 Thread network_thread;
 
 SPI encoder_spi(D11, D12, D13); // MOSI, MISO, CLK
-DigitalOut cs(D10); // chip select for encoder
-AMT203 encoder(&encoder_spi, &cs);
+DigitalOut encoder_cs(D10); // chip select for encoder
+AMT203 encoder(&encoder_spi, &encoder_cs);
 
 CAN can1(PA_11, PA_12, 1000000);
 
