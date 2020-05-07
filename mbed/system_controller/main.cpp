@@ -1,7 +1,7 @@
 #include "mbed.h"
 #include "acquire_feedback.h"
 #include "AMT203.h"
-#include "furuta_model.h"
+#include "kalman_filter.h"
 #include "rtos.h"
 #include "arm_math.h"
 #include <string>
@@ -35,7 +35,7 @@ int main()
 
     ThisThread::sleep_for(2000);
 
-    
+    matrices_init();
 
     printf("Sending signal: %02X %02X %02X %02X\r\n", canPacket.buffer[0], canPacket.buffer[1], canPacket.buffer[2], canPacket.buffer[3]);
     can1.write(CANMessage(0x1, (const char *)&canPacket.buffer, sizeof(float)));
