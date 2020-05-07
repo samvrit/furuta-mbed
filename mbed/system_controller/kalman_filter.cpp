@@ -32,12 +32,12 @@ const float32_t LQR_gain_f32[6] =
     3.1623, -122.7917, -348.0623, 5.8876, -46.2046, -51.4185
 };
 
-float32_t Xest_f32[6];                              // (A - B*K)*Xest (a priori)
-float32_t measurement_vector_f32[3];                // z
-float32_t measurement_prediction_vector_f32[3];     // C*Xest
-float32_t measurement_error_vector_f32[3];          // z - C*Xest
-float32_t correction_vector_f32[6];                 // KalmanGain*(z - C*Xest)
-float32_t u_f32[1];                                 // torque command (-K*u)
+float32_t Xest_f32[6];
+float32_t measurement_vector_f32[3];
+float32_t measurement_prediction_vector_f32[3];
+float32_t measurement_error_vector_f32[3];
+float32_t correction_vector_f32[6];
+float32_t u_f32[1];
 
 arm_matrix_instance_f32 A_minus_B_K;
 arm_matrix_instance_f32 C;
