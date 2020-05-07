@@ -33,6 +33,7 @@ const float32_t LQR_gain_f32[6] =
 };
 
 float32_t Xest_f32[6];
+float32_t Xest_prev_f32[6];
 float32_t measurement_vector_f32[3];
 float32_t measurement_prediction_vector_f32[3];
 float32_t measurement_error_vector_f32[3];
@@ -44,6 +45,7 @@ arm_matrix_instance_f32 C;
 arm_matrix_instance_f32 Kalman_gain;
 arm_matrix_instance_f32 LQR_gain;
 arm_matrix_instance_f32 Xest;
+arm_matrix_instance_f32 Xest_prev;
 arm_matrix_instance_f32 measurement_vector;
 arm_matrix_instance_f32 measurement_prediction_vector;
 arm_matrix_instance_f32 measurement_error_vector;
@@ -74,6 +76,10 @@ void matrices_init(void)
     srcColumns = 1;
     arm_mat_init_f32(&Xest, srcRows, srcColumns, (float32_t *)Xest_f32);
 
+    srcRows = 6;
+    srcColumns = 1;
+    arm_mat_init_f32(&Xest_prev, srcRows, srcColumns, (float32_t *)Xest_prev_f32);
+
     srcRows = 3;
     srcColumns = 1;
     arm_mat_init_f32(&measurement_vector, srcRows, srcColumns, (float32_t *)measurement_vector_f32);
@@ -94,4 +100,51 @@ void matrices_init(void)
     srcColumns = 1;
     arm_mat_init_f32(&u, srcRows, srcColumns, (float32_t *)u_f32);
 
+}
+
+int compute_a_priori(void)
+{
+    const arm_status status = arm_mat_mult_f32(&A_minus_B_K, &Xest_prev, &Xest);
+
+    if(ARM_MATH_SUCCESS == status)
+    {
+        return 1;
+    }
+    else return 0;
+}
+
+int compute_a_posteriori(void)
+{
+    const arm_status status1 = arm_mat_mult_f32(&C, &Xest_prev, &measurement_prediction_vector);
+    const arm_status status2 = arm_mat_sub_f32(&measurement_vector, &measurement_prediction_vector, &measurement_error_vector);
+    const arm_status status3 = arm_mat_mult_f32(&Kalman_gain, &measurement_error_vector, &correction_vector);
+
+    if((ARM_MATH_SUCCESS == status1) && (ARM_MATH_SUCCESS == status2) && (ARM_MATH_SUCCESS == status3))
+    {
+        return 1;
+    }
+    else return 0;
+}
+
+int add_a_priori_a_posteriori(void)
+{
+    const arm_status status = arm_mat_add_f32(&Xest, &correction_vector, &Xest);
+
+    if(ARM_MATH_SUCCESS == status)
+    {
+        return 1;
+    }
+    else return 0;
+}
+
+int compute_torque_command(void)
+{
+    const arm_status status = arm_mat_mult_f32(&LQR_gain, &Xest, &u);
+    *u_f32 *= -1.0f;    // multiply with -1 because equation is u = -K*x
+
+    if(ARM_MATH_SUCCESS == status)
+    {
+        return 1;
+    }
+    else return 0;
 }
