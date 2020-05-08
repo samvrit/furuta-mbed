@@ -11,8 +11,8 @@ static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
 OdinWiFiInterface *_wifi;
 #define ECHO_SERVER_PORT 5050
 
-MemoryPool<udp_frame, 12> mpool;
-Queue<udp_frame, 12> queue;
+MemoryPool<udpPacket_t, 12> mpool;
+Queue<udpPacket_t, 12> queue;
 
 static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
 {
@@ -48,29 +48,11 @@ static void stop_ap()
     printf("\nAP stopped\r\n");
 }
 
-int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
-{
-    if (buffer && frame) // check for null pointer
-    {
-        frame->pos_rad = (*(buffer + 1) << 8) | (*(buffer + 0));
-        frame->vel_sign = *(buffer + 2);
-        frame->vel_rad = (*(buffer + 6) << 24) | (*(buffer + 5) << 16) | (*(buffer + 4) << 8) | (*(buffer + 3));
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
-}
-
 void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
 {
-    udp_frame *frame = mpool.alloc();
-    if (deserialize_frame((unsigned char *)recv_buf, frame) == 0)
-    {
-        if ((frame->pos_rad <= 628) && (frame->vel_sign == 0 || frame->vel_sign == 1))  // onlu add valid frames to queue
-            queue.put(frame);
-    }
+    udpPacket_t *frame = mpool.alloc();
+    memcpy(frame, recv_buf, 4);
+    queue.put(frame);
 }
 
 void sensors_receive()

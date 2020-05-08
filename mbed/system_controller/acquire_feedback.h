@@ -9,10 +9,13 @@ struct udp_frame
     unsigned int vel_rad;
 };
 
-extern MemoryPool<udp_frame, 12> mpool;
-extern Queue<udp_frame, 12> queue;
+typedef union {
+    float value;
+    char buffer[sizeof(float)];
+} udpPacket_t;
 
-int deserialize_frame(unsigned char *buffer, struct udp_frame *frame);
+extern MemoryPool<udpPacket_t, 12> mpool;
+extern Queue<udpPacket_t, 12> queue;
 
 void process_data(unsigned char *recv_buf, nsapi_addr_t *address);
 
