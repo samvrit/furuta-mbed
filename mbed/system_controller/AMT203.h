@@ -16,6 +16,6 @@ private:
     SPI *_spi_handle;
     DigitalOut *_cs;
     uint8_t _timeoutCounter = 0;
-    uint16_t _currentPosition = 0;
+    int16_t _currentPosition = 0;
     void _init(void);
 };

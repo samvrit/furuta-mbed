@@ -67,7 +67,7 @@ float AMT203::get_position_minus_pi_to_plus_pi(void)
 
 void AMT203::_init(void)
 {
-    _spi_handle->frequency(500000);
+    _spi_handle->frequency(100000);
     _spi_handle->format(8, 0, 0);
     _spi_handle->clear_transfer_buffer();
     _cs->write(1);

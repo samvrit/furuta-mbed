@@ -45,8 +45,10 @@ int main()
         timer.start();
 
         float position = encoder.get_position_minus_pi_to_plus_pi();
+
+        printf("Position: %.5f rad\r\n", position);
         
-        ThisThread::sleep_for(5000);
+        ThisThread::sleep_for(10);
 
         osEvent evt = queue.get(0);
         if (evt.status == osEventMessage)
