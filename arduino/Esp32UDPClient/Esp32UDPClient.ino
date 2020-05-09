@@ -5,7 +5,7 @@
 
 //===================Defines===================//
 #define PI 3.1415F
-#define ANGLE_SCALING_FACTOR (PI/(1U << 16U))
+#define ANGLE_SCALING_FACTOR (-PI/32768U) // reverse sign to comply with model
 
 //===================Global Variables===================//
 typedef union {
@@ -13,9 +13,6 @@ typedef union {
     char buffer[sizeof(float)];
 } udpPacket_t;
 udpPacket_t udpPacket;
-unsigned long t0 = 0, t1 = 0, dt = 0;
-double velocity = 0.0;
-unsigned int previous_position;
 byte mac[6];
 bool device1, device2;
 //==================================================//
