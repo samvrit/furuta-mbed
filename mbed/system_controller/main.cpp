@@ -46,16 +46,23 @@ int main()
 
         //float position = encoder.get_position_minus_pi_to_plus_pi();
 
-        osEvent evt = queue.get();
+        osEvent evt = queue.get(1);
         if (evt.status == osEventMessage)
         {
             timer.stop();
             dt = timer.read_us();
             timer.reset();
             udpPacket_t *frame = (udpPacket_t *)evt.value.p;
-            printf("\n%d | Received: %.5f\r\n", dt, frame->value);
+            printf("%d | Received: %.5f\r\n", dt, frame->value);
 
             mpool.free(frame);
+        }
+        else
+        {
+            timer.stop();
+            dt = timer.read_us();
+            timer.reset();
+            printf("%d, SNA\r\n", dt);
         }
     }
 
