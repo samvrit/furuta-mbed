@@ -8,11 +8,14 @@ static const char *ap_netmask = MBED_CONF_APP_AP_NETMASK;
 static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
 #endif
 
+void process_data(unsigned char *recv_buf, const nsapi_addr_t *address);
+
 OdinWiFiInterface *_wifi;
 #define ECHO_SERVER_PORT 5050
 
-MemoryPool<udpPacket_t, 12> mpool;
-Queue<udpPacket_t, 12> queue;
+Mutex resource_lock;
+
+volatile udpPacket_t x2, x3;
 
 static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
 {
@@ -48,11 +51,30 @@ static void stop_ap()
     printf("\nAP stopped\r\n");
 }
 
-void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
+float get_x2(void)
 {
-    udpPacket_t *frame = mpool.alloc();
-    memcpy(frame, recv_buf, 4);
-    queue.put(frame);
+    return x2.value;
+}
+
+float get_x3(void)
+{
+    return x3.value;
+}
+
+void process_data(unsigned char *recv_buf, const nsapi_addr_t *address)
+{
+    if(10U == address->bytes[3])
+    {
+        resource_lock.lock();
+        memcpy((void *)x2.buffer, recv_buf, 4);
+        resource_lock.unlock();
+    }
+    else if(5U == address->bytes[3])
+    {
+        resource_lock.lock();
+        memcpy((void *)x3.buffer, recv_buf, 4);
+        resource_lock.unlock();
+    }
 }
 
 void sensors_receive()
