@@ -25,11 +25,20 @@ typedef union {
 
 volatile canPacket_t canPacket;
 
+float x1_val = 0.0f, x2_val = 0.0f, x3_val = 0.0f;
+
+void get_state(void)
+{
+    x2_val = get_x2();
+    x3_val = get_x3();
+}
+
 
 int main()
 {
     
     canPacket.value = -0.5;
+    ticker.attach_us(&get_state, 20);
 
     network_thread.start(callback(sensors_receive));
 
@@ -40,29 +49,15 @@ int main()
     printf("Sending signal: %02X %02X %02X %02X\r\n", canPacket.buffer[0], canPacket.buffer[1], canPacket.buffer[2], canPacket.buffer[3]);
     can1.write(CANMessage(0x1, (const char *)&canPacket.buffer, sizeof(float)));
 
+    timer.start();
     while (1)
     {
-        timer.start();
-
-        //float position = encoder.get_position_minus_pi_to_plus_pi();
-
-        osEvent evt = queue.get(1);
-        if (evt.status == osEventMessage)
+        dt = timer.read_us();
+        if(dt >= 100)
         {
-            timer.stop();
-            dt = timer.read_us();
+            x1_val = encoder.get_position_minus_pi_to_plus_pi();
             timer.reset();
-            udpPacket_t *frame = (udpPacket_t *)evt.value.p;
-            printf("%d | Received: %.5f\r\n", dt, frame->value);
-
-            mpool.free(frame);
-        }
-        else
-        {
-            timer.stop();
-            dt = timer.read_us();
-            timer.reset();
-            printf("%d, SNA\r\n", dt);
+            printf("%d | %.5f | %.5f | %.5f\r\n", dt, x1_val, x2_val, x3_val);
         }
     }
 

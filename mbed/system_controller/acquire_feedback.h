@@ -14,9 +14,7 @@ typedef union {
     char buffer[sizeof(float)];
 } udpPacket_t;
 
-extern MemoryPool<udpPacket_t, 12> mpool;
-extern Queue<udpPacket_t, 12> queue;
-
-void process_data(unsigned char *recv_buf, nsapi_addr_t *address);
+float get_x2(void);
+float get_x3(void);
 
 void sensors_receive();
