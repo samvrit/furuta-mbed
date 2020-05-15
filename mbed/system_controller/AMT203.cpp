@@ -7,7 +7,7 @@
 #define PI                      3.1415F
 #define ANGLE_SCALING_FACTOR    (PI / 2048U)
 
-AMT203::AMT203(SPI *spi_handle, DigitalOut *cs): _spi_handle(spi_handle), _cs(cs)
+AMT203::AMT203(SPI *spi_handle, DigitalOut *cs, uint32_t frequncy): _spi_handle(spi_handle), _cs(cs), _frequency(frequncy)
 {
     _init();
 }
@@ -15,7 +15,6 @@ AMT203::AMT203(SPI *spi_handle, DigitalOut *cs): _spi_handle(spi_handle), _cs(cs
 uint16_t AMT203::get_position_raw(void)
 {
     _timeoutCounter = 0;     //our timeout incrementer
-    _currentPosition = 0;   //this 16 bit variable will hold our 12-bit position
 
     uint8_t data = SPIWrite(rd_pos);
     
@@ -41,7 +40,6 @@ uint16_t AMT203::get_position_raw(void)
 float AMT203::get_position_minus_pi_to_plus_pi(void)
 {
     _timeoutCounter = 0;     //our timeout incrementer
-    _currentPosition = 0;   //this 16 bit variable will hold our 12-bit position
 
     uint8_t data = SPIWrite(rd_pos);
     
@@ -67,8 +65,8 @@ float AMT203::get_position_minus_pi_to_plus_pi(void)
 
 void AMT203::_init(void)
 {
-    _spi_handle->frequency(500000);
-    _spi_handle->format(8, 0, 0);
+    _spi_handle->frequency(_frequency);
+    _spi_handle->format(8, 0);
     _spi_handle->clear_transfer_buffer();
     _cs->write(1);
 }
