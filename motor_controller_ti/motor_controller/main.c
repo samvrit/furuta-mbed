@@ -68,9 +68,10 @@ typedef union {
 
 volatile interfacePacket_t uartPacket, canPacket;
 volatile float32_t currentSenseA = 0.0; // current sense from ADC, scaled to obtain value in amperes
+volatile float32_t currentSenseALPF = 0.0;
 volatile float32_t torqueCommand = 0.0; // torque command as obtained from SCI
 volatile uint32_t CAN_errorFlag = 0;
-volatile bool motorEnableFlag = false;
+volatile bool motorEnableFlag = true;
 
 float32_t torqueFeedback;       // tau = Kt * i
 float32_t error;                // error signal (torque reference - torque feedback)
@@ -262,7 +263,7 @@ void currentControl(void)
     dutyCycle = vbridge * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
 
     newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle);         // compute new Compare A register value
-    direction = error > 0.0 ? 1 : 0;   // set direction
+    direction = vbridge > 0.0 ? 1 : 0;   // set direction
 
     EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, newCMPA);
     GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, direction);
@@ -309,18 +310,25 @@ __interrupt void adcA1ISR(void)
 {
     adcResultRaw = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);
     adcPPBResultRaw = ADC_readPPBResult(ADCARESULT_BASE, ADC_PPB_NUMBER1);    // Add the latest result to the buffer
-    currentSenseA = ((float32_t)adcPPBResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
 
+    // The current sensor is a little weird - it has different linearity constants for positive current and negative current.
+    // The scaling factors were determined by passing a known amount of current (+1A and -1A) through the sensor and monitoring the ADC value after a heavy low pass filter.
+    currentSenseA = (adcPPBResultRaw > 0) ? ((float32_t)adcPPBResultRaw) * CURR_SENSE_POS_SCALING_FACTOR : ((float32_t)adcPPBResultRaw) * CURR_SENSE_NEG_SCALING_FACTOR;
+
+    // Debug variables
     adcMax = adcResultRaw > adcMax ? adcResultRaw : adcMax;
     adcMin = adcResultRaw < adcMin ? adcResultRaw : adcMin;
+
+    LOW_PASS_FILTER(adcResultRawLPF, (float32_t)adcResultRaw, CURR_SENSE_LPF_CONST);
+    LOW_PASS_FILTER(currentSenseALPF, currentSenseA, CURR_SENSE_LPF_CONST);
 
 #if !TEST_MODE
 #if USE_CLA
     GPIO_writePin(DEBUG_PIN, 1);
-    claInputs.currentAmperes = currentSenseA;
-    claInputs.torqueCommand = torqueCommand;
-    claInputs.enable = motorEnableFlag;
-    CLA_forceTasks(CLA1_BASE, CLA_TASKFLAG_1);
+    claInputs.currentAmperes = currentSenseA;       // set current value
+    claInputs.torqueCommand = torqueCommand;        // set torque command
+    claInputs.enable = motorEnableFlag;             // set enable bit
+    CLA_forceTasks(CLA1_BASE, CLA_TASKFLAG_1);      // force CLA task of PI controller
 #else
     currentControl();
 #endif // USE_CLA

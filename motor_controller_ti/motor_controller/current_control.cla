@@ -55,7 +55,7 @@ __interrupt void Cla1Task1 ( void )
     dutyCycle = vbridge * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
 
     newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle);         // compute new Compare A register value
-    direction = error > 0.0 ? 1 : 0;   // set direction
+    direction = vbridge > 0.0 ? 1 : 0;   // set direction
 
     claOutputs.direction = direction;
     claOutputs.CMPA = newCMPA;
