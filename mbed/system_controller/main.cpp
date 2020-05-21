@@ -1,21 +1,22 @@
 #include "mbed.h"
 #include "acquire_feedback.h"
-#include "AMT203.h"
 #include "kalman_filter.h"
 #include "rtos.h"
 #include "arm_math.h"
 #include <string>
 
-Thread network_thread;
+Thread sensors_thread(priority = osPriorityHigh);
+Thread communication_thread(priority = osPriorityHigh1);
+Thread controls_thread(priority = osPriorityRealtime);
 
 SPI encoder_spi(D11, D12, D13); // MOSI, MISO, CLK
 DigitalOut encoder_cs(D10); // chip select for encoder
-AMT203 encoder(&encoder_spi, &encoder_cs, 1000000);
 
 CAN can1(PA_11, PA_12, 1000000);
 
 Timer timer;
-Ticker ticker;
+Ticker ticker_20kHz;
+Ticker ticker_10kHz;
 int dt = 0;
 
 typedef union {
@@ -40,7 +41,7 @@ int main()
     canPacket.value = -0.5;
     ticker.attach_us(&get_state, 20);
 
-    network_thread.start(callback(sensors_receive));
+    sensors_thread.start(callback(sensors_receive));
 
     ThisThread::sleep_for(2000);
 
