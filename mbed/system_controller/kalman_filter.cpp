@@ -1,4 +1,7 @@
 #include "kalman_filter.h"
+#include "acquire_feedback.h"
+
+EventQueue control_queue(32 * EVENTS_EVENT_SIZE);
 
 const float32_t A_minus_B_K_f32[36] = 
 {
@@ -147,4 +150,16 @@ int compute_torque_command(void)
         return 1;
     }
     else return 0;
+}
+
+void control_loop(void)
+{
+    osEvent evt = feedback_queue.get(0);
+    if (evt.status == osEventMessage)
+    {
+        state_vector *X = (state_vector*)evt.value.p;
+
+
+        mpool.free(X);
+    }
 }

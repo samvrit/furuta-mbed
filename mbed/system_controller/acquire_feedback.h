@@ -2,19 +2,14 @@
 #include "OdinWiFiInterface.h"
 #include <string>
 
-struct udp_frame
-{
-    unsigned short pos_rad;
-    uint8_t vel_sign;
-    unsigned int vel_rad;
-};
-
 typedef union {
     float value;
     char buffer[sizeof(float)];
 } udpPacket_t;
 
-float get_x2(void);
-float get_x3(void);
+typedef struct { float x[3]; } state_vector;
+
+extern MemoryPool<state_vector, 16> mpool;
+extern Queue<state_vector, 16> feedback_queue;
 
 void sensors_receive();

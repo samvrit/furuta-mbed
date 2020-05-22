@@ -21,7 +21,7 @@ int dt = 0;
 
 void task_20kHz(void)
 {
-
+    control_queue.call(control_loop);
 }
 
 void task_10kHz(void)
@@ -36,9 +36,10 @@ int main()
     ThisThread::sleep_for(2000);
 
     can_communication_thread.start(callback(&can_queue, &EventQueue::dispatch_forever));
+    controls_thread.start(callback(&control_queue, &EventQueue::dispatch_forever));
 
     ticker_20kHz.attach_us(task_20kHz, 50);
-    ticker_10kHz.attach_us(task_10kHz, 100);
+    ticker_10kHz.attach(task_10kHz, 1);
 
     matrices_init();
 

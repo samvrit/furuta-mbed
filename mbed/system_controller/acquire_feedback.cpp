@@ -13,7 +13,10 @@ void process_data(unsigned char *recv_buf, const nsapi_addr_t *address);
 OdinWiFiInterface *_wifi;
 #define ECHO_SERVER_PORT 5050
 
-Mutex resource_lock;
+MemoryPool<state_vector, 16> mpool;
+Queue<state_vector, 16> feedback_queue;
+
+state_vector *x_vect = mpool.alloc();
 
 volatile udpPacket_t x2, x3;
 
@@ -51,30 +54,20 @@ static void stop_ap()
     printf("\nAP stopped\r\n");
 }
 
-float get_x2(void)
-{
-    return x2.value;
-}
-
-float get_x3(void)
-{
-    return x3.value;
-}
-
 void process_data(unsigned char *recv_buf, const nsapi_addr_t *address)
 {
     if(10U == address->bytes[3])
     {
-        resource_lock.lock();
         memcpy((void *)x2.buffer, recv_buf, 4);
-        resource_lock.unlock();
+        x_vect->x[1] = x2.value;
     }
     else if(5U == address->bytes[3])
     {
-        resource_lock.lock();
         memcpy((void *)x3.buffer, recv_buf, 4);
-        resource_lock.unlock();
+        x_vect->x[2] = x3.value;
     }
+
+    feedback_queue.put(x_vect);
 }
 
 void sensors_receive()

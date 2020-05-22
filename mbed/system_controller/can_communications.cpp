@@ -9,10 +9,11 @@ typedef union {
     char buffer[sizeof(float)];
 } canPacket_t;
 
-volatile canPacket_t canPacket;
+volatile canPacket_t canPacket = {.value = 0.0f};
 
 void can_send(void)
 {
-    canPacket.value = -0.5;
+    const float i = 0.01f;
+    canPacket.value += i;
     can1.write(CANMessage(0x1, (const char *)&canPacket.buffer, sizeof(float)));
 }

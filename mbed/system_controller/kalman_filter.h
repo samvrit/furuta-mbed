@@ -1,6 +1,8 @@
 #include "mbed.h"
 #include "arm_math.h"
 
+extern EventQueue control_queue;
+
 extern const float32_t A_minus_B_K_f32[36];
 
 extern const float32_t C_f32[18];
@@ -35,3 +37,4 @@ int compute_a_posteriori(void);
 int add_a_priori_a_posteriori(void);
 int compute_torque_command(void);
 
+void control_loop(void);
