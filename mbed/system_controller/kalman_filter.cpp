@@ -158,8 +158,12 @@ void control_loop(void)
     if (evt.status == osEventMessage)
     {
         state_vector *X = (state_vector*)evt.value.p;
-
+        printf("X1: %.5f | X2: %.5f\r\n", X->x[1], X->x[2]);
 
         mpool.free(X);
+    }
+    else if(evt.status == osEventTimeout)
+    {
+
     }
 }

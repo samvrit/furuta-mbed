@@ -16,8 +16,6 @@ OdinWiFiInterface *_wifi;
 MemoryPool<state_vector, 16> mpool;
 Queue<state_vector, 16> feedback_queue;
 
-state_vector *x_vect = mpool.alloc();
-
 volatile udpPacket_t x2, x3;
 
 static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
@@ -56,15 +54,19 @@ static void stop_ap()
 
 void process_data(unsigned char *recv_buf, const nsapi_addr_t *address)
 {
+    state_vector *x_vect = mpool.alloc();
+
     if(10U == address->bytes[3])
     {
         memcpy((void *)x2.buffer, recv_buf, 4);
         x_vect->x[1] = x2.value;
+        //printf("Got X1: %.5f\r\n", x2.value);
     }
     else if(5U == address->bytes[3])
     {
         memcpy((void *)x3.buffer, recv_buf, 4);
         x_vect->x[2] = x3.value;
+        //printf("Got X2: %.5f\r\n", x3.value);
     }
 
     feedback_queue.put(x_vect);

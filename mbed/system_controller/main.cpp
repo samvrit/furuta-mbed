@@ -6,7 +6,7 @@
 #include "arm_math.h"
 #include <string>
 
-Thread sensors_thread(osPriorityHigh);
+Thread sensors_thread(osPriorityRealtime1);
 Thread can_communication_thread(osPriorityHigh1);
 Thread controls_thread(osPriorityRealtime);
 
@@ -33,7 +33,7 @@ int main()
 {
     sensors_thread.start(callback(sensors_receive));
 
-    ThisThread::sleep_for(2000);
+    ThisThread::sleep_for(20000);
 
     can_communication_thread.start(callback(&can_queue, &EventQueue::dispatch_forever));
     controls_thread.start(callback(&control_queue, &EventQueue::dispatch_forever));
