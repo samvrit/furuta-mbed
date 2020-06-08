@@ -8,11 +8,14 @@ static const char *ap_netmask = MBED_CONF_APP_AP_NETMASK;
 static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
 #endif
 
+void process_data(unsigned char *recv_buf, const nsapi_addr_t *address);
+
 OdinWiFiInterface *_wifi;
 #define ECHO_SERVER_PORT 5050
 
-MemoryPool<udp_frame, 12> mpool;
-Queue<udp_frame, 12> queue;
+Mutex resource_lock;
+
+volatile udpPacket_t x2, x3;
 
 static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
 {
@@ -48,28 +51,29 @@ static void stop_ap()
     printf("\nAP stopped\r\n");
 }
 
-int deserialize_frame(unsigned char *buffer, struct udp_frame *frame)
+float get_x2(void)
 {
-    if (buffer && frame) // check for null pointer
-    {
-        frame->pos_rad = (*(buffer + 1) << 8) | (*(buffer + 0));
-        frame->vel_sign = *(buffer + 2);
-        frame->vel_rad = (*(buffer + 6) << 24) | (*(buffer + 5) << 16) | (*(buffer + 4) << 8) | (*(buffer + 3));
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
+    return x2.value;
 }
 
-void process_data(unsigned char *recv_buf, nsapi_addr_t *address)
+float get_x3(void)
 {
-    udp_frame *frame = mpool.alloc();
-    if (deserialize_frame((unsigned char *)recv_buf, frame) == 0)
+    return x3.value;
+}
+
+void process_data(unsigned char *recv_buf, const nsapi_addr_t *address)
+{
+    if(10U == address->bytes[3])
     {
-        if ((frame->pos_rad <= 628) && (frame->vel_sign == 0 || frame->vel_sign == 1))  // onlu add valid frames to queue
-            queue.put(frame);
+        resource_lock.lock();
+        memcpy((void *)x2.buffer, recv_buf, 4);
+        resource_lock.unlock();
+    }
+    else if(5U == address->bytes[3])
+    {
+        resource_lock.lock();
+        memcpy((void *)x3.buffer, recv_buf, 4);
+        resource_lock.unlock();
     }
 }
 
