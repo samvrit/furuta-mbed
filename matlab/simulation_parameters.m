@@ -13,7 +13,7 @@ actuator_noise_variance = 0.0001;
 Ts = 100e-6;
 
 transport_delay_wifi = 5e-6;
-zero_order_hold_measurement = Ts; % seconds -- this is the cycle time of high level controller
+zero_order_hold_measurement = 500e-6; % seconds -- this is the cycle time of high level controller
 zero_order_hold_torque_command = 100e-6;
 
 Q_process = 1;

@@ -319,7 +319,7 @@ __interrupt void adcA1ISR(void)
     adcMax = adcResultRaw > adcMax ? adcResultRaw : adcMax;
     adcMin = adcResultRaw < adcMin ? adcResultRaw : adcMin;
 
-    LOW_PASS_FILTER(adcResultRawLPF, (float32_t)adcResultRaw, CURR_SENSE_LPF_CONST);
+    LOW_PASS_FILTER(adcResultRawLPF, (float32_t)adcPPBResultRaw, CURR_SENSE_LPF_CONST);
     LOW_PASS_FILTER(currentSenseALPF, currentSenseA, CURR_SENSE_LPF_CONST);
 
 #if !TEST_MODE

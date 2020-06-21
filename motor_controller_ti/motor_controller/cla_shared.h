@@ -47,10 +47,11 @@ extern "C" {
 #define WAITSTEP     asm(" RPT #255 || NOP")
 #define CONTROL_CYCLE_TIME_US   20U // microseconds
 #define USE_CLA     1
-#define TEST_MODE   0
+#define TEST_MODE   1
 
 #define ADC_RESOLUTION          12
 #define EPWM1_TIMER_TBPRD       1000U
+#define TIMESTEP                (2e-8F * EPWM1_TIMER_TBPRD)
 #define PI                      3.1415F
 
 #define MOTOR_DRIVER_DIRECTION_PIN  1U
@@ -64,16 +65,16 @@ extern "C" {
 #define MOTOR_SPEED_THRESHOLD_HZ            10000U  // Hz (encoder pulses)
 
 #define CURR_SENSE_LPF_CONST                    2.0F*PI*(10.0F/20000.0F)
-#define CURR_SENSE_OFFSET                       2160U       // determined by observing the ADC value after applying a very heavy LPF
-#define CURR_SENSE_POS_SCALING_FACTOR_INVERSE   210U        // determined by observing the change in ADC value for +1A of current after applying a very heavy LPF
-#define CURR_SENSE_NEG_SCALING_FACTOR_INVERSE   110U        // determined by observing the change in ADC value for -1A of current after applying a very heavy LPF
+#define CURR_SENSE_OFFSET                       2165U       // determined by observing the ADC value after applying a very heavy LPF
+#define CURR_SENSE_POS_SCALING_FACTOR_INVERSE   170U        // determined by observing the change in ADC value for +1A of current after applying a very heavy LPF
+#define CURR_SENSE_NEG_SCALING_FACTOR_INVERSE   158U        // determined by observing the change in ADC value for -1A of current after applying a very heavy LPF
 #define CURR_SENSE_POS_SCALING_FACTOR           (1.0F / CURR_SENSE_POS_SCALING_FACTOR_INVERSE)
 #define CURR_SENSE_NEG_SCALING_FACTOR           (1.0F / CURR_SENSE_NEG_SCALING_FACTOR_INVERSE)
 
 #define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
 
-#define KP 10.08F                          // proportional gain for PI controller
-#define KI 100.30F                        // integral gain for PI controller
+#define KP 91.6F                          // proportional gain for PI controller
+#define KI 110090.0F                      // integral gain for PI controller
 
 #define CAN_RX_MSG_OBJ_ID               2
 #define COMM_MSG_RECV_DATA_LENGTH       4

@@ -49,7 +49,7 @@ __interrupt void Cla1Task1 ( void )
     errorIntegral = SATURATE(errorIntegral, -50.0F, 50.0F);
     errorIntegral = claInputs.enable ? errorIntegral : 0.0F;
 
-    vbridge = (KP * error) + (KI * errorIntegral);                  // PI control equation
+    vbridge = (KP * error) + (KI * errorIntegral * TIMESTEP);                   // PI control equation
     vbridge = SATURATE(vbridge, -MOTOR_SUPPLY_VOLTAGE, MOTOR_SUPPLY_VOLTAGE);   // saturate voltage to [-Vmotor, Vmotor]
 
     dutyCycle = vbridge * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
