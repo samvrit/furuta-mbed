@@ -11,13 +11,14 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./current_control.obj" \
-"./eqep_module.obj" \
+"./interrupt_routines.obj" \
 "./main.obj" \
 "./peripheral_initializations.obj" \
 "./device/F2837xD_CodeStartBranch.obj" \
 "./device/device.obj" \
 "../2837xD_FLASH_CLA_lnk_cpu1.cmd" \
 "C:/ti/c2000/C2000Ware_3_01_00_00/libraries/math/IQmath/c28/lib/IQmath_fpu32.lib" \
+"C:/ti/c2000/C2000Ware_3_01_00_00/libraries/dsp/FPU/c28/lib/c28x_fpu_dsp_library.lib" \
 "C:/ti/c2000/C2000Ware_3_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
@@ -163,9 +164,8 @@ motor_controller.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "current_control.obj" "eqep_module.obj" "main.obj" "peripheral_initializations.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" 
-	-$(RM) "eqep_module.d" "main.d" "peripheral_initializations.d" "device\device.d" 
-	-$(RM) "current_control.d" 
+	-$(RM) "current_control.obj" "interrupt_routines.obj" "main.obj" "peripheral_initializations.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" 
+	-$(RM) "current_control.d" "interrupt_routines.d" "main.d" "peripheral_initializations.d" "device\device.d" 
 	-$(RM) "device\F2837xD_CodeStartBranch.d" 
 	-@echo 'Finished clean'
 	-@echo ' '

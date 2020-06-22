@@ -63,16 +63,6 @@ void setup()
 void loop()
 {
   udpPacket.value = getAngle();
-  Serial.print("Position: ");
-  Serial.print(udpPacket.value);
-  Serial.print(" | ");
-  Serial.print(udpPacket.buffer[0], HEX);
-  Serial.print(" ");
-  Serial.print(udpPacket.buffer[1], HEX);
-  Serial.print(" ");
-  Serial.print(udpPacket.buffer[2], HEX);
-  Serial.print(" ");
-  Serial.println(udpPacket.buffer[3], HEX);
   if (wifi_connected)  //only send data when connected
   {
     //Send a packet
@@ -80,11 +70,11 @@ void loop()
     udp.write((const uint8_t *)udpPacket.buffer, 4);
     udp.endPacket();
 
-    if (udp.parsePacket())
-    {
-      // code for encoder zero setting
-    }
+//    if (udp.parsePacket())
+//    {
+//      // code for encoder zero setting
+//    }
   }
 
-  delayMicroseconds(1);
+  //delayMicroseconds(1);
 }

@@ -4,9 +4,121 @@
  *  Created on: Apr 8, 2020
  *      Author: Samvrit Srinivas
  */
-
+#include "driverlib.h"
+#include "device.h"
 #include "peripheral_initializations.h"
 #include "cla_shared.h"
+#include "globals.h"
+
+void configGPIOS(void)
+{
+    // GPIO 0 is configured as EPWM1 for duty cycle to the motor driver
+    GPIO_setPadConfig(0, GPIO_PIN_TYPE_STD);
+    GPIO_setPinConfig(GPIO_0_EPWM1A);
+
+    // GPIO 1 is configured as a digital output for motor direction
+    GPIO_setPadConfig(MOTOR_DRIVER_DIRECTION_PIN, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(MOTOR_DRIVER_DIRECTION_PIN, GPIO_DIR_MODE_OUT);
+    GPIO_setPinConfig(GPIO_1_GPIO1);
+
+    // GPIO 2 is configured as a digital output for motor driver sleep (active LOW, hence configured as open-drain)
+    GPIO_setPadConfig(MOTOR_DRIVER_SLEEP_PIN, GPIO_PIN_TYPE_OD);
+    GPIO_setDirectionMode(MOTOR_DRIVER_SLEEP_PIN, GPIO_DIR_MODE_OUT);
+    GPIO_setPinConfig(GPIO_2_GPIO2);
+
+    // GPIO 3 is configured as a digital input for motor fault indication
+    GPIO_setPadConfig(MOTOR_DRIVER_FAULT_IN, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(MOTOR_DRIVER_FAULT_IN, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(MOTOR_DRIVER_FAULT_IN, GPIO_QUAL_SYNC);  // sync to SYSCLKOUT
+    GPIO_setInterruptPin(MOTOR_DRIVER_FAULT_IN, GPIO_INT_XINT2);
+
+    // GPIO 4 is configured as a digital input for motor enable button
+    GPIO_setPadConfig(MOTOR_DRIVER_ENABLE, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(MOTOR_DRIVER_ENABLE, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(MOTOR_DRIVER_ENABLE, GPIO_QUAL_SYNC);  // sync to SYSCLKOUT
+    GPIO_setInterruptPin(MOTOR_DRIVER_ENABLE, GPIO_INT_XINT1);
+
+    // GPIO11 is the SCI Rx pin.
+    GPIO_setMasterCore(11, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_11_SCIRXDB);
+    GPIO_setDirectionMode(11, GPIO_DIR_MODE_IN);
+    GPIO_setPadConfig(11, GPIO_PIN_TYPE_STD);
+    GPIO_setQualificationMode(11, GPIO_QUAL_ASYNC);
+
+    // GPIO 12 is configured as CAN TX B
+    GPIO_setPadConfig(12, GPIO_PIN_TYPE_STD);
+    GPIO_setPinConfig(GPIO_12_CANTXB);
+
+    // GPIO 17 is configured as CAN RX B
+    GPIO_setPadConfig(17, GPIO_PIN_TYPE_STD);
+    GPIO_setPinConfig(GPIO_17_CANRXB);
+
+    // GPIO18 is the SCI Tx pin.
+    GPIO_setMasterCore(18, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_18_SCITXDB);
+    GPIO_setDirectionMode(18, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(18, GPIO_PIN_TYPE_STD);
+    GPIO_setQualificationMode(18, GPIO_QUAL_ASYNC);
+
+    // GPIO 131 is configured as debug pin for function profiling
+    GPIO_setPadConfig(DEBUG_PIN, GPIO_PIN_TYPE_STD);
+    GPIO_setDirectionMode(DEBUG_PIN, GPIO_DIR_MODE_OUT);
+    GPIO_setPinConfig(GPIO_131_GPIO131);
+
+    // GPIO59 is the SPISOMIA.
+    GPIO_setMasterCore(59, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_59_SPISOMIA);
+    GPIO_setPadConfig(59, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(59, GPIO_QUAL_ASYNC);
+
+    // GPIO16 is the SPISIMOA clock pin.
+    GPIO_setMasterCore(16, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_16_SPISIMOA);
+    GPIO_setPadConfig(16, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(16, GPIO_QUAL_ASYNC);
+
+    // GPIO19 is the SPISTEA.
+    GPIO_setMasterCore(19, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_19_SPISTEA);
+    GPIO_setPadConfig(19, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(19, GPIO_QUAL_ASYNC);
+
+    // GPIO60 is the SPICLKA.
+    GPIO_setMasterCore(60, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_60_SPICLKA);
+    GPIO_setPadConfig(60, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(60, GPIO_QUAL_ASYNC);
+
+    // GPIO64 is the SPISOMIB.
+    GPIO_setMasterCore(64, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_64_SPISOMIB);
+    GPIO_setPadConfig(64, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(64, GPIO_QUAL_ASYNC);
+
+    // GPIO63 is the SPISIMOB.
+    GPIO_setMasterCore(63, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_63_SPISIMOB);
+    GPIO_setPadConfig(63, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(63, GPIO_QUAL_ASYNC);
+
+    // GPIO66 is the SPISTEB.
+    GPIO_setMasterCore(66, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_66_SPISTEB);
+    GPIO_setPadConfig(66, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(66, GPIO_QUAL_ASYNC);
+
+    // GPIO65 is the SPICLKB.
+    GPIO_setMasterCore(65, GPIO_CORE_CPU1);
+    GPIO_setPinConfig(GPIO_65_SPICLKB);
+    GPIO_setPadConfig(65, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setQualificationMode(65, GPIO_QUAL_ASYNC);
+
+    // setup external interrupt pins
+    GPIO_setInterruptType(GPIO_INT_XINT1, GPIO_INT_TYPE_FALLING_EDGE);
+    GPIO_enableInterrupt(GPIO_INT_XINT1);
+    GPIO_setInterruptType(GPIO_INT_XINT2, GPIO_INT_TYPE_FALLING_EDGE);
+    GPIO_enableInterrupt(GPIO_INT_XINT2);
+}
 
 // CLA_configClaMemory - Configure CLA memory sections
 void CLA_configClaMemory(void)
@@ -47,15 +159,17 @@ void CLA_configClaMemory(void)
 }
 
 // CLA_initCpu1Cla1 - Initialize CLA1 task vectors and end-of-task interrupts
-void CLA_initCpu1Cla1(void)
+void CLA_initCpu1Cla(void)
 {
     EALLOW;
-    CLA_mapTaskVector(CLA1_BASE,CLA_MVECT_1,(uint16_t)&Cla1Task1);  // map task vector to the task to be performed
+    CLA_mapTaskVector(CLA1_BASE,CLA_MVECT_1,(uint16_t)&Cla1Task1);  // map task vector to the task to be performed - current controller
+    CLA_mapTaskVector(CLA1_BASE,CLA_MVECT_8,(uint16_t)&Cla1Task8);  // map task vector to the task to be performed - variable initializations
 
     /* Enable the IACK instruction to start a task on CLA in software.
-       Also, globally enable task 1 */
+       Also, globally enable task 1 and 8 */
     CLA_enableIACK(CLA1_BASE);
-    CLA_enableTasks(CLA1_BASE, CLA_TASKFLAG_1);
+    CLA_enableTasks(CLA1_BASE, CLA_TASKFLAG_1| CLA_TASKFLAG_8);
+    CLA_forceTasks(CLA1_BASE, CLA_TASKFLAG_8);  // this only initializes the variables
 }
 
 // Function to configure and power up ADCA.
@@ -65,11 +179,7 @@ void initADC(void)
     ADC_setPrescaler(ADCA_BASE, ADC_CLK_DIV_4_0);   // Set ADCCLK divider to /4
 
     // Set resolution and signal mode and load corresponding trims.
-#if(ADC_RESOLUTION == 12)
     ADC_setMode(ADCA_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
-#elif(ADC_RESOLUTION == 16)
-    ADC_setMode(ADCA_BASE, ADC_RESOLUTION_16BIT, ADC_MODE_DIFFERENTIAL);
-#endif
 
     ADC_setInterruptPulseMode(ADCA_BASE, ADC_PULSE_END_OF_CONV);    // Set pulse positions to end of conversion
 
@@ -114,29 +224,22 @@ void initADCSOC(void)
     /* Configure SOC1 of ADCA to convert pin A1. The EPWM1SOCA signal will be
        the trigger.
        For 12-bit resolution, a sampling window of 15 (75 ns at a 200MHz
-       SYSCLK rate) will be used.  For 16-bit resolution, a sampling window of
-       64 (320 ns at a 200MHz SYSCLK rate) will be used. */
-#if(ADC_RESOLUTION == 12)
-       ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN1, 15);
-#elif(ADC_RESOLUTION == 16)
-       ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN1, 64);
-#endif
+       SYSCLK rate) will be used. */
+    ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN1, 15);
+    ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER4, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN4, 15);
 
     // Set SOC1 to set the interrupt 1 flag. Enable the interrupt and make sure its flag is cleared.
     ADC_setInterruptSource(ADCA_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER1);
+    ADC_setInterruptSource(ADCA_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER4);
+
     ADC_enableInterrupt(ADCA_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
-
-    // Setup post-processing block 1 to process SOC1 of ADCA and subtract the sensor offset
-    ADC_setupPPB(ADCA_BASE, ADC_PPB_NUMBER1, ADC_SOC_NUMBER1);
-    ADC_setPPBCalibrationOffset(ADCA_BASE, ADC_PPB_NUMBER1, 0);
-    ADC_setPPBReferenceOffset(ADCA_BASE, ADC_PPB_NUMBER1, CURR_SENSE_OFFSET);
 }
 
 // initSCIAFIFO - Configure SCIA FIFO
 void initSCIBFIFO()
 {
-    // 8 char bits, 1 stop bit, no parity. Baud rate is 9600.
+    // 8 char bits, 1 stop bit, no parity. Baud rate is 115200.
     SCI_setConfig(SCIB_BASE, DEVICE_LSPCLK_FREQ, 115200, (SCI_CONFIG_WLEN_8 | SCI_CONFIG_STOP_ONE | SCI_CONFIG_PAR_NONE));
     SCI_enableModule(SCIB_BASE);
     SCI_resetChannels(SCIB_BASE);
@@ -153,44 +256,8 @@ void initSCIBFIFO()
     SCI_resetRxFIFO(SCIB_BASE);
 }
 
-void initEQEP(void)
-{
-    // Configure the decoder for up-count mode, counting both rising and falling edges (that is, 2x resolution)
-    EQEP_setDecoderConfig(EQEP1_BASE, (EQEP_CONFIG_1X_RESOLUTION | EQEP_CONFIG_UP_COUNT | EQEP_CONFIG_NO_SWAP));
-
-    EQEP_setEmulationMode(EQEP1_BASE, EQEP_EMULATIONMODE_RUNFREE);
-
-    EQEP_setPositionCounterConfig(EQEP1_BASE, EQEP_POSITION_RESET_IDX, 0xFFFFFFFF);
-
-    EQEP_enableUnitTimer(EQEP1_BASE, (DEVICE_SYSCLK_FREQ / 100));   // Enable the unit timer, setting the frequency to 100 Hz
-
-    EQEP_setLatchMode(EQEP1_BASE, EQEP_LATCH_UNIT_TIME_OUT);    // Configure the position counter to be latched on a unit time out
-
-    // Configure and enable the edge-capture unit. The capture clock divider is SYSCLKOUT/128. The unit-position event divider is QCLK/8.
-    EQEP_setCaptureConfig(EQEP1_BASE, EQEP_CAPTURE_CLK_DIV_128, EQEP_UNIT_POS_EVNT_DIV_8);
-    EQEP_enableCapture(EQEP1_BASE);
-
-    EQEP_enableModule(EQEP1_BASE);  // Enable the eQEP1 module
-}
-
-// initCPUTimers - This function initializes the timer to a known state.
-void initCPUTimer(void)
-{
-    // Initialize timer period to maximum
-    CPUTimer_setPeriod(CPUTIMER0_BASE, 0xFFFFFFFF);
-
-    // Initialize pre-scale counter to divide by 1 (SYSCLKOUT)
-    CPUTimer_setPreScaler(CPUTIMER0_BASE, 0);
-
-    // Make sure timer is stopped
-    CPUTimer_stopTimer(CPUTIMER0_BASE);
-
-    // Reload all counter register with period value
-    CPUTimer_reloadTimerCounter(CPUTIMER0_BASE);
-}
-
 // configCPUTimer - This function initializes the selected timer to the period
-void configCPUTimer(uint32_t cpuTimer, uint16_t period)
+void configCPUTimer(uint32_t cpuTimer, uint32_t period, uint16_t interrupt_enable)
 {
     uint32_t count = (uint32_t)(DEVICE_SYSCLK_FREQ / 1000000 * period);
     CPUTimer_setPeriod(cpuTimer, count);
@@ -199,10 +266,57 @@ void configCPUTimer(uint32_t cpuTimer, uint16_t period)
     CPUTimer_setPreScaler(cpuTimer, 0);
 
     // Initializes timer control register. The timer is stopped, reloaded,
-    // free run disabled, and interrupt enabled.
-    // Additionally, the free and soft bits are set
+    // free run enabled, and interrupt enabled.
     CPUTimer_stopTimer(cpuTimer);
     CPUTimer_reloadTimerCounter(cpuTimer);
     CPUTimer_setEmulationMode(cpuTimer, CPUTIMER_EMULATIONMODE_RUNFREE);
-    CPUTimer_enableInterrupt(cpuTimer);
+
+    if(interrupt_enable)
+    {
+        CPUTimer_enableInterrupt(cpuTimer);
+    }
+    else
+    {
+        CPUTimer_disableInterrupt(cpuTimer);
+    }
+
+    CPUTimer_startTimer(cpuTimer);
+}
+
+// Function to configure SPI A in FIFO mode.
+void initSPIA()
+{
+    // Must put SPI into reset before configuring it
+    SPI_disableModule(SPIA_BASE);
+
+    // SPI configuration. Use a 12.5MHz SPICLK and 8-bit word size.
+    SPI_setConfig(SPIA_BASE, DEVICE_LSPCLK_FREQ, SPI_PROT_POL0PHA0, SPI_MODE_MASTER, 12500000, 8);
+    SPI_disableLoopback(SPIA_BASE);
+    SPI_setEmulationMode(SPIA_BASE, SPI_EMULATION_FREE_RUN);
+    SPI_resetRxFIFO(SPIA_BASE);
+    SPI_enableFIFO(SPIA_BASE);
+
+    // Configuration complete. Enable the module.
+    SPI_enableModule(SPIA_BASE);
+}
+
+// Function to configure SPI B in FIFO mode.
+void initSPIB()
+{
+    // Must put SPI into reset before configuring it
+    SPI_disableModule(SPIB_BASE);
+
+    // SPI configuration. Use a 1.5MHz SPICLK and 16-bit word size.
+#ifndef TEST_MODE
+    SPI_setConfig(SPIB_BASE, DEVICE_LSPCLK_FREQ, SPI_PROT_POL0PHA0, SPI_MODE_MASTER, 1500000, 16);
+#else
+    SPI_setConfig(SPIB_BASE, DEVICE_LSPCLK_FREQ, SPI_PROT_POL0PHA0, SPI_MODE_MASTER, 1000000, 8);
+#endif // TEST_MODE
+    SPI_disableLoopback(SPIB_BASE);
+    SPI_setEmulationMode(SPIB_BASE, SPI_EMULATION_FREE_RUN);
+    SPI_resetRxFIFO(SPIB_BASE);
+    SPI_enableFIFO(SPIB_BASE);
+
+    // Configuration complete. Enable the module.
+    SPI_enableModule(SPIB_BASE);
 }

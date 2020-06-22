@@ -39,49 +39,23 @@
 /*==================INCLUDES==================*/
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*==================DEFINES==================*/
-#define WAITSTEP     asm(" RPT #255 || NOP")
-#define CONTROL_CYCLE_TIME_US   20U // microseconds
-#define USE_CLA     1
-#define TEST_MODE   1
-
-#define ADC_RESOLUTION          12
-#define EPWM1_TIMER_TBPRD       1000U
-#define TIMESTEP                (2e-8F * EPWM1_TIMER_TBPRD)
-#define PI                      3.1415F
-
-#define MOTOR_DRIVER_DIRECTION_PIN  1U
-#define MOTOR_DRIVER_SLEEP_PIN      2U
-#define MOTOR_DRIVER_FAULT_IN       3U
-#define DEBUG_PIN                   131U
-
-#define MOTOR_SUPPLY_VOLTAGE    12.0F
-#define PWM_DUTY_CYCLE_SCALER   (EPWM1_TIMER_TBPRD / MOTOR_SUPPLY_VOLTAGE)
-
-#define MOTOR_SPEED_THRESHOLD_HZ            10000U  // Hz (encoder pulses)
-
-#define CURR_SENSE_LPF_CONST                    2.0F*PI*(10.0F/20000.0F)
-#define CURR_SENSE_OFFSET                       2165U       // determined by observing the ADC value after applying a very heavy LPF
-#define CURR_SENSE_POS_SCALING_FACTOR_INVERSE   170U        // determined by observing the change in ADC value for +1A of current after applying a very heavy LPF
-#define CURR_SENSE_NEG_SCALING_FACTOR_INVERSE   158U        // determined by observing the change in ADC value for -1A of current after applying a very heavy LPF
-#define CURR_SENSE_POS_SCALING_FACTOR           (1.0F / CURR_SENSE_POS_SCALING_FACTOR_INVERSE)
-#define CURR_SENSE_NEG_SCALING_FACTOR           (1.0F / CURR_SENSE_NEG_SCALING_FACTOR_INVERSE)
-
-#define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
-
-#define KP 91.6F                          // proportional gain for PI controller
-#define KI 110090.0F                      // integral gain for PI controller
-
-#define CAN_RX_MSG_OBJ_ID               2
-#define COMM_MSG_RECV_DATA_LENGTH       4
-
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
 #define LOW_PASS_FILTER(output, input, lpf_constant) ((output) += (((input) - (output)) * (lpf_constant)))
 #define ABS(input) ((input) < 0 ? -(input) : (input))
+
+#ifdef MOTOR_CHARACTERIZATION
+#define CONTROL_CYCLE_TIME_US   800000U // microseconds
+#else
+#define CONTROL_CYCLE_TIME_US   500U // microseconds
+#endif //MOTOR_CHARACTERIZATION
+
+#define EPWM1_TIMER_TBPRD       1000U
+#define PI                      3.1415F
+
+
+
 
 /*==================CLA VARIABLES==================*/
 typedef struct {
@@ -96,14 +70,11 @@ typedef struct {
 
 extern claInputs_S claInputs;
 extern claOutputs_S claOutputs;
-extern float errorIntegral; // This variable will have to retain its value between iterations, and since CLA cannot declare static variables, this is declared as a shared variable
 
 /*==================FUNCTION PROTOTYPES==================*/
 __interrupt void Cla1Task1();
+__interrupt void Cla1Task8();
 
-#ifdef __cplusplus
-}
-#endif // extern "C"
 
 #endif //end of _CLA_ASIN_SHARED_H_ definition
 

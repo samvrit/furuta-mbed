@@ -10,4 +10,10 @@ matlab/solidworks_model/slprj/
 .hg/
 .temp/
 *.mbed
-
+esp/*/build/
+wireless_pcb_design/Project Outputs/
+wireless_pcb_design/Project Outputs for WirelessPCB/
+wireless_pcb_design/History/
+wireless_pcb_design/Project Logs for WirelessPCB/
+wireless_pcb_design/debug.log
+wireless_pcb_design/__Previews

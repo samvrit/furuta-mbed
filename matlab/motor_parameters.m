@@ -53,7 +53,7 @@ rotor_radius = 11.5e-3; %m
 gear_ratio = 30;
 rotor_inertia = 0.5 * rotor_mass * (rotor_radius^2) * (gear_ratio^2); % moment of inertia measured at output of gearbox
 
-J = 0.0032 + rotor_inertia; % moment of inertia of load (link 1) in kg m^2
+J = rotor_inertia; % moment of inertia of load (link 1) in kg m^2
 R = 1/gain;
 Kv = 0.2915; % measured using actual data and regression analysis
 L = R*rising_time;  % at no load, rise time = L/R
@@ -62,6 +62,11 @@ L = R*rising_time;  % at no load, rise time = L/R
 num = (Kt/L).*[1 (b/J)];
 den = [1 ((R*J + b*L)/(L*J)) ((R*b + Kv*Kt)/(L*J))];
 torque_tf = tf(num, den);
+
+%% Motor transfer function from experimental data
+num = [132.6 17.94];
+den = [1 1016 2.306e4];
+torque_tf_exp = tf(num, den);
 
 %% Motor state space representation
 Ts_motor = 20e-6; % time step in seconds for motor controller
@@ -75,7 +80,7 @@ motor_ss_discrete = c2d(motor_ss, Ts_motor);
 
 %% PI Controller
 opts = pidtuneOptions('CrossoverFrequency',1.23e4,'PhaseMargin',88);
-[C, info] = pidtune(torque_tf, 'PI', opts);
+[C, info] = pidtune(torque_tf_exp, 'PI', opts);
 
 disp(C.Kp)
 disp(C.Ki)
