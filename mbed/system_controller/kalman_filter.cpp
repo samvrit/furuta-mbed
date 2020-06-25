@@ -1,6 +1,18 @@
 #include "kalman_filter.h"
 #include "acquire_feedback.h"
 
+DigitalOut debug_pin1(D5);
+CAN can1(PA_11, PA_12, 1000000);
+
+typedef union {
+    float value;
+    char buffer[sizeof(float)];
+} canPacket_t;
+
+volatile canPacket_t canPacket = {.value = 0.0f};
+
+Ticker ticker;
+
 EventQueue control_queue(32 * EVENTS_EVENT_SIZE);
 
 const float32_t A_minus_B_K_f32[36] = 
@@ -152,18 +164,35 @@ int compute_torque_command(void)
     else return 0;
 }
 
-void control_loop(void)
+static void control_calculation(void)
 {
     osEvent evt = feedback_queue.get(0);
     if (evt.status == osEventMessage)
     {
+        debug_pin1 = 1;
         state_vector *X = (state_vector*)evt.value.p;
-        printf("X1: %.5f | X2: %.5f\r\n", X->x[1], X->x[2]);
-
         mpool.free(X);
+        debug_pin1 = 0;
     }
-    else if(evt.status == osEventTimeout)
+    else
     {
+        // handle signal MIA
+    }
+    debug_pin1 = 1;
+    compute_a_priori();
+    compute_a_posteriori();
+    add_a_priori_a_posteriori();
+    compute_torque_command();
+    canPacket.value = 0.1f;
+    debug_pin1 = 0;
+}
 
+void control_loop(void)
+{
+    matrices_init();
+    ticker.attach_us(control_calculation, 200);
+    while(1)
+    {
+        can1.write(CANMessage(0x1, (const char *)&canPacket.buffer, sizeof(float)));        
     }
 }
