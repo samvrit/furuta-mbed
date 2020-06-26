@@ -1,9 +1,6 @@
 #include "mbed.h"
 #include "arm_math.h"
 
-extern EventQueue control_queue;
-extern DigitalOut debug_pin1;
-
 extern const float32_t A_minus_B_K_f32[36];
 
 extern const float32_t C_f32[18];

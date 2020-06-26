@@ -1,5 +1,18 @@
 #include "kalman_filter.h"
-#include "acquire_feedback.h"
+#include "OdinWiFiInterface.h"
+
+#ifdef DEVICE_WIFI_AP
+static const char *wifi_ssid = MBED_CONF_APP_WIFI_SSID;
+static const char *wifi_password = MBED_CONF_APP_WIFI_PASSWORD;
+static const char *ap_ip = MBED_CONF_APP_AP_IP;
+static const char *ap_netmask = MBED_CONF_APP_AP_NETMASK;
+static const char *ap_gateway = MBED_CONF_APP_AP_GATEWAY;
+#endif
+
+static void process_data(unsigned char *recv_buf, const nsapi_addr_t *address);
+
+OdinWiFiInterface *_wifi;
+#define ECHO_SERVER_PORT 5050
 
 DigitalOut debug_pin1(D5);
 CAN can1(PA_11, PA_12, 1000000);
@@ -7,9 +20,11 @@ CAN can1(PA_11, PA_12, 1000000);
 typedef union {
     float value;
     char buffer[sizeof(float)];
-} canPacket_t;
+} interfacePacket_t;
 
-volatile canPacket_t canPacket = {.value = 0.0f};
+volatile interfacePacket_t canPacket = {.value = 0.0f};
+
+volatile interfacePacket_t x2 = {.value = 500.0f}, x3 = {.value = 500.0f};
 
 Ticker ticker;
 
@@ -164,35 +179,115 @@ int compute_torque_command(void)
     else return 0;
 }
 
-static void control_calculation(void)
+static void start_ap(nsapi_security_t security = NSAPI_SECURITY_WPA_WPA2)
 {
-    osEvent evt = feedback_queue.get(0);
-    if (evt.status == osEventMessage)
+    nsapi_error_t error_code;
+
+    printf("\nStarting AP\r\n");
+
+    // AP Configure and start
+    error_code = _wifi->set_ap_network(ap_ip, ap_netmask, ap_gateway);
+    MBED_ASSERT(error_code == NSAPI_ERROR_OK);
+
+    //DHCP not available
+    error_code = _wifi->set_ap_dhcp(false);
+    MBED_ASSERT(error_code == NSAPI_ERROR_OK);
+
+    //Set beacon interval to default value
+    _wifi->set_ap_beacon_interval(100);
+
+    //Set ap ssid, password and channel
+    error_code = _wifi->ap_start(wifi_ssid, wifi_password, security, cbWLAN_CHANNEL_01);
+    MBED_ASSERT(error_code == NSAPI_ERROR_OK);
+
+    printf("\nAP started successfully, wifi password: %s\r\n", wifi_password);
+}
+
+static void stop_ap()
+{
+    nsapi_error_t error_code;
+
+    error_code = _wifi->ap_stop();
+    MBED_ASSERT(error_code == NSAPI_ERROR_OK);
+
+    printf("\nAP stopped\r\n");
+}
+
+static void process_data(unsigned char *recv_buf, const nsapi_addr_t *address)
+{
+    if(10U == address->bytes[3])
     {
         debug_pin1 = 1;
-        state_vector *X = (state_vector*)evt.value.p;
-        mpool.free(X);
+        memcpy((void *)x2.buffer, recv_buf, 4);
+        printf("%.5f\r\n",x2.value);
         debug_pin1 = 0;
     }
-    else
+    else if(5U == address->bytes[3])
     {
-        // handle signal MIA
+        memcpy((void *)x3.buffer, recv_buf, 4);
     }
-    debug_pin1 = 1;
+}
+
+static void control_calculation(void)
+{
+    
     compute_a_priori();
     compute_a_posteriori();
     add_a_priori_a_posteriori();
     compute_torque_command();
     canPacket.value = 0.1f;
-    debug_pin1 = 0;
+    
 }
 
 void control_loop(void)
 {
+    debug_pin1 = 0;
+    nsapi_size_or_error_t errcode;
+    UDPSocket sock;
+
+    SocketAddress sockAddr;
+    int n = 0;
+
+    /*Start AP*/
+    _wifi = new OdinWiFiInterface(true);
+    start_ap();
+
+    /*Socket initialization*/
+    errcode = sock.open(_wifi);
+    if (errcode != NSAPI_ERROR_OK)
+    {
+        printf("UDPSocket.open() fails, code: %d\r\n", errcode);
+    }
+
+    errcode = sock.bind(ap_ip, ECHO_SERVER_PORT);
+    if (errcode < 0)
+    {
+        printf("UDPSocket.connect() fails, code: %d\r\n", errcode);
+    }
+    else
+    {
+        printf("UDP: connected with %s server\r\n", ap_ip);
+    }
+
     matrices_init();
     ticker.attach_us(control_calculation, 200);
     while(1)
     {
+        char recv_buf[7] = "";
+        n = sock.recvfrom(&sockAddr, (void *)recv_buf, sizeof(recv_buf));
+        if (n > 0)
+        {
+            nsapi_addr_t address;
+            address = sockAddr.get_addr();
+            process_data((unsigned char *)&recv_buf, &address);
+        }
+        else
+        {
+            //printf("\n UDPSocket.recv() failed\r\n");
+            // return -1;
+        }
         can1.write(CANMessage(0x1, (const char *)&canPacket.buffer, sizeof(float)));        
     }
+    sock.close();
+    stop_ap();
 }
