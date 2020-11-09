@@ -14,6 +14,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_netif.h"
 #include "nvs_flash.h"
 #include "driver/spi_master.h"
 #include "esp32/rom/ets_sys.h"
@@ -55,7 +56,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_FAIL_BIT      BIT1
 
 static const char *WIFI_TAG = "WIFI";
-static const char *TCP_TAG = "UDP";
+static const char *TCP_TAG = "TCP";
 
 static int s_retry_num = 0;
 static uint8_t device1;
@@ -90,7 +91,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) 
     {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(WIFI_TAG, "got ip:%s", ip4addr_ntoa(&event->ip_info.ip));
+        ESP_LOGI(WIFI_TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     }
@@ -100,11 +101,16 @@ void wifi_init_sta()
 {
     s_wifi_event_group = xEventGroupCreate();
 
-    tcpip_adapter_init();
+    esp_netif_init();
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    ESP_ERROR_CHECK(tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA)); // stop DHCP server for the AP mode
+    esp_netif_config_t cfg_netif = ESP_NETIF_DEFAULT_WIFI_STA();
+    esp_netif_t *sta_netif = esp_netif_new(&cfg_netif);
+    esp_netif_attach_wifi_station(sta_netif);
+    esp_wifi_set_default_wifi_sta_handlers();
+    esp_netif_dhcpc_stop(sta_netif);
+
     // assign a static IP to the network interface
 
     uint8_t mac_address[6] = {0};
@@ -112,7 +118,7 @@ void wifi_init_sta()
 
     ESP_LOGW(WIFI_TAG, "MAC: %02X %02X %02X %02X %02X %02X", mac_address[0], mac_address[1], mac_address[2], mac_address[3], mac_address[4], mac_address[5]);
 
-    tcpip_adapter_ip_info_t info;
+    esp_netif_ip_info_t info;
     memset(&info, 0, sizeof(info));  
 
     device1 = ((mac_address[3] == 0x7A) && (mac_address[4] == 0x10) && (mac_address[5] == 0xEC)) ? 1 : 0; // use MAC address to differentiate between the two devices  
@@ -129,13 +135,15 @@ void wifi_init_sta()
     info.gw.addr = inet_addr(GATEWAY_ADDR);
     IP4_ADDR(&info.netmask, 255, 255, 255, 0);
 
-    ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info)); // hook the TCP adapter to the WiFi driver
+    ESP_ERROR_CHECK(esp_netif_set_ip_info(sta_netif, &info)); // hook the TCP adapter to the WiFi driver
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    esp_event_handler_instance_t instance_any_id;
+    esp_event_handler_instance_t instance_got_ip;
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
 
     wifi_config_t wifi_config = {
         .sta = {
@@ -172,8 +180,8 @@ void wifi_init_sta()
         ESP_LOGE(WIFI_TAG, "UNEXPECTED EVENT");
     }
 
-    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
-    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
+    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
     vEventGroupDelete(s_wifi_event_group);
 }
 
@@ -237,6 +245,10 @@ static void tcp_server_task(void *pvParameters)
         local_addr.sin_family = AF_INET;
         local_addr.sin_port = htons(LOCAL_PORT);
 
+        // local_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        // local_addr.sin_family = AF_INET;
+        // local_addr.sin_port = htons(LOCAL_PORT);
+
         // Create a listening socket
         int listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
         if (listen_sock < 0) 
@@ -247,10 +259,10 @@ static void tcp_server_task(void *pvParameters)
         ESP_LOGI(TCP_TAG, "Socket created");
 
         // Set socket option to use AC_VO to reduce latency
-        const int ip_precedence_vi = 6;
-        const int ip_precedence_offset = 7;
-        int priority = (ip_precedence_vi << ip_precedence_offset);
-        setsockopt(listen_sock, IPPROTO_IP, IP_TOS, &priority, sizeof(priority));
+        // const int ip_precedence_vi = 6;
+        // const int ip_precedence_offset = 7;
+        // int priority = (ip_precedence_vi << ip_precedence_offset);
+        // setsockopt(listen_sock, IPPROTO_IP, IP_TOS, &priority, sizeof(priority));
 
         // Bind the socket to the local server port
         int err = bind(listen_sock, (struct sockaddr *)&local_addr, sizeof(local_addr));
@@ -260,7 +272,7 @@ static void tcp_server_task(void *pvParameters)
         }
         ESP_LOGI(TCP_TAG, "Socket bound, port %d", LOCAL_PORT);
 
-        err = listen(listen_sock, 1);
+        err = listen(listen_sock, 5);
         if (err != 0) {
             ESP_LOGE(TCP_TAG, "Error occurred during listen: errno %d", errno);
             break;
@@ -279,7 +291,7 @@ static void tcp_server_task(void *pvParameters)
         while (1) 
         {
             char rx_buffer[4] = "";
-            int len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+            int len = recv(sock, rx_buffer, sizeof(rx_buffer), 0);
             // Error occurred during receiving
             if (len < 0) 
             {
@@ -294,6 +306,7 @@ static void tcp_server_task(void *pvParameters)
             }
             else
             {
+                ESP_LOGI(TCP_TAG, "Got packet %X %X %X %X", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
                 // Retrieve the latest angular position
                 spi_ret = spi_device_transmit(handle, &t);
                 angle_raw = ((angle_raw & 0xFF00U) >> 8) | ((angle_raw & 0x00FFU) << 8);    // convert LSB to MSB first
