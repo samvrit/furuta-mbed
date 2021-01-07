@@ -258,12 +258,6 @@ static void tcp_server_task(void *pvParameters)
         }
         ESP_LOGI(TCP_TAG, "Socket created");
 
-        // Set socket option to use AC_VO to reduce latency
-        // const int ip_precedence_vi = 6;
-        // const int ip_precedence_offset = 7;
-        // int priority = (ip_precedence_vi << ip_precedence_offset);
-        // setsockopt(listen_sock, IPPROTO_IP, IP_TOS, &priority, sizeof(priority));
-
         // Bind the socket to the local server port
         int err = bind(listen_sock, (struct sockaddr *)&local_addr, sizeof(local_addr));
         if (err < 0) 
@@ -288,6 +282,14 @@ static void tcp_server_task(void *pvParameters)
         }
         ESP_LOGI(TCP_TAG, "Socket accepted");
 
+        // Set socket option to use AC_VO and TCP_NODELAY to reduce latency
+        const int ip_precedence_vi = 6;
+        const int ip_precedence_offset = 7;
+        int priority = (ip_precedence_vi << ip_precedence_offset);
+        setsockopt(sock, IPPROTO_IP, IP_TOS, &priority, sizeof(priority));
+        int nodelay = 1;
+        setsockopt(sock, IPPROTO_IP, TCP_NODELAY, &nodelay, sizeof(nodelay));
+
         while (1) 
         {
             char rx_buffer[4] = "";
@@ -306,7 +308,7 @@ static void tcp_server_task(void *pvParameters)
             }
             else
             {
-                ESP_LOGI(TCP_TAG, "Got packet %X %X %X %X", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+                // ESP_LOGI(TCP_TAG, "Got packet %X %X %X %X", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
                 // Retrieve the latest angular position
                 spi_ret = spi_device_transmit(handle, &t);
                 angle_raw = ((angle_raw & 0xFF00U) >> 8) | ((angle_raw & 0x00FFU) << 8);    // convert LSB to MSB first
@@ -348,5 +350,5 @@ void app_main()
     ESP_LOGI(WIFI_TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
 
-    xTaskCreate(tcp_server_task, "udp_server", 4096, NULL, 6, NULL);
+    xTaskCreatePinnedToCore(tcp_server_task, "tcp_server", 4096, NULL, 6, NULL, (BaseType_t)1);
 }
