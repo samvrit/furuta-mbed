@@ -11,13 +11,14 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./current_control.obj" \
-"./eqep_module.obj" \
+"./interrupt_routines.obj" \
 "./main.obj" \
 "./peripheral_initializations.obj" \
 "./device/F2837xD_CodeStartBranch.obj" \
 "./device/device.obj" \
 "../2837xD_FLASH_CLA_lnk_cpu1.cmd" \
 "C:/ti/c2000/C2000Ware_3_01_00_00/libraries/math/IQmath/c28/lib/IQmath_fpu32.lib" \
+"C:/ti/c2000/C2000Ware_3_01_00_00/libraries/dsp/FPU/c28/lib/c28x_fpu_dsp_library.lib" \
 "C:/ti/c2000/C2000Ware_3_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
@@ -149,7 +150,7 @@ all: $(OBJS) $(CMD_SRCS) $(LIB_SRCS) $(GEN_CMDS)
 motor_controller.out: $(OBJS) $(CMD_SRCS) $(LIB_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: C2000 Linker'
-	"C:/ti/ccs1000/ccs/tools/compiler/ti-cgt-c2000_20.2.0.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -O4 --opt_for_speed=1 --define=_LAUNCHXL_F28379D --define=DEBUG --define=_FLASH --define=CPU1 --diag_suppress=10063 --diag_suppress=10068 --diag_suppress=770 --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"motor_controller.map" --stack_size=0x100 --warn_sections -i"C:/ti/ccs1000/ccs/tools/compiler/ti-cgt-c2000_20.2.0.LTS/lib" -i"C:/ti/ccs1000/ccs/tools/compiler/ti-cgt-c2000_20.2.0.LTS/include" --reread_libs --define=CLA_C --diag_wrap=off --display_error_number --xml_link_info="motor_controller_linkInfo.xml" --entry_point=code_start --rom_model -o "motor_controller.out" $(ORDERED_OBJS)
+	"C:/ti/ccs1000/ccs/tools/compiler/ti-cgt-c2000_20.2.0.LTS/bin/cl2000" -v28 -ml -mt --cla_support=cla1 --float_support=fpu32 --tmu_support=tmu0 --vcu_support=vcu2 -O4 --opt_for_speed=1 --fp_mode=strict --advice:performance=all --define=_LAUNCHXL_F28379D --define=DEBUG --define=_FLASH --define=CPU1 --diag_suppress=10063 --diag_suppress=10068 --diag_suppress=770 --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"motor_controller.map" --stack_size=0x100 --warn_sections -i"C:/ti/ccs1000/ccs/tools/compiler/ti-cgt-c2000_20.2.0.LTS/lib" -i"C:/ti/ccs1000/ccs/tools/compiler/ti-cgt-c2000_20.2.0.LTS/include" --reread_libs --define=CLA_C --diag_wrap=off --display_error_number --xml_link_info="motor_controller_linkInfo.xml" --entry_point=code_start --rom_model -o "motor_controller.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
@@ -163,9 +164,8 @@ motor_controller.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "current_control.obj" "eqep_module.obj" "main.obj" "peripheral_initializations.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" 
-	-$(RM) "eqep_module.d" "main.d" "peripheral_initializations.d" "device\device.d" 
-	-$(RM) "current_control.d" 
+	-$(RM) "current_control.obj" "interrupt_routines.obj" "main.obj" "peripheral_initializations.obj" "device\F2837xD_CodeStartBranch.obj" "device\device.obj" 
+	-$(RM) "current_control.d" "interrupt_routines.d" "main.d" "peripheral_initializations.d" "device\device.d" 
 	-$(RM) "device\F2837xD_CodeStartBranch.d" 
 	-@echo 'Finished clean'
 	-@echo ' '

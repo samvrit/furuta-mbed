@@ -39,44 +39,27 @@
 /*==================INCLUDES==================*/
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*==================DEFINES==================*/
-#define ADC_RESOLUTION          12
-#define EPWM1_TIMER_TBPRD       1000U
-
-#define MOTOR_DRIVER_DIRECTION_PIN  1U
-#define MOTOR_DRIVER_SLEEP_PIN      2U
-
-#define MOTOR_SUPPLY_VOLTAGE    12.0F
-#define PWM_DUTY_CYCLE_SCALER   (EPWM1_TIMER_TBPRD / MOTOR_SUPPLY_VOLTAGE)
-
-#define MOTOR_SPEED_THRESHOLD_HZ            10000U  // Hz (encoder pulses)
-
-#define ADC_SCALING_FACTOR                  ((1 << ADC_RESOLUTION) / 3.3F)
-#define VOLTAGE_DIVIDER_RATIO               0.67F         // R2 = 6.8kOhms, R1 = 3.3kOhms
-#define CURR_SENSE_VOLT_PER_AMP             0.4F          // 400mV per ampere
-#define CURR_SENSE_OFFSET_V                 0.5F          // 500mV offset
-#define CURR_SENSE_OFFSET                   (CURR_SENSE_OFFSET_V * VOLTAGE_DIVIDER_RATIO * ADC_SCALING_FACTOR)
-#define CURR_SENSE_SCALING_FACTOR_INVERSE   (CURR_SENSE_VOLT_PER_AMP * VOLTAGE_DIVIDER_RATIO * ADC_SCALING_FACTOR)
-#define CURR_SENSE_SCALING_FACTOR           (1.0F / CURR_SENSE_SCALING_FACTOR_INVERSE)
-
-#define MOTOR_CONSTANT_KT 0.2525F           // Nm/A
-
-#define KP 166.08F                          // proportional gain for PI controller
-#define KI 26161.30F                        // integral gain for PI controller
-
-#define CAN_RX_MSG_OBJ_ID               2
-#define COMM_MSG_RECV_DATA_LENGTH       4
-
 #define SATURATE(input, lower_limit, upper_limit) ((input) > (upper_limit) ? (upper_limit) : ((input) < (lower_limit) ? (lower_limit) : (input)))
-#define LOW_PASS_FILTER(output, input, dt, cutoff_freq) ((output) += (((input) - (output)) * 2 * PI * (cutoff_freq) * (dt) * MICROSECOND))
+#define LOW_PASS_FILTER(output, input, lpf_constant) ((output) += (((input) - (output)) * (lpf_constant)))
 #define ABS(input) ((input) < 0 ? -(input) : (input))
+
+#ifdef MOTOR_CHARACTERIZATION
+#define CONTROL_CYCLE_TIME_US   800000U // microseconds
+#else
+#define CONTROL_CYCLE_TIME_US   500U // microseconds
+#endif //MOTOR_CHARACTERIZATION
+
+#define EPWM1_TIMER_TBPRD       1000U
+#define PI                      3.1415F
+
+
+
 
 /*==================CLA VARIABLES==================*/
 typedef struct {
+    uint16_t enable;
     float currentAmperes;
     float torqueCommand;
 } claInputs_S;
@@ -87,14 +70,11 @@ typedef struct {
 
 extern claInputs_S claInputs;
 extern claOutputs_S claOutputs;
-extern float errorIntegral; // This variable will have to retain its value between iterations, and since CLA cannot declare static variables, this is declared as a shared variable
 
 /*==================FUNCTION PROTOTYPES==================*/
 __interrupt void Cla1Task1();
+__interrupt void Cla1Task8();
 
-#ifdef __cplusplus
-}
-#endif // extern "C"
 
 #endif //end of _CLA_ASIN_SHARED_H_ definition
 

@@ -48,7 +48,12 @@ battery_step_amplitude = 12.27; % volts
 current_amplitude_at_steady_state = 8.46; % amperes
 gain = current_amplitude_at_steady_state / battery_step_amplitude;
 
-J = 0.0032; % moment of inertia of load (link 1) in kg m^2
+rotor_mass = 30e-3; % kg
+rotor_radius = 11.5e-3; %m
+gear_ratio = 30;
+rotor_inertia = 0.5 * rotor_mass * (rotor_radius^2) * (gear_ratio^2); % moment of inertia measured at output of gearbox
+
+J = rotor_inertia; % moment of inertia of load (link 1) in kg m^2
 R = 1/gain;
 Kv = 0.2915; % measured using actual data and regression analysis
 L = R*rising_time;  % at no load, rise time = L/R
@@ -58,9 +63,24 @@ num = (Kt/L).*[1 (b/J)];
 den = [1 ((R*J + b*L)/(L*J)) ((R*b + Kv*Kt)/(L*J))];
 torque_tf = tf(num, den);
 
+%% Motor transfer function from experimental data
+num = [132.6 17.94];
+den = [1 1016 2.306e4];
+torque_tf_exp = tf(num, den);
+
+%% Motor state space representation
+Ts_motor = 20e-6; % time step in seconds for motor controller
+A_motor = [-R/L -Kv/L; Kt/J -b/J];
+B_motor = [1/L; 0];
+C_motor = [1 0; 0 1];
+D_motor = [0; 0];
+motor_ss = ss(A_motor, B_motor, C_motor, D_motor);
+motor_ss_discrete = c2d(motor_ss, Ts_motor);
+[Gain_motor, ~] = lqr(A_motor, B_motor, diag([100000 0]), 1);
+
 %% PI Controller
 opts = pidtuneOptions('CrossoverFrequency',1.23e4,'PhaseMargin',88);
-[C, info] = pidtune(torque_tf, 'PI', opts);
+[C, info] = pidtune(torque_tf_exp, 'PI', opts);
 
 disp(C.Kp)
 disp(C.Ki)
@@ -71,5 +91,5 @@ closed_loop_tf = (C*torque_tf) / (1 + (C*torque_tf));
 
 %% Simulation parameters
 motor_supply_voltage = 12;
-torque_ref = timeseries([-0.1 0.1 -0.1 0.1 -0.1], [0.1 0.2 0.4 0.8 0.9]);
+torque_ref = timeseries([-1 1 -1 1 -1], [0.1 0.2 0.4 0.8 0.9]);
 zero_order_hold_adc = 20e-6; % seconds -- this is the ADC sampling period

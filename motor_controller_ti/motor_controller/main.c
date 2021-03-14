@@ -35,299 +35,262 @@
 //###########################################################################
 
 /*==================INCLUDES==================*/
+#include "driverlib.h"
+#include "device.h"
 #include "cla_shared.h"
 #include "peripheral_initializations.h"
-#include "IQmathLib.h"
-#include "eqep_module.h"
+#include "globals.h"
+#include "timer_inlines.h"
+#ifndef TEST_MODE
+#include "fpu_vector.h"
+#endif //TEST_MODE
 
 /*==================DEFINES==================*/
-#define WAITSTEP     asm(" RPT #255 || NOP")
-
-#define EQEP_BASE_FREQ       10000  // Base/max frequency is 10 kHz
-#define FREQ_SCALER_PR  (((DEVICE_SYSCLK_FREQ / 128) * 8) / (2 * EQEP_BASE_FREQ))
+#define RLS_POSITION_SCALER     (2.0F * PI / 16384.0F)
 
 /*==================VARIABLES==================*/
-uint16_t adcResultRaw;
+
 uint16_t rDataA[COMM_MSG_RECV_DATA_LENGTH];
+float32_t x1 = 0.0F, x2 = 0.0F, x3 = 0.0F, x4 = 0.0F;
+uint16_t wifiDataValid = 1U;
+uint64_t wifiDataInvalidCount = 0U;
+uint32_t timer_count = 0U;
+uint16_t RLS_calibration_complete = 0U;
+uint16_t crc = 0U;
+uint16_t RLS_position_raw = 0U;
+uint16_t RLS_position_status = 0U;
 
-FreqCal_Object freq =
-{
-    FREQ_SCALER_PR,  // freqScalerPR
-    EQEP_BASE_FREQ,       // baseFreq
-    0, 0, 0, 0    // Initialize outputs to zero
-};
+volatile interfacePacket_t uartPacket, canPacket, spiPacket;
+volatile float32_t torqueCommand = 0.0F; // torque command as obtained from SCI
+volatile uint16_t CAN_errorFlag = 0U;
+volatile uint16_t setMotorPWMFlag = 0U;
+volatile uint16_t getWiFiDataFlag = 0U;
+volatile uint16_t getRLSDataFlag = 0U;
 
-typedef union {
-    float32_t value;
-    uint16_t buffer[sizeof(float32_t)];
-} uartPacket_t;
+uint16_t motorDriverFaultCount; // indicates a fault in the motor driver
 
-volatile uartPacket_t uartPacket;
-volatile float32_t currentSenseA = 0.0; // current sense from ADC, scaled to obtain value in amperes
-volatile float32_t torqueCommand = 0.0; // torque command as otained from SCI
-volatile uint32_t CAN_errorFlag = 0;
-volatile bool motorEnableFlag = true;
 
 /*==================CLA VARIABLE DEFINITIONS==================*/
-#ifdef __cplusplus
-#pragma DATA_SECTION("CpuToCla1MsgRAM");
-claInputs_S claInputs;
-#pragma DATA_SECTION("Cla1ToCpuMsgRAM");
-claOutputs_S claOutputs;
-#else
 #pragma DATA_SECTION(claInputs,"CpuToCla1MsgRAM");
 claInputs_S claInputs;
 #pragma DATA_SECTION(claOutputs,"Cla1ToCpuMsgRAM");
 claOutputs_S claOutputs;
-#endif //__cplusplus
-#ifdef __cplusplus
-#pragma DATA_SECTION("CLADataLS0")
-#else
-#pragma DATA_SECTION(errorIntegral,"CLADataLS0")
-#endif //__cplusplus
-float errorIntegral;
 
 /*==================FUNCTION PROTOTYPES==================*/
-__interrupt void scibRXFIFOISR(void);
-__interrupt void adcA1ISR(void);
-__interrupt void cla1Isr1();
-__interrupt void canISR();
-interrupt void xint1_isr(void);
+void setMotorPWM(float);
+void getWiFiData(void);
+void RLS_getData(void);
+void RLS_triggerSelfCalibration(void);
+void RLS_setZeroPositionOffset(uint16_t);
+
 
 /*==================MAIN==================*/
 void main(void)
 {
 
-    Device_init();              // Intialize device clock and peripherals
-    Device_initGPIO();          // Disable pin locks and enable internal pullups.
-    Interrupt_initModule();     // Initialize PIE and clear PIE registers. Disables CPU interrupts
-    Interrupt_initVectorTable();// Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR).
+    Device_init();                  // Intialize device clock and peripherals
+    Device_initGPIO();              // Disable pin locks and enable internal pullups.
+    Interrupt_initModule();         // Initialize PIE and clear PIE registers. Disables CPU interrupts
+    Interrupt_initVectorTable();    // Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR).
 
     Interrupt_register(INT_ADCA1, &adcA1ISR);
-    Interrupt_register(INT_SCIB_RX, scibRXFIFOISR);
+    Interrupt_register(INT_SCIB_RX, &scibRXFIFOISR);
     Interrupt_register(INT_CLA1_1, &cla1Isr1);  // Configure the vectors for the end-of-task interrupt for task 1
+    Interrupt_register(INT_CLA1_8, &cla1Isr8);  // Configure the vectors for the end-of-task interrupt for task 8
     Interrupt_register(INT_CANB0, &canISR);
-    Interrupt_register(INT_XINT1, &xint1_isr);
+    Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
+    Interrupt_register(INT_XINT1, &xint1_isr);  // push button input
+    Interrupt_register(INT_XINT2, &xint2_isr);  // motor driver fault indication
 
     initSCIBFIFO();
 
-    // GPIO 0 is configured as EPWM1 for duty cycle to the motor driver
-    GPIO_setPadConfig(0, GPIO_PIN_TYPE_STD);
-    GPIO_setPinConfig(GPIO_0_EPWM1A);
+    configCPUTimer(CPUTIMER0_BASE, CONTROL_CYCLE_TIME_US, 1);   // timer0 for control cycle
+    configCPUTimer(CPUTIMER1_BASE, MAX_CPU_TIMER_PRD, 0);       // timer1 for getting counter value
 
-    // GPIO 1 is configured as a digital output for motor direction
-    GPIO_setPadConfig(MOTOR_DRIVER_DIRECTION_PIN, GPIO_PIN_TYPE_PULLUP);
-    GPIO_setDirectionMode(MOTOR_DRIVER_DIRECTION_PIN, GPIO_DIR_MODE_OUT);
-    GPIO_setPinConfig(GPIO_1_GPIO1);
-
-    // GPIO 2 is configured as a digital output for motor driver sleep (active LOW, hence configured as open-drain)
-    GPIO_setPadConfig(MOTOR_DRIVER_SLEEP_PIN, GPIO_PIN_TYPE_OD);
-    GPIO_setDirectionMode(MOTOR_DRIVER_SLEEP_PIN, GPIO_DIR_MODE_OUT);
-    GPIO_setPinConfig(GPIO_2_GPIO2);
-
-    // GPIO 12 is configured as CAN TX B
-    GPIO_setPadConfig(12, GPIO_PIN_TYPE_STD);
-    GPIO_setPinConfig(GPIO_12_CANTXB);
-
-    // GPIO 17 is configured as CAN RX B
-    GPIO_setPadConfig(17, GPIO_PIN_TYPE_STD);
-    GPIO_setPinConfig(GPIO_17_CANRXB);
-
-    // GPIO28 is the SCI Rx pin.
-    GPIO_setMasterCore(19, GPIO_CORE_CPU1);
-    GPIO_setPinConfig(GPIO_19_SCIRXDB);
-    GPIO_setDirectionMode(19, GPIO_DIR_MODE_IN);
-    GPIO_setPadConfig(19, GPIO_PIN_TYPE_STD);
-    GPIO_setQualificationMode(19, GPIO_QUAL_ASYNC);
-
-    // GPIO20 is the EQEP1A for encoder feedback
-    GPIO_setPinConfig(GPIO_20_EQEP1A);
-    GPIO_setPadConfig(20, GPIO_PIN_TYPE_STD);
-
-
-    // GPIO18 is the SCI Tx pin.
-    GPIO_setMasterCore(18, GPIO_CORE_CPU1);
-    GPIO_setPinConfig(GPIO_18_SCITXDB);
-    GPIO_setDirectionMode(18, GPIO_DIR_MODE_OUT);
-    GPIO_setPadConfig(18, GPIO_PIN_TYPE_STD);
-    GPIO_setQualificationMode(18, GPIO_QUAL_ASYNC);
-
-    // GPIO 66 is used as external interrupt for enabling/disabling motor driver
-    GPIO_setDirectionMode(66, GPIO_DIR_MODE_IN);
-    GPIO_setPadConfig(66, GPIO_PIN_TYPE_PULLUP);
-    GPIO_setQualificationMode(66, GPIO_QUAL_SYNC);  // sync to SYSCLKOUT
-    GPIO_setInterruptPin(66,GPIO_INT_XINT1);
-
-    GPIO_setInterruptType(GPIO_INT_XINT1, GPIO_INT_TYPE_FALLING_EDGE);
-    GPIO_enableInterrupt(GPIO_INT_XINT1);
+    configGPIOS();
 
     SysCtl_disablePeripheral(SYSCTL_PERIPH_CLK_TBCLKSYNC);  // Disable sync(Freeze clock to PWM as well)
     initEPWM();
     SysCtl_enablePeripheral(SYSCTL_PERIPH_CLK_TBCLKSYNC);   // Enable sync and clock to PWM
 
-    initADC();
-    initADCSOC();
-
     // Initialize CANB module
     CAN_initModule(CANB_BASE);
-    CAN_setBitRate(CANB_BASE, DEVICE_SYSCLK_FREQ, 500000, 20);
+    CAN_setBitRate(CANB_BASE, DEVICE_SYSCLK_FREQ, 1000000, 20);
 
     CAN_enableInterrupt(CANB_BASE, CAN_INT_IE0 | CAN_INT_ERROR | CAN_INT_STATUS);   // Enable CANB interrupts
 
-    // Initialize CLA variables
-    adcResultRaw = 0.0;
-    errorIntegral = 0.0;
+    // Initialize variables
+    claInputs.enable = 0;
     claInputs.currentAmperes = 0.0;
     claInputs.torqueCommand = 0.0;
 
     // Configure the CLA memory spaces first followed by the CLA task vectors
     CLA_configClaMemory();
-    CLA_initCpu1Cla1();
+    CLA_initCpu1Cla();
+    waitCount(5U * WAIT_COUNT_1_US); // 5 us to complete initializations in CLA task 8
+
+    initADC();
+    initADCSOC();
+
+    // reset the motor driver sleep pin to get it to a known state, since it is an open-drain output
+    GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 0);
+    waitCount(WAIT_COUNT_1_MS);    // 2 s
+    GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, getMotorEnableFlag());
 
     // Enable CLA, ADC and SCI interrupts
-    Interrupt_enable(INT_CLA1_1);   // Enable CLA interrupts at the group and subgroup levels
+    Interrupt_enable(INT_CLA1_1);
+    Interrupt_enable(INT_CLA1_8);
     Interrupt_enable(INT_ADCA1);
     Interrupt_enable(INT_SCIB_RX);
     Interrupt_enable(INT_CANB0);
     Interrupt_enable(INT_XINT1);
+    Interrupt_enable(INT_XINT2);
+    Interrupt_enable(INT_TIMER0);
 
     CAN_enableGlobalInterrupt(CANB_BASE, CAN_GLOBAL_INT_CANINT0);
 
     //CANB setup message object
     CAN_setupMessageObject(CANB_BASE, CAN_RX_MSG_OBJ_ID, 0x1, CAN_MSG_FRAME_STD, CAN_MSG_OBJ_TYPE_RX, 0, CAN_MSG_OBJ_RX_INT_ENABLE, COMM_MSG_RECV_DATA_LENGTH);
 
+    initSPIA();
+    initSPIB();
+
     // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
     EINT;
     ERTM;
 
-    initEQEP();
+#ifdef RLS_TRIGGER_SELF_CALIBRATION
+    RLS_calibration_complete = 0U;
+    RLS_triggerSelfCalibration();
+    RLS_calibration_complete = 1U;
+#endif // RLS_TRIGGER_SELF_CALIBRATION
+
+    // calibrate ADC zero bias -- this is done because at every startup, the zero bias seems to vary
+    setADCCalibratedFlag(0U);                           // set ADC-calibrated flag explicitly to avoid motor getting enabled
+    while(!isLVPowerPresent());                         // wait till 3.3V is present so that the current sensor is powered
+    waitCount(2U * WAIT_COUNT_1_S);                     // wait for LPF to settle
+    setADCZeroBias((uint16_t)getADCResultRawLPF());     // latch the instantaneous zero-current ADC value to the ADC zero bias
+    setADCCalibratedFlag(1U);                           // set ADC-calibrated flag to true
 
     for(;;)
     {
-        if(motorEnableFlag && (freq.freqHzPR < MOTOR_SPEED_THRESHOLD_HZ))
+        if(setMotorPWMFlag)
         {
-            FreqCal_calculate(&freq);   // calculate EQEP frequency
-            GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 1);   // disable sleep state (if previously set) of the motor driver
-            CLA_runTask();
-        }
-        else
-        {
-            GPIO_writePin(MOTOR_DRIVER_SLEEP_PIN, 0);   // enable sleep state of the motor driver
+            setMotorPWM(uartPacket.value);
+            setMotorPWMFlag = 0U;
         }
 
-    }
-}
-
-void CLA_runTask(void)
-{
-    claInputs.currentAmperes = currentSenseA;
-    claInputs.torqueCommand = torqueCommand;
-    CLA_forceTasks(CLA1_BASE,CLA_TASKFLAG_1);   // run task 1 in CLA 1 core
-}
-
-// sciaRXFIFOISR - SCIA Receive FIFO ISR
-__interrupt void scibRXFIFOISR(void)
-{
-
-    SCI_readCharArray(SCIB_BASE, rDataA, 4);
-
-    /* Minimum addressable memory unit in the F28379D is 16 bits as opposed to
-     * 8 bits, and size of float is 2 x 16 bits, hence unpack the 8-bit bytes read from SCI accordingly */
-    uartPacket.buffer[0] = (rDataA[1] << 8) | rDataA[0];
-    uartPacket.buffer[1] = (rDataA[3] << 8) | rDataA[2];
-
-    torqueCommand = uartPacket.value;
-
-    SCI_clearOverflowStatus(SCIB_BASE);
-
-    SCI_clearInterruptStatus(SCIB_BASE, SCI_INT_RXFF);
-
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);  // Issue PIE ack
-}
-
-// ADC A Interrupt 1 ISR
-__interrupt void adcA1ISR(void)
-{
-
-    adcResultRaw = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);    // Add the latest result to the buffer
-    currentSenseA = ((float)adcResultRaw) * CURR_SENSE_SCALING_FACTOR;  // convert ADC reading to amperes by scaling
-
-    ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);   // Clear the interrupt flag
-
-    // Check if overflow has occurred
-    if(true == ADC_getInterruptOverflowStatus(ADCA_BASE, ADC_INT_NUMBER1))
-    {
-        ADC_clearInterruptOverflowStatus(ADCA_BASE, ADC_INT_NUMBER1);
-        ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
-    }
-
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);  // Acknowledge the interrupt
-}
-
-// cla1Isr1 - CLA1 ISR 1
-__interrupt void cla1Isr1 ()
-{
-    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, claOutputs.CMPA);
-    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, claOutputs.direction);
-
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP11); // Acknowledge the end-of-task interrupt for task 1
-
-    // asm(" ESTOP0");
-}
-
-__interrupt void canISR(void)
-{
-    uint32_t status;
-
-    status = CAN_getInterruptCause(CANB_BASE);  // Read the CAN interrupt status to find the cause of the interrupt
-
-    // If the cause is a controller status interrupt, then get the status
-    if(status == CAN_INT_INT0ID_STATUS)
-    {
-        /* Read the controller status.  This will return a field of status
-         * error bits that can indicate various errors.  Error processing
-         * is not done in this example for simplicity.  Refer to the
-         * API documentation for details about the error status bits.
-         * The act of reading this status will clear the interrupt. */
-        status = CAN_getStatus(CANB_BASE);
-
-        // Check to see if an error occurred.
-        if(((status  & ~(CAN_STATUS_TXOK | CAN_STATUS_RXOK)) != 7) && ((status  & ~(CAN_STATUS_TXOK | CAN_STATUS_RXOK)) != 0))
+        if(getWiFiDataFlag)
         {
-            CAN_errorFlag = 1;  // Set a flag to indicate some errors may have occurred.
+            getWiFiData();
+            getWiFiDataFlag = 0U;
         }
+
+        if(getRLSDataFlag)
+        {
+            startTimerCounter();
+            RLS_getData();
+            timer_count = getTimerCounter();
+            resetTimerCounter();
+            getRLSDataFlag = 0U;
+        }
+
     }
-
-    // Check if the cause is the receive message object 2
-    else if(status == CAN_RX_MSG_OBJ_ID)
-    {
-        CAN_readMessage(CANB_BASE, CAN_RX_MSG_OBJ_ID, rDataA);   // Get the received message
-
-        // Arrange the data to suit the word length of the F28379D
-        uartPacket.buffer[0] = (rDataA[1] << 8) | rDataA[0];
-        uartPacket.buffer[1] = (rDataA[3] << 8) | rDataA[2];
-
-        CAN_clearInterruptStatus(CANB_BASE, CAN_RX_MSG_OBJ_ID);     // Clear the message object interrupt
-        CAN_errorFlag = 0;  // Since the message was received, clear any error flags.
-    }
-
-    // If something unexpected caused the interrupt, this would handle it.
-    else
-    {
-        // Handle unexpected interrupt
-    }
-
-    CAN_clearGlobalInterruptStatus(CANB_BASE, CAN_GLOBAL_INT_CANINT0);  // Clear the global interrupt flag for the CAN interrupt line
-
-
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);  // Acknowledge this interrupt located in group 9
 }
 
-// External interrupt ISR
-interrupt void xint1_isr(void)
+void setMotorPWM(float PWM_dutyCycle)
 {
-    motorEnableFlag = !motorEnableFlag;
+    ASSERT(PWM_dutyCycle <= 1.0F);
 
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);  // Acknowledge this interrupt to get more from group 1
+    uint32_t PWM_newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)ABS(PWM_dutyCycle * EPWM1_TIMER_TBPRD);         // compute new Compare A register value
+    uint32_t motor_direction = PWM_dutyCycle > 0.0 ? 1 : 0;   // set direction
+
+    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, PWM_newCMPA);
+    GPIO_writePin(MOTOR_DRIVER_DIRECTION_PIN, motor_direction);
+}
+
+void getWiFiData(void)
+{
+    int i;
+    // write 0x00 9 times to transfer 72 bits
+#pragma UNROLL(9)
+    for(i = 0; i < 9; i++)
+    {
+        SPI_writeDataBlockingNonFIFO(SPIA_BASE, 0x00);
+    }
+
+    while(SPI_getRxFIFOStatus(SPIA_BASE) != SPI_FIFO_RX9){};    // wait until 9 words have been received from wifi device
+
+    // first get x2 by reading from FIFO buffer
+    spiPacket.buffer[0] = (SPI_readDataBlockingFIFO(SPIA_BASE) << 8) | SPI_readDataBlockingFIFO(SPIA_BASE);
+    spiPacket.buffer[1] = (SPI_readDataBlockingFIFO(SPIA_BASE) << 8) | SPI_readDataBlockingFIFO(SPIA_BASE);
+    x2 = spiPacket.value;
+
+    // then get x3
+    spiPacket.buffer[0] = (SPI_readDataBlockingFIFO(SPIA_BASE) << 8) | SPI_readDataBlockingFIFO(SPIA_BASE);
+    spiPacket.buffer[1] = (SPI_readDataBlockingFIFO(SPIA_BASE) << 8) | SPI_readDataBlockingFIFO(SPIA_BASE);
+    x3 = spiPacket.value;
+
+    // in the end, get the byte that indicates if the data is valid or not
+    wifiDataValid = SPI_readDataBlockingFIFO(SPIA_BASE);
+
+    if(wifiDataValid != 3U) wifiDataInvalidCount++;
+
+    SPI_resetRxFIFO(SPIA_BASE); // reset receive buffer
+}
+
+void RLS_getData(void)
+{
+    const uint16_t data_request_command[2] = {0x0000, 0x0000};
+    int i;
+
+#pragma UNROLL(2)
+    for(i = 0; i < 2; i++)
+    {
+        SPI_writeDataBlockingNonFIFO(SPIB_BASE, data_request_command[i]);
+    }
+
+    while(SPI_getRxFIFOStatus(SPIB_BASE) != SPI_FIFO_RX2){};    // wait until 3 words have been received from RLS sensor
+
+    /* reply frame looks like this:
+    b24:b10 = position data (14-bit)
+    b9:b8 = status bits
+    b7:b0 = crc
+    */
+
+    // first read position and status
+    uint16_t pos_status = SPI_readDataBlockingFIFO(SPIB_BASE);
+    RLS_position_raw = (pos_status & 0xFFFC) >> 2;
+    RLS_position_status = pos_status & 0x03;
+    x1 = ((float)RLS_position_raw) * RLS_POSITION_SCALER;
+
+    // then read crc
+    crc = SPI_readDataBlockingFIFO(SPIB_BASE) >> 8;
+
+    SPI_resetRxFIFO(SPIB_BASE); // reset receive buffer
+}
+
+void RLS_triggerSelfCalibration(void)
+{
+    const uint16_t self_calib_sequence[5] = {0xCD00, 0xEF00, 0x8900, 0xAB00, 0x4100};
+    int i;
+
+    setMotorPWM(0.05F);  // 20% duty cycle
+    waitCount(2U * WAIT_COUNT_1_S);  // 2 s
+
+    SPI_resetTxFIFO(SPIB_BASE);
+
+    for(i = 0; i < 5; i++)
+    {
+        SPI_writeDataBlockingFIFO(SPIB_BASE, self_calib_sequence[i]);
+        waitCount(20U * WAIT_COUNT_1_US);    // 100 us
+    }
+
+    waitCount(10U * WAIT_COUNT_1_S);  // 10 s
+    setMotorPWM(0.0F);
+}
+
+void RLS_setZeroPositionOffset(uint16_t position_offset)
+{
 
 }

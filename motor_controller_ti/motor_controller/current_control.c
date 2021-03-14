@@ -36,24 +36,49 @@
 
 /*==================INCLUDES==================*/
 #include "cla_shared.h"
+#ifndef TEST_MODE
+#include "fpu_vector.h"
+#endif //TEST_MODE
+
+#define KP                              92.42F                         // proportional gain for PI controller
+#define KI                              134000.0F                      // integral gain for PI controller
+#define MOTOR_CONSTANT_KT               0.258F           // Nm/A
+#define MOTOR_SUPPLY_VOLTAGE            12.0F
+#define PWM_DUTY_CYCLE_SCALER           (EPWM1_TIMER_TBPRD / MOTOR_SUPPLY_VOLTAGE)
+#define TIMESTEP                        (0.00000002F * EPWM1_TIMER_TBPRD)
+
+float torqueFeedback, error, dutyCycle, vbridge;
+static float errorIntegral;
+uint16_t newCMPA, direction;
 
 /*==================TASKS==================*/
 __interrupt void Cla1Task1 ( void )
 {
-    float torqueFeedback, error, dutyCycle, voltage;
-    uint16_t newCMPA;
-
     torqueFeedback = MOTOR_CONSTANT_KT * claInputs.currentAmperes;  // tau = Kt * i
-    error = ABS(claInputs.torqueCommand) - torqueFeedback;          // compute error signal
+    error = claInputs.torqueCommand - torqueFeedback;               // compute error signal
     errorIntegral += error;                                         // integrate error signal
+    errorIntegral = SATURATE(errorIntegral, -50.0F, 50.0F);
+    errorIntegral = claInputs.enable ? errorIntegral : 0.0F;
 
-    voltage = (KP * error) + (KI * errorIntegral);                  // PI control equation
-    voltage = SATURATE(voltage, 0.0F, MOTOR_SUPPLY_VOLTAGE);        // saturate voltage to Vmotor
+    vbridge = (KP * error) + (KI * errorIntegral * TIMESTEP);                   // PI control equation
+    vbridge = SATURATE(vbridge, -MOTOR_SUPPLY_VOLTAGE, MOTOR_SUPPLY_VOLTAGE);   // saturate voltage to [-Vmotor, Vmotor]
 
-    dutyCycle = voltage * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
+    dutyCycle = vbridge * PWM_DUTY_CYCLE_SCALER;                    // scale voltage to duty cycle range
 
-    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)dutyCycle;              // compute new Compare A register value
+    newCMPA = EPWM1_TIMER_TBPRD - (uint16_t)ABS(dutyCycle);         // compute new Compare A register value
+    direction = vbridge > 0.0 ? 1 : 0;   // set direction
 
-    claOutputs.direction = claInputs.torqueCommand < 0.0 ? 1 : 0;   // set direction
-    claOutputs.CMPA = newCMPA;                                      // set output
+    claOutputs.direction = direction;
+    claOutputs.CMPA = newCMPA;
+}
+
+__interrupt void Cla1Task8 ( void )
+{
+    torqueFeedback = 0.0F;
+    error = 0.0F;
+    dutyCycle = 0.0F;
+    vbridge = 0.0F;
+    errorIntegral = 0.0F;
+    newCMPA = EPWM1_TIMER_TBPRD;
+    direction = 1U;
 }

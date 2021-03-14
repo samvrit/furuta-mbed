@@ -8,48 +8,43 @@ SHELL = cmd.exe
 CMD_SRCS += \
 ../2837xD_FLASH_CLA_lnk_cpu1.cmd 
 
-CLA_SRCS += \
-../current_control.cla 
-
 LIB_SRCS += \
 C:/ti/c2000/C2000Ware_3_01_00_00/libraries/math/IQmath/c28/lib/IQmath_fpu32.lib \
+C:/ti/c2000/C2000Ware_3_01_00_00/libraries/dsp/FPU/c28/lib/c28x_fpu_dsp_library.lib \
 C:/ti/c2000/C2000Ware_3_01_00_00/driverlib/f2837xd/driverlib/ccs/Debug/driverlib.lib 
 
 C_SRCS += \
-../eqep_module.c \
+../current_control.c \
+../interrupt_routines.c \
 ../main.c \
 ../peripheral_initializations.c 
 
-CLA_DEPS += \
-./current_control.d 
-
 C_DEPS += \
-./eqep_module.d \
+./current_control.d \
+./interrupt_routines.d \
 ./main.d \
 ./peripheral_initializations.d 
 
 OBJS += \
 ./current_control.obj \
-./eqep_module.obj \
+./interrupt_routines.obj \
 ./main.obj \
 ./peripheral_initializations.obj 
 
 OBJS__QUOTED += \
 "current_control.obj" \
-"eqep_module.obj" \
+"interrupt_routines.obj" \
 "main.obj" \
 "peripheral_initializations.obj" 
 
 C_DEPS__QUOTED += \
-"eqep_module.d" \
+"current_control.d" \
+"interrupt_routines.d" \
 "main.d" \
 "peripheral_initializations.d" 
 
-CLA_DEPS__QUOTED += \
-"current_control.d" 
-
 C_SRCS__QUOTED += \
-"../eqep_module.c" \
+"../interrupt_routines.c" \
 "../main.c" \
 "../peripheral_initializations.c" 
 

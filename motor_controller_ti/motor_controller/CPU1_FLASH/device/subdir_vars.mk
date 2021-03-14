@@ -34,7 +34,4 @@ ASM_DEPS__QUOTED += \
 ASM_SRCS__QUOTED += \
 "../device/F2837xD_CodeStartBranch.asm" 
 
-C_SRCS__QUOTED += \
-"../device/device.c" 
-
 

@@ -9,18 +9,20 @@
 #define PERIPHERAL_INITIALIZATIONS_H_
 
 /*==================INCLUDES==================*/
-#include "driverlib.h"
-#include "device.h"
+#include <stdint.h>
 
 /*==================FUNCTION PROTOTYPES==================*/
+void configGPIOS(void);
 void CLA_runTask(void);
 void CLA_configClaMemory(void);
-void CLA_initCpu1Cla1(void);
+void CLA_initCpu1Cla(void);
 void initADC(void);
 void initEPWM(void);
 void initADCSOC(void);
 void initSCIBFIFO(void);
-void initEQEP(void);
+void configCPUTimer(uint32_t, uint32_t, uint16_t);
+void initSPIA(void);
+void initSPIB(void);
 
 
 
