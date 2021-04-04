@@ -189,7 +189,7 @@ else
 end
 
 % LQR calculations
-Q = diag([10 400 400 10 100 100]);
+Q = diag([10 4000 4000 1000 10 10]);
 R = 1;
 
 [K, P] = lqr(A_matrix, B_matrix, Q, R);
