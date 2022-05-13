@@ -2,3 +2,6 @@
 	path = esp/esp-idf
 	url = https://github.com/espressif/esp-idf.git
 	branch = master
+[submodule "matlab/kalman_filter_lqr_lib"]
+	path = matlab/kalman_filter_lqr_lib
+	url = https://github.com/samvrit/kalman_filter_lqr_lib.git
