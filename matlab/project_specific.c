@@ -5,6 +5,8 @@
 #define PI (3.1415f)
 #define DEG_TO_RAD(x)	((x) * (PI / 180.0f))
 
+#define SAT(x, max, min)	( (x) > (max) ? (max) : ((x) < (min) ? (min) : (x)))
+
 
 const float A[N_STATES][N_STATES] = {	{0.000000,	0.000000,	0.000000,	1.000000,	0.000000,	0.000000},
 										{0.000000,	0.000000,	0.000000,	0.000000,	1.000000,	0.000000},
@@ -39,7 +41,7 @@ const float R = 1.0f;
 
 float control_output_process(const float computed_output, const float x_hat[N_STATES], const float timestep)
 {
-	const bool linearity = (fabs(x_hat[1]) < DEG_TO_RAD(3.0f));
+	const bool linearity = (fabs(x_hat[1]) < DEG_TO_RAD(10.0f));
 	
-	return linearity ? computed_output : 0.0f;
+	return linearity ? SAT(computed_output, 4.0f, -4.0f) : 0.0f;
 }

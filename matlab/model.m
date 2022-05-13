@@ -173,10 +173,8 @@ if run_model
         B_matrix(i+3) = subs(diff(accel(i), tau), [X(1) X(2) X(3) X(4) X(5) X(6) tau], [op(1) op(2) op(3) op(4) op(5) op(6) 0]);
     end
     
-    C_matrix = [1 0 0 0 0 0;
-                0 1 0 0 0 0;
-                0 0 1 0 0 0];
-    D_matrix = zeros(3,1);
+    C_matrix = [eye(3) zeros(3,3); zeros(3,6)];
+    D_matrix = zeros(6,1);
     
     fprintf('Time to calc M: %f | Time to calc accel: %f\n', time_M, time_accel);
 else
@@ -192,7 +190,12 @@ end
 Q = diag([10 4000 4000 1000 10 10]);
 R = 1;
 
-[K, P] = lqr(A_matrix, B_matrix, Q, R);
+Q_kalman = 1000;
+R_kalman = 1;
+
+[K, ~] = lqr(A_matrix, B_matrix, Q, R);
+sys = ss(A_matrix, B_matrix, C_matrix, D_matrix);
+[~, L_kalman] = kalman(sys, Q_kalman, R_kalman);
 
 % Closed loop eigen values
 Acl = A_matrix - (B_matrix * K);
@@ -203,4 +206,4 @@ disp(eig_cl)
 disp(A_matrix)
 disp(B_matrix)
 disp(K)
-save('Matrices.mat', 'A_matrix', 'B_matrix', 'C_matrix', 'D_matrix', 'K');
+save('Matrices.mat', 'A_matrix', 'B_matrix', 'C_matrix', 'D_matrix', 'K', 'L_kalman');
