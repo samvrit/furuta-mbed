@@ -207,3 +207,11 @@ disp(A_matrix)
 disp(B_matrix)
 disp(K)
 save('Matrices.mat', 'A_matrix', 'B_matrix', 'C_matrix', 'D_matrix', 'K', 'L_kalman');
+
+function retmat = rotx(alpha)
+    retmat = [1 0 0; 0 cosd(alpha) -sind(alpha); 0 sind(alpha) cosd(alpha)];
+end
+
+function retmat = roty(beta)
+    retmat = [cosd(beta) 0 sind(beta); 0 1 0; -sind(beta) 0 cosd(beta)];
+end

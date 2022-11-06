@@ -1,5 +1,5 @@
 %% File : kf_and_controller.tlc
-%% Created : Mon May 16 19:50:45 2022
+%% Created : Mon Aug 22 23:25:55 2022
 %%
 %% Description: 
 %%   Simulink Coder wrapper functions interface generated for 
@@ -22,28 +22,105 @@
 %%      generated code.
 %%
 %function BlockTypeSetup(block, system) Output
-  %openfile externs
 
-    #ifdef __cplusplus
-    extern "C" {
+  %if IsModelReferenceSimTarget() || CodeFormat == "S-Function" || ::isRAccel
+    %assign hFileName = "kf_and_controller_accel_wrapper"
+    %assign hFileNameMacro = FEVAL("upper", hFileName)
+    %openfile hFile = "%<hFileName>.h"
+    %selectfile hFile
+    #ifndef _%<hFileNameMacro>_H_
+    #define _%<hFileNameMacro>_H_
+
+    #ifdef MATLAB_MEX_FILE
+    #include "tmwtypes.h"
+    #else
+    #include "rtwtypes.h"
     #endif
+    #ifdef __cplusplus
+    #define SFB_EXTERN_C extern "C"
+    #else
+    #define SFB_EXTERN_C extern
+    #endif
+    SFB_EXTERN_C void kf_and_controller_Start_wrapper_accel(real_T *xD);
+    SFB_EXTERN_C void kf_and_controller_Outputs_wrapper_accel(const real_T *u0,
+			real_T *y0,
+			const real_T *xD);
+    SFB_EXTERN_C void kf_and_controller_Update_wrapper_accel(const real_T *u0,
+			real_T *y0,
+			real_T *xD);
+    #undef SFB_EXTERN_C
+    #endif
+    %closefile hFile
+
+    %assign cFileName = "kf_and_controller_accel_wrapper"
+    %openfile cFile = "%<cFileName>.c"
+    %selectfile cFile
+    #include <string.h>
+    #ifdef MATLAB_MEX_FILE
+    #include "tmwtypes.h"
+    #else
+    #include "rtwtypes.h"
+    #endif
+    #include "%<hFileName>.h"
+    
 
     extern void kf_and_controller_Start_wrapper(real_T *xD);
-
     extern void kf_and_controller_Outputs_wrapper(const real_T *u0,
 			real_T *y0,
 			const real_T *xD);
+    extern void kf_and_controller_Terminate_wrapper(real_T *xD);
+
     extern void kf_and_controller_Update_wrapper(const real_T *u0,
 			real_T *y0,
 			real_T *xD);
+    void kf_and_controller_Start_wrapper_accel(real_T *xD){
+    kf_and_controller_Start_wrapper(xD);
+    }
+    void kf_and_controller_Outputs_wrapper_accel(const real_T *u0,
+			real_T *y0,
+			const real_T *xD){
+    kf_and_controller_Outputs_wrapper(u0,
+			y0,
+			xD);
+    }
 
-    extern void kf_and_controller_Terminate_wrapper(real_T *xD);
+    void kf_and_controller_Update_wrapper_accel(const real_T *u0,
+			real_T *y0,
+			real_T *xD){
+    kf_and_controller_Update_wrapper(u0,
+			y0,
+			xD);
+    }
+
+    %closefile cFile
+
+    %<LibAddToCommonIncludes("%<hFileName>.h")>
+
+  %else
+  %openfile externs
 
     #ifdef __cplusplus
-    }
+    #define SFB_EXTERN_C extern "C"
+    #else
+    #define SFB_EXTERN_C extern
     #endif
+
+    SFB_EXTERN_C void kf_and_controller_Start_wrapper(real_T *xD);
+
+    SFB_EXTERN_C void kf_and_controller_Outputs_wrapper(const real_T *u0,
+			real_T *y0,
+			const real_T *xD);
+    SFB_EXTERN_C void kf_and_controller_Update_wrapper(const real_T *u0,
+			real_T *y0,
+			real_T *xD);
+
+    SFB_EXTERN_C void kf_and_controller_Terminate_wrapper(real_T *xD);
+
+    #undef SFB_EXTERN_C
   %closefile externs
   %<LibCacheExtern(externs)>
+
+  %endif
   %%
 %endfunction
 
@@ -72,7 +149,13 @@
 %function Start(block, system) Output
    /* %<Type> Block: %<Name> */
   %assign pxd = LibBlockDWorkAddr(DSTATE, "", "", 0)
-  kf_and_controller_Start_wrapper(%<pxd>);
+  
+  %if IsModelReferenceSimTarget() || CodeFormat == "S-Function" || ::isRAccel
+    kf_and_controller_Start_wrapper_accel(%<pxd>);
+  %else
+    kf_and_controller_Start_wrapper(%<pxd>);
+  %endif
+
 %endfunction
 %% Function: Outputs ==========================================================
 %%
@@ -84,7 +167,13 @@
   %assign pu0 = LibBlockInputSignalAddr(0, "", "", 0)
   %assign py0 = LibBlockOutputSignalAddr(0, "", "", 0)
   %assign pxd = LibBlockDWorkAddr(DSTATE, "", "", 0)
-  kf_and_controller_Outputs_wrapper(%<pu0>, %<py0>, %<pxd>);
+  
+  %if IsModelReferenceSimTarget() || CodeFormat == "S-Function" || ::isRAccel
+    kf_and_controller_Outputs_wrapper_accel(%<pu0>, %<py0>, %<pxd>);
+  %else
+    kf_and_controller_Outputs_wrapper(%<pu0>, %<py0>, %<pxd>);
+  %endif
+
   %%
 %endfunction
 
@@ -98,7 +187,12 @@
   %assign pu0 = LibBlockInputSignalAddr(0, "", "", 0)
   %assign py0 = LibBlockOutputSignalAddr(0, "", "", 0)
   %assign pxd = LibBlockDWorkAddr(DSTATE, "", "", 0)
-  kf_and_controller_Update_wrapper(%<pu0>, %<py0>, %<pxd>);
+    %if IsModelReferenceSimTarget() || CodeFormat == "S-Function" || ::isRAccel
+    kf_and_controller_Update_wrapper_accel(%<pu0>, %<py0>, %<pxd>);
+  %else
+    kf_and_controller_Update_wrapper(%<pu0>, %<py0>, %<pxd>);
+  %endif
+
   %%
 %endfunction
 
