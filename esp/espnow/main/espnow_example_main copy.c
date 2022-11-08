@@ -42,7 +42,7 @@
 
 static const char *TAG = "espnow_example";
 
-static uint8_t peer_mac[ESP_NOW_ETH_ALEN] = { 0x24, 0x0A, 0xC4, 0xEC, 0xAC, 0x24 };
+static uint8_t peer_mac[ESP_NOW_ETH_ALEN] = { 0x24, 0x0A, 0xC4, 0xEC, 0xA6, 0x28 };
 
 /* WiFi should start before using ESPNOW */
 static void example_wifi_init(void)
@@ -54,6 +54,7 @@ static void example_wifi_init(void)
     esp_wifi_set_storage(WIFI_STORAGE_RAM);
     esp_wifi_set_mode(ESPNOW_WIFI_MODE);
     esp_wifi_start();
+    esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_LR);
 }
 
 /* ESPNOW sending or receiving callback function is called in WiFi task.
@@ -61,7 +62,18 @@ static void example_wifi_init(void)
  * necessary data to a queue and handle it from a lower priority task. */
 static void example_espnow_send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-    // ESP_LOGI(TAG, "Data sent!");
+    gpio_set_level(GPIO_OUTPUT_IO_0, 1U);
+    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL);
+    timer_start(TIMER_GROUP_0, TIMER_0);
+
+    uint64_t timer_val = 0UL;
+    while(timer_val < 10UL)
+    {
+        timer_get_counter_value(TIMER_GROUP_0, TIMER_0, &timer_val);
+    }
+    timer_pause(TIMER_GROUP_0, TIMER_0);
+    
+    gpio_set_level(GPIO_OUTPUT_IO_0, 0U);
 }
 
 static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
@@ -71,7 +83,7 @@ static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data,
     timer_start(TIMER_GROUP_0, TIMER_0);
 
     uint64_t timer_val = 0UL;
-    while(timer_val < 15000UL)
+    while(timer_val < 10UL)
     {
         timer_get_counter_value(TIMER_GROUP_0, TIMER_0, &timer_val);
     }
@@ -91,7 +103,7 @@ static void example_espnow_task(void *pvParameter)
 
         const uint8_t data_to_send[4] = {0x12, 0x23, 0x34, 0x56};
         esp_now_send(peer_mac, data_to_send, 4U);
-        vTaskDelay(100 / portTICK_RATE_MS);
+        vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
 
@@ -118,7 +130,7 @@ static esp_err_t example_espnow_init(void)
 
     esp_now_add_peer(&peer);
 
-    xTaskCreate(example_espnow_task, "example_espnow_task", 2048, NULL, 4, NULL);
+    xTaskCreate(example_espnow_task, "example_espnow_task", 2048, NULL, 14, NULL);
 
     return ESP_OK;
 }
