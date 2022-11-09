@@ -30,6 +30,7 @@
 #include "espnow_example.h"
 #include "driver/gpio.h"
 #include "driver/timer.h"
+#include "esp_timer.h"
 
 #define ESPNOW_MAXDELAY 512
 
@@ -54,7 +55,7 @@ static void example_wifi_init(void)
     esp_wifi_set_storage(WIFI_STORAGE_RAM);
     esp_wifi_set_mode(ESPNOW_WIFI_MODE);
     esp_wifi_start();
-    esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_LR);
+    esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR);
 }
 
 /* ESPNOW sending or receiving callback function is called in WiFi task.
@@ -62,18 +63,6 @@ static void example_wifi_init(void)
  * necessary data to a queue and handle it from a lower priority task. */
 static void example_espnow_send_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-    gpio_set_level(GPIO_OUTPUT_IO_0, 1U);
-    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL);
-    timer_start(TIMER_GROUP_0, TIMER_0);
-
-    uint64_t timer_val = 0UL;
-    while(timer_val < 10UL)
-    {
-        timer_get_counter_value(TIMER_GROUP_0, TIMER_0, &timer_val);
-    }
-    timer_pause(TIMER_GROUP_0, TIMER_0);
-    
-    gpio_set_level(GPIO_OUTPUT_IO_0, 0U);
 }
 
 static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
@@ -92,18 +81,33 @@ static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data,
     gpio_set_level(GPIO_OUTPUT_IO_0, 0U);
 }
 
+static void periodic_timer_callback(void* arg)
+{
+    gpio_set_level(GPIO_OUTPUT_IO_0, 1U);
+    const uint8_t data_to_send[4] = {0x12, 0x23, 0x34, 0x56};
+    esp_now_send(peer_mac, data_to_send, 4U);
+    gpio_set_level(GPIO_OUTPUT_IO_0, 0U);
+}
+
 static void example_espnow_task(void *pvParameter)
 {
-    vTaskDelay(5000 / portTICK_RATE_MS);
+    vTaskDelay(1000 / portTICK_RATE_MS);
     ESP_LOGI(TAG, "Start sending broadcast data");
+
+    esp_timer_create_args_t periodic_timer_args = {0};
+    periodic_timer_args.callback = (esp_timer_cb_t)periodic_timer_callback;
+    periodic_timer_args.arg = NULL;
+    periodic_timer_args.dispatch_method = ESP_TIMER_TASK;
+    periodic_timer_args.name = "periodic_timer";
+
+    esp_timer_handle_t periodic_timer;
+
+    esp_timer_create(&periodic_timer_args, &periodic_timer);
+
+    esp_timer_start_periodic(periodic_timer, 10000);
 
     for(;;)
     {
-        /* Start sending broadcast ESPNOW data. */
-
-        const uint8_t data_to_send[4] = {0x12, 0x23, 0x34, 0x56};
-        esp_now_send(peer_mac, data_to_send, 4U);
-        vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
 
@@ -129,8 +133,6 @@ static esp_err_t example_espnow_init(void)
     }
 
     esp_now_add_peer(&peer);
-
-    xTaskCreate(example_espnow_task, "example_espnow_task", 2048, NULL, 14, NULL);
 
     return ESP_OK;
 }
@@ -166,4 +168,6 @@ void app_main(void)
 
     example_wifi_init();
     example_espnow_init();
+
+    xTaskCreate(example_espnow_task, "example_espnow_task", 2048, NULL, 14, NULL);
 }
