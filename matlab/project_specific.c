@@ -41,7 +41,7 @@ const float R = 1.0f;
 
 float control_output_process(const float computed_output, const float x_hat[N_STATES], const float timestep)
 {
-	const bool linearity = (fabs(x_hat[1]) < DEG_TO_RAD(10.0f));
+	const bool linearity = (fabs(x_hat[1]) < DEG_TO_RAD(20.0f));
 	
 	return linearity ? SAT(computed_output, 4.0f, -4.0f) : 0.0f;
 }
