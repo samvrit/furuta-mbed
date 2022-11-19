@@ -1,1 +1,5 @@
 *.mexw64
+*.tlc
+kf_and_controller.c
+rtwmakecfg.m
+SFB__kf_and_controller__SFB.mat

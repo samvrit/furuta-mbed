@@ -27,7 +27,7 @@
 /* %%%-SFUNWIZ_wrapper_externs_Changes_BEGIN --- EDIT HERE TO _END */
 /* extern double func(double a); */
 
-const float Ts = 0.0001f;
+const float Ts = 0.0001;
 float x_hat[6] = {0.0f};
 /* %%%-SFUNWIZ_wrapper_externs_Changes_END --- EDIT HERE TO _BEGIN */
 
