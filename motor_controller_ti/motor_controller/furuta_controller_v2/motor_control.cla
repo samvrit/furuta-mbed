@@ -1,0 +1,11 @@
+// Included Files
+#include <cpu_cla_shared.h>
+
+// Defines
+
+// Globals
+
+__interrupt void motor_torque_control(void)
+{
+    cla_outputs.current_feedback = cla_inputs.torque_cmd;
+}
