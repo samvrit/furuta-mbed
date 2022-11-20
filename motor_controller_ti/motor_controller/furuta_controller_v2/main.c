@@ -4,6 +4,7 @@
 #include "adc_init.h"
 #include "epwm_init.h"
 #include "gpio_init.h"
+#include "dac_init.h"
 
 #include "driverlib.h"
 #include "device.h"
@@ -48,7 +49,9 @@ void main(void)
     cla_configClaMemory();
     cla_initCpu1Cla1();
 
-    CLA_forceTasks(CLA1_BASE,CLA_TASKFLAG_8);
+    configureDAC();
+
+    DAC_setShadowValue(DACA_BASE, 2048);
 
     // Enable Global Interrupts (INTM) and realtime interrupt (DGBM)
 
