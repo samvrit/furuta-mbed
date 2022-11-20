@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "F2837xD_device.h"
+
 // Defines
 
 
@@ -32,5 +34,6 @@ extern struct cpu_cla_shared_S cpu_cla_shared;
 
 // Function Prototypes
 __interrupt void motor_torque_control();
+__interrupt void sw_task();
 
 #endif //end of _CLA_ATAN_SHARED_H_ definition
