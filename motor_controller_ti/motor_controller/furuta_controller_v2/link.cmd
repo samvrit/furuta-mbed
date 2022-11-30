@@ -97,16 +97,16 @@ SECTIONS
 {
    /* Allocate program areas: */
    .cinit           : > FLASHB      PAGE = 0, ALIGN(8)
-   .text            : > FLASHB      PAGE = 0, ALIGN(8)
+   .text            : > FLASHB | FLASHC | FLASHD | FLASHE      PAGE = 0, ALIGN(8)
    codestart        : > BEGIN       PAGE = 0, ALIGN(8)
-   .stack           : > RAMM1       PAGE = 1
+   .stack           : > RAMM1 | RAMLS2 | RAMLS3       PAGE = 1
    .switch          : > FLASHB      PAGE = 0, ALIGN(8)
 
    /* Allocate uninitalized data sections: */
 
 #if defined(__TI_EABI__)
    .init_array         : > FLASHB,       PAGE = 0, ALIGN(8)
-   .bss                : > RAMLS2,       PAGE = 1
+   .bss                : > RAMLS2 | RAMLS3,       PAGE = 1
    .bss:output         : > RAMLS2,       PAGE = 1
    .data               : > RAMLS2,       PAGE = 1
    .sysmem             : > RAMLS2,       PAGE = 1

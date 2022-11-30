@@ -1,8 +1,16 @@
 eclipse.preferences.version=1
+encoding//CPU1_FLASH/controls/subdir_rules.mk=UTF-8
+encoding//CPU1_FLASH/controls/subdir_vars.mk=UTF-8
 encoding//CPU1_FLASH/device/subdir_rules.mk=UTF-8
 encoding//CPU1_FLASH/device/subdir_vars.mk=UTF-8
+encoding//CPU1_FLASH/kalman_filter_lqr_lib/subdir_rules.mk=UTF-8
+encoding//CPU1_FLASH/kalman_filter_lqr_lib/subdir_vars.mk=UTF-8
+encoding//CPU1_FLASH/kalman_filter_lqr_lib/tests/subdir_rules.mk=UTF-8
+encoding//CPU1_FLASH/kalman_filter_lqr_lib/tests/subdir_vars.mk=UTF-8
 encoding//CPU1_FLASH/makefile=UTF-8
 encoding//CPU1_FLASH/objects.mk=UTF-8
+encoding//CPU1_FLASH/peripheral_initializations/subdir_rules.mk=UTF-8
+encoding//CPU1_FLASH/peripheral_initializations/subdir_vars.mk=UTF-8
 encoding//CPU1_FLASH/sources.mk=UTF-8
 encoding//CPU1_FLASH/subdir_rules.mk=UTF-8
 encoding//CPU1_FLASH/subdir_vars.mk=UTF-8
