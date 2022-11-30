@@ -23,15 +23,15 @@ noise_sensitivity_tf = 1 / (1 + motor_tf*pi_tf);
 
 foa_tf = 1/(5e-5*s + 1);
 
-figure
-step(closed_loop_tf, foa_tf);
-title('Closed Loop Step Response')
-legend('closed loop', 'first order approx')
-
-figure
-step(disturbance_tf)
-title('Disturbance Step')
-
-figure
-step(noise_sensitivity_tf)
-title('Noise sensitivity step')
+% figure
+% step(closed_loop_tf, foa_tf);
+% title('Closed Loop Step Response')
+% legend('closed loop', 'first order approx')
+% 
+% figure
+% step(disturbance_tf)
+% title('Disturbance Step')
+% 
+% figure
+% step(noise_sensitivity_tf)
+% title('Noise sensitivity step')

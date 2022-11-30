@@ -187,15 +187,15 @@ else
 end
 
 % LQR calculations
-Q = diag([10 4000 4000 1000 10 10]);
+Q = diag([10 400000 4000 1000 10000 1000]);
 R = 1;
 
-Q_kalman = 1000;
-R_kalman = 1;
+Q_kalman = 7.5e-5;
+R_kalman = 1.21e-6;
 
 [K, ~] = lqr(A_matrix, B_matrix, Q, R);
 sys = ss(A_matrix, B_matrix, C_matrix, D_matrix);
-[~, L_kalman] = kalman(sys, Q_kalman, R_kalman);
+[~, L_kalman, P] = kalman(sys, Q_kalman, R_kalman);
 
 % Closed loop eigen values
 Acl = A_matrix - (B_matrix * K);

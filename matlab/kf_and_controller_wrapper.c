@@ -27,8 +27,9 @@
 /* %%%-SFUNWIZ_wrapper_externs_Changes_BEGIN --- EDIT HERE TO _END */
 /* extern double func(double a); */
 
-const float Ts = 0.0001;
+const float Ts = 0.0001f;
 float x_hat[6] = {0.0f};
+float torque_cmd = 0.0f;
 /* %%%-SFUNWIZ_wrapper_externs_Changes_END --- EDIT HERE TO _BEGIN */
 
 /*
@@ -67,7 +68,7 @@ void kf_and_controller_Outputs_wrapper(const real_T *u0,
       y1[0].im = u1[0].im;
  */
 
-y0[0] = control_output(x_hat, Ts);
+y0[0] = torque_cmd;
 /* %%%-SFUNWIZ_wrapper_Outputs_Changes_END --- EDIT HERE TO _BEGIN */
 }
 
@@ -87,8 +88,16 @@ void kf_and_controller_Update_wrapper(const real_T *u0,
 
 const float measurement[6] = {u0[0], u0[1], u0[2], u0[3], u0[4], u0[5]};
 
-covariance_matrix_step();
-observer_step(measurement, true, x_hat);
+static float measurement_lpf[6] = {0};
+
+for (int i = 0; i < 6; i++)
+{
+    measurement_lpf[i] += (measurement[i] - measurement_lpf[i]) * 0.09090909091f;
+}
+
+// covariance_matrix_step();
+torque_cmd = control_output(x_hat, Ts);
+observer_step(measurement_lpf, true, x_hat);
 /* %%%-SFUNWIZ_wrapper_Update_Changes_END --- EDIT HERE TO _BEGIN */
 }
 

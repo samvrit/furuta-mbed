@@ -1,7 +1,8 @@
-F = dsys.A;
-H = dsys.C;
-Q = dsys.B * 1 * dsys.B';
-R = eye(3) .* 1e-6;
+Ts = 1e-4;
+F = eye(6) + Ts * A_matrix;
+H = C_matrix;
+Q = (B_matrix * B_matrix') * Ts^2 * 7.5e-5;
+R = eye(6) * 1.21e-6;
 P = zeros(6,6);
 n = 20000;
 gain_log = zeros(18,n);

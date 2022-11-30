@@ -29,19 +29,19 @@ const float C[N_STATES][N_STATES] = {	{1.000000,	0.000000,	0.000000,	0.000000,	0
 										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
 										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000}};
 
-const float K[N_STATES][N_STATES] = {	{3.162278,	-677.257131,	-1339.746051,	33.700353,	-218.398551,	-198.544387},
+const float K[N_STATES][N_STATES] = {	{3.1623,    -1.1589e3,    -3.2336e3,    35.0927,  -429.5221,  -464.7969},
 										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
 										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
 										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
 										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
 										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000}};
 
-const float Q = 1e3f;
-const float R = 1.0f;
+const float Q = 7.5e-5f;
+const float R = 1.21e-6f;
 
 float control_output_process(const float computed_output, const float x_hat[N_STATES], const float timestep)
 {
-	const bool linearity = (fabs(x_hat[1]) < DEG_TO_RAD(20.0f));
+	const bool linearity = (fabsf(x_hat[1]) < DEG_TO_RAD(90.0f));
 	
-	return linearity ? SAT(computed_output, 4.0f, -4.0f) : 0.0f;
+	return linearity ? SAT(computed_output, 15.0f, -15.0f) : 0.0f;
 }
