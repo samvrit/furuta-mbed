@@ -15,6 +15,7 @@
 /* %%%-SFUNWIZ_wrapper_includes_Changes_BEGIN --- EDIT HERE TO _END */
 #include <math.h>
 #include <stdbool.h>
+#include <string.h>
 #include "kalman_filter_lqr_lib/observer_controller.h"
 /* %%%-SFUNWIZ_wrapper_includes_Changes_END --- EDIT HERE TO _BEGIN */
 #define u_width 6
@@ -27,9 +28,49 @@
 /* %%%-SFUNWIZ_wrapper_externs_Changes_BEGIN --- EDIT HERE TO _END */
 /* extern double func(double a); */
 
+#define PI (3.1415f)
+#define DEG_TO_RAD(x)	((x) * (PI / 180.0f))
+
+#define SAT(x, max, min)	( (x) > (max) ? (max) : ((x) < (min) ? (min) : (x)))
+
+const float A[N_STATES][N_STATES] = {	{0.000000,	0.000000,	0.000000,	1.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	1.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	1.000000},
+										{0.000000,	82.411254,	-2.785977,	0.000000,	0.000000,	0.000000},
+										{0.000000,	130.127738,	-22.802044,	0.000000,	0.000000,	0.000000},
+										{0.000000,	-142.150128,	76.102558,	0.000000,	0.000000,	0.000000}};
+
+const float B[N_STATES][N_STATES] = {	{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{147.219505,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{168.419459,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{-184.196878,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000}};
+
+const float C[N_STATES][N_STATES] = {	{1.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	1.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	1.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000}};
+
+const float K[N_STATES][N_STATES] = {	{3.1623,    -1.1589e3,    -3.2336e3,    35.0927,  -429.5221,  -464.7969},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000},
+										{0.000000,	0.000000,	0.000000,	0.000000,	0.000000,	0.000000}};
+
+const float Q = 7.5e-5f;
+const float R = 1.21e-6f;
+
+kf_input_S kf_input;
+kf_states_S kf_states;
+
 const float Ts = 0.0001f;
-float x_hat[6] = {0.0f};
 float torque_cmd = 0.0f;
+
+bool inverse_valid = true;
 /* %%%-SFUNWIZ_wrapper_externs_Changes_END --- EDIT HERE TO _BEGIN */
 
 /*
@@ -43,12 +84,25 @@ void kf_and_controller_Start_wrapper(real_T *xD)
  * Custom Start code goes here.
  */
 
-observer_init(x_hat, Ts);
-
-for(int i = 0; i < 20000; i++)
-{
-    covariance_matrix_step();
-}
+    memcpy(kf_input.A, A, N_STATES*N_STATES*sizeof(float));
+    memcpy(kf_input.B, B, N_STATES*N_STATES*sizeof(float));
+    memcpy(kf_input.C, C, N_STATES*N_STATES*sizeof(float));
+    memcpy(kf_input.K, K, N_STATES*N_STATES*sizeof(float));
+    
+    kf_input.Q = Q;
+    kf_input.R = R;
+    
+    kf_input.timestep = Ts;
+    
+    kf_observer_init(&kf_input, &kf_states);
+    
+    for(int i = 0; i < 20000; i++)
+    {
+        inverse_valid = kf_covariance_matrix_step(&kf_input, &kf_states);
+        
+        if(!inverse_valid)
+            break;
+    }
 /* %%%-SFUNWIZ_wrapper_Start_Changes_END --- EDIT HERE TO _BEGIN */
 }
 /*
@@ -68,7 +122,7 @@ void kf_and_controller_Outputs_wrapper(const real_T *u0,
       y1[0].im = u1[0].im;
  */
 
-y0[0] = torque_cmd;
+    y0[0] = torque_cmd;
 /* %%%-SFUNWIZ_wrapper_Outputs_Changes_END --- EDIT HERE TO _BEGIN */
 }
 
@@ -86,18 +140,22 @@ void kf_and_controller_Update_wrapper(const real_T *u0,
  *   xD[0] = u0[0];
  */
 
-const float measurement[6] = {u0[0], u0[1], u0[2], u0[3], u0[4], u0[5]};
+    const float measurement[6] = {u0[0], u0[1], u0[2], u0[3], u0[4], u0[5]};
+    
+    static float measurement_lpf[6] = {0};
+    
+    for (int i = 0; i < 6; i++)
+    {
+        measurement_lpf[i] += (measurement[i] - measurement_lpf[i]) * 0.09090909091f;
+    }
 
-static float measurement_lpf[6] = {0};
+    const bool linearity = fabsf(measurement[1]) < DEG_TO_RAD(20.0f);
+    
+    // covariance_matrix_step();
+    const float torque_cmd_pre = kf_control_output(kf_states.x_hat, Ts, &kf_input);
+    torque_cmd = (linearity && inverse_valid) ? SAT(torque_cmd_pre, 15.0f, -15.0f) : 0.0f;
 
-for (int i = 0; i < 6; i++)
-{
-    measurement_lpf[i] += (measurement[i] - measurement_lpf[i]) * 0.09090909091f;
-}
-
-// covariance_matrix_step();
-torque_cmd = control_output(x_hat, Ts);
-observer_step(measurement_lpf, true, x_hat);
+    kf_observer_step(measurement_lpf, (linearity && inverse_valid), &kf_input, &kf_states);
 /* %%%-SFUNWIZ_wrapper_Update_Changes_END --- EDIT HERE TO _BEGIN */
 }
 
