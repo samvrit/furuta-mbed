@@ -84,6 +84,8 @@ void cla_initCpu1Cla1(void)
     CLA_enableIACK(CLA1_BASE);
     CLA_enableTasks(CLA1_BASE, CLA_TASKFLAG_ALL);
 
+    CLA_forceTasks(CLA1_BASE, CLA_TASKFLAG_8);
+
     CLA_setTriggerSource(CLA_TASK_1, CLA_TRIGGER_ADCA1); // CLA_TRIGGER_ADCA1 implies ADCA Interrupt 1, and not ADCA Channel 1
 
     EDIS;

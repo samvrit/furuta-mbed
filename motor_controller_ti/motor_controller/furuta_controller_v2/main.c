@@ -15,13 +15,15 @@
 // Globals
 
 #pragma DATA_SECTION(cla_inputs,"CpuToCla1MsgRAM");
-struct cla_inputs_S cla_inputs;
+struct cla_inputs_S cla_inputs = {.enable = false, .torque_cmd = 0.0f};
 
 #pragma DATA_SECTION(cla_outputs,"Cla1ToCpuMsgRAM");
 struct cla_outputs_S cla_outputs;
 
 #pragma DATA_SECTION(cpu_cla_shared,"CLADataLS0")
-struct cpu_cla_shared_S cpu_cla_shared;
+struct cpu_cla_shared_S cpu_cla_shared = {.integrator = 0.0f};
+
+uint16_t dac_value = 4095;
 
 
 void main(void)
@@ -54,8 +56,6 @@ void main(void)
 
     configureDAC();
 
-    DAC_setShadowValue(DACA_BASE, 2048);
-
     // Enable Global Interrupts (INTM) and realtime interrupt (DGBM)
 
     EINT;
@@ -63,5 +63,6 @@ void main(void)
 
     for(;;)
     {
+        DAC_setShadowValue(DACA_BASE, dac_value);
     }
 }
