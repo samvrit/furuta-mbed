@@ -21,14 +21,83 @@
 
 \chapter{Motor Controller} \label{chap:motor_controller}
 
-The input for the furuta pendulum is a torque applied by the motor at the base of the setup. We use a DC brushed motor for this purpose, and hence the motor controller is designed to be a current controller, as the torque is directly proportional to the winding current. The winding current is controlled by applying a pulse-width-modulated voltage at the motor terminals. In the following sections, we will look into the mathematical model and the control design of the current/torque controller.
+The input for the furuta pendulum is a torque applied by the motor at the base of the setup. The high-level controller computes the amount of torque to be applied by the motor, and the low-level controller runs a PI control on the torque reference. We use a DC brushed motor for this purpose, and hence the motor controller is designed to be a current controller, as the torque is directly proportional to the winding current. The winding current is controlled by applying a pulse-width-modulated voltage at the motor terminals. In the following sections, we will look into the mathematical model and the control design of the current/torque controller.
 
 \section{Mathematical Model}	\label{sec:math_model}
 
-Following represents the current-voltage dynamics of a DC motor \cite{motor_control_umich_lecture}:\\
-
+Since the winding current is controlled by applying a certain voltage at the motor terminals, it is beneficial to look at the transfer function $\frac{I(s)}{V(s)}$. Following represents the current-voltage dynamics of a DC motor \cite{motor_control_umich_lecture}:\\
 
 \includegraphics{dc_motor_transfer_fn}
+
+The combined transfer function is as follows:
+
+\begin{align}
+\frac{I\left(s\right)}{V\left(s\right)} &= \frac{sJ + b}{(sL + R)\cdot(sJ + b) + K_t \cdot K_v} \label{eq:motor_plant_transfer_fn} \\
+\nonumber \\
+\text{where,} \nonumber \\
+I(s) &= \text{winding current} \nonumber \\
+V(s) &= \text{terminal voltage} \nonumber \\
+K_t &= \text{torque constant} \nonumber \\
+K_v &= \text{back emf constant} \nonumber \\
+J &= \text{rotor inertia} \nonumber\\
+b &= \text{rotor friction-damping} \nonumber \\
+L &= \text{winding inductance} \nonumber \\
+R &= \text{winding resistance} \nonumber \\
+V_b &= \text{back emf} \nonumber \\
+\omega &= \text{rotor angular velocity} \nonumber \\
+\tau &= \text{torque} \nonumber
+\end{align}
+
+Equation \ref{eq:motor_plant_transfer_fn} represents the plant dynamics for the controller that we wish to design. By simulating the high level controller with slightly different initial conditions, we were able to get an idea of the torque and speed requirements of the DC motor. A motor with a stall-torque rating of at least 4 Nm and a speed rating of at least 60 RPM was deemed necessary. A motor from Pololu was selected with the nameplate specifications shown in Table \ref{table:pololu_specs} \cite{pololu_motor_specs}.
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Value }\\
+\hline\hline
+Voltage & 12V \\
+\hline
+No-load speed & 67 RPM \\
+\hline
+No-load current & 0.2 A \\
+\hline
+Stall torque & 4.9 Nm \\
+\hline
+Stall current & 5.5 A \\
+\hline
+\end{tabular}
+\caption{Pololu motor nameplate specifications} \label{table:pololu_specs}
+\end{center}
+\end{table}
+
+
+From the nameplate specifications and from CAD drawings provided by the manufacturer, the other motor parameters were derived, as shown in Table \ref{table:pololu_motor_params}.
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Value} & \textbf{Units} & \textbf{Derivation} \\
+\hline \hline
+$K_t$ & $0.968$ & $Nm/A$ & $\frac{\text{stall-torque}}{\text{stall-current}}$ \\
+\hline
+$K_v$ & $1.7103$ & $V/rad/s$ & $\frac{\text{nameplate voltage}}{\text{nameplate speed}}$ \\
+\hline
+$L$ & $2.3e-3$ & $H$ & Provided by manufacturer \\
+\hline
+$R$ & $2.18$ & $\Omega$ & $\frac{\text{nameplate voltage}}{\text{stall current}}$ \\
+\hline
+$J$ & $12e-9$ & $kgm^2$ & CAD drawing \\
+\hline
+$b$ & $0.0151$ & $Nm/rad/s$ & $\frac{\text{no-load-current} \cdot K_t}{\text{no-load-speed}}$ \\
+\hline
+\end{tabular}
+\caption{Motor parameters} \label{table:pololu_motor_params}
+\end{center}
+\end{table}
 
 
 \bibliographystyle{plain} 
