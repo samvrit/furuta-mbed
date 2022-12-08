@@ -5,7 +5,7 @@
 // Defines
 
 #define CURRENT_SCALING (0.003052503053f)   // [A/adc_resolution] = (3/4095)*(5/3)*(1/0.4)
-#define CURRENT_OFFSET_RAW (2048U)
+#define CURRENT_OFFSET_RAW (2048.0f)
 #define CURRENT_BIAS_LPF_A (2.5e-6f)    // 4s time constant at 100kHz
 #define TORQUE_CONSTANT (0.968f)    // [Nm/A]
 
@@ -24,7 +24,7 @@ float current_bias;
 
 __interrupt void motor_torque_control(void)
 {
-    const float current_val_raw = (AdcaResultRegs.ADCRESULT0 - CURRENT_OFFSET_RAW) * CURRENT_SCALING;
+    const float current_val_raw = ((float)AdcaResultRegs.ADCRESULT0 - CURRENT_OFFSET_RAW) * CURRENT_SCALING;
 
     // Accumulate bias when current controller is not active
     if (!cla_inputs.enable)
