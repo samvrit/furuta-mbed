@@ -4,6 +4,9 @@
 #include "driverlib.h"
 #include "device.h"
 
+// Defines
+#define ADC_PPB_REF_OFFSET (2048U)
+
 //
 // Function to configure and power up ADCA.
 //
@@ -24,6 +27,10 @@ void initADCSOC(void)
     ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN2, 15);
 
     ADC_setSOCPriority(ADCA_BASE, ADC_PRI_THRU_SOC5_HIPRI);
+
+    ADC_setupPPB(ADCA_BASE, ADC_PPB_NUMBER1, ADC_SOC_NUMBER0);
+
+    ADC_setPPBReferenceOffset(ADCA_BASE, ADC_PPB_NUMBER1, ADC_PPB_REF_OFFSET);
 
     ADC_enableConverter(ADCA_BASE);
     DEVICE_DELAY_US(1000);

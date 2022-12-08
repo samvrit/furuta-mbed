@@ -5,7 +5,6 @@
 // Defines
 
 #define CURRENT_SCALING (0.003052503053f)   // [A/adc_resolution] = (3/4095)*(5/3)*(1/0.4)
-#define CURRENT_OFFSET_RAW (2048.0f)
 #define CURRENT_BIAS_LPF_A (2.5e-6f)    // 4s time constant at 100kHz
 #define TORQUE_CONSTANT (0.968f)    // [Nm/A]
 
@@ -16,7 +15,10 @@
 #define V_BRIDGE_MAX (12.0f)    // [V] DC voltage
 #define PWM_PERIOD_COUNTER (2000.0f)    // same as defined in epwm_init.c
 
-#define SAT(x, max, min) ((x) > (max) ? (max) : ((x) < (min) ? (min) : (x)))
+#define MAX(a, b) __mmaxf32((a), (b))
+#define MIN(a, b) __mminf32((a), (b))
+
+#define SAT(x, max, min) (MAX(MIN((x), (max)), (min)))
 
 // Globals
 float pi_control_i_term;
@@ -24,7 +26,8 @@ float current_bias;
 
 __interrupt void motor_torque_control(void)
 {
-    const float current_val_raw = ((float)AdcaResultRegs.ADCRESULT0 - CURRENT_OFFSET_RAW) * CURRENT_SCALING;
+    const int32_t adc_raw = AdcaResultRegs.ADCPPB1RESULT.all;   // post processing block already has the offset subtracted
+    const float current_val_raw = adc_raw * CURRENT_SCALING;
 
     // Accumulate bias when current controller is not active
     if (!cla_inputs.enable)
@@ -53,7 +56,7 @@ __interrupt void motor_torque_control(void)
 
     const uint16_t direction = (duty_percent > 0.0f) ? 1U : 0U;
 
-    EPwm1Regs.CMPA.bit.CMPA = (uint16_t)counter_compare;
+    EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
     GpioDataRegs.GPADAT.bit.GPIO1 = direction;
 
     cla_outputs.current_feedback = current_feedback;
