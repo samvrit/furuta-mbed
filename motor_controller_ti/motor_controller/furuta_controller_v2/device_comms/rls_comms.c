@@ -51,7 +51,7 @@ uint32_t rls_get_position(void)
 
     raw_data = raw_data_temp;
 
-    position_data = (raw_data >> 20U);
+    position_data = (raw_data >> 18U);
 
     return raw_data;
 }
