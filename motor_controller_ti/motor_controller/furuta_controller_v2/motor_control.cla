@@ -52,12 +52,24 @@ __interrupt void motor_torque_control(void)
     const float duty_percent = v_bridge / V_BRIDGE_MAX;
 
     float counter_compare = PWM_PERIOD_COUNTER - (fabsf(duty_percent) * PWM_PERIOD_COUNTER);
-    counter_compare = cla_inputs.enable ? counter_compare : PWM_PERIOD_COUNTER;
 
     const uint16_t direction = (duty_percent > 0.0f) ? 1U : 0U;
 
     EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
     GpioDataRegs.GPADAT.bit.GPIO1 = direction;
+
+    if (cla_inputs.enable && cla_inputs.pwm_override_enable)
+    {
+        EPwm1Regs.CMPA.bit.CMPA = cla_inputs.pwm_override_cmpa;
+    }
+    else if (cla_inputs.enable)
+    {
+        EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
+    }
+    else
+    {
+        EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(PWM_PERIOD_COUNTER);
+    }
 
     cla_outputs.current_feedback = current_feedback;
 }

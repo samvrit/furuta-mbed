@@ -15,6 +15,8 @@ struct cla_inputs_S
 {
     float torque_cmd;
     bool enable;
+    bool pwm_override_enable;
+    bool pwm_override_cmpa;
 };
 
 struct cla_outputs_S
