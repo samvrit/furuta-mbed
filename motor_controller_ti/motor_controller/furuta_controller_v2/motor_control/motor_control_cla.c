@@ -1,5 +1,6 @@
 // Included Files
-#include <cpu_cla_shared.h>
+#include "cpu_cla_shared.h"
+#include "epwm_global.h"
 
 
 // Defines
@@ -13,7 +14,6 @@
 #define CURRENT_CONTROLLER_I_TERM_MAX (20.0f) // [V/A]
 
 #define V_BRIDGE_MAX (12.0f)    // [V] DC voltage
-#define PWM_PERIOD_COUNTER (2000.0f)    // same as defined in epwm_init.c
 
 #define MAX(a, b) __mmaxf32((a), (b))
 #define MIN(a, b) __mminf32((a), (b))
@@ -51,24 +51,23 @@ __interrupt void motor_torque_control(void)
 
     const float duty_percent = v_bridge / V_BRIDGE_MAX;
 
-    float counter_compare = PWM_PERIOD_COUNTER - (fabsf(duty_percent) * PWM_PERIOD_COUNTER);
+    float counter_compare = MOTOR_CONTROL_TBPRD - (fabsf(duty_percent) * MOTOR_CONTROL_TBPRD);
 
     const uint16_t direction = (duty_percent > 0.0f) ? 1U : 0U;
 
-    EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
-    GpioDataRegs.GPADAT.bit.GPIO1 = direction;
-
-    if (cla_inputs.enable && cla_inputs.pwm_override_enable)
+    if (cla_inputs.overrides_enable)
     {
         EPwm1Regs.CMPA.bit.CMPA = cla_inputs.pwm_override_cmpa;
+        GpioDataRegs.GPADAT.bit.GPIO1 = cla_inputs.direction_override;
     }
     else if (cla_inputs.enable)
     {
         EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
+        GpioDataRegs.GPADAT.bit.GPIO1 = direction;
     }
     else
     {
-        EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(PWM_PERIOD_COUNTER);
+        EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(MOTOR_CONTROL_TBPRD);
     }
 
     cla_outputs.current_feedback = current_feedback;

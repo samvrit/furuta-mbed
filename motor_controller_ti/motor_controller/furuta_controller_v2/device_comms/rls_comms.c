@@ -10,8 +10,12 @@
 #include "driverlib.h"
 #include "device.h"
 
-uint32_t raw_data = 0U;
-uint32_t position_data = 0U;
+// Defines
+#define RLS_POSITION_SCALING  (3.835186051e-4f)  // [rad/count] equal to (2*pi)/(2^14-1)
+
+#define SPI_N_WORDS (4U)
+
+// Local variables
 
 
 // Local functions
@@ -30,28 +34,29 @@ static void cs_assert(void)
 
 // Global functions
 
-uint32_t rls_get_position(void)
+float rls_get_position(uint16_t* error_bitfield)
 {
-    const uint16_t sData[4] = {0x6400U, 0x0U, 0x0U, 0x0U};
-    uint16_t rData[4] = {0};
+    const uint16_t sData[SPI_N_WORDS] = {0x6400U, 0x0U, 0x0U, 0x0U};
 
     cs_deassert();
 
     uint32_t raw_data_temp = 0U;
 
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < SPI_N_WORDS; i++)
     {
         SPI_writeDataBlockingNonFIFO(SPIA_BASE, sData[i]);
-        rData[i] = SPI_readDataBlockingNonFIFO(SPIA_BASE);
+        const uint16_t receive_data = SPI_readDataBlockingNonFIFO(SPIA_BASE);
 
-        raw_data_temp |= ( ( ((uint32_t)rData[i]) & 0xFFU ) << (8U*(3U-i)) );
+        const uint16_t shift_count = 8U * ((SPI_N_WORDS - 1U) - i);
+
+        raw_data_temp |= ( ((uint32_t)receive_data & 0xFFU) << shift_count );
     }
 
     cs_assert();
 
-    raw_data = raw_data_temp;
+    const float position = (raw_data_temp >> 18U) * RLS_POSITION_SCALING;
 
-    position_data = (raw_data >> 18U);
+    *error_bitfield = ((raw_data_temp & 0xFF00U) >> 8U);
 
-    return raw_data;
+    return position;
 }

@@ -1,11 +1,12 @@
 // Includes
 #include "epwm_init.h"
+#include "epwm_global.h"
 #include "core_controls.h"
 
 #include "driverlib.h"
 
 // Defines
-#define EPWM1_TIMER_TBPRD  (2000U)  // 100kHz with clock prescaler equal to 1
+#define EPWM1_TIMER_TBPRD  MOTOR_CONTROL_TBPRD
 #define EPWM3_TIMER_TBPRD  (5000U)  // 10kHz with clock prescaler equal to 4
 
 // Public Functions

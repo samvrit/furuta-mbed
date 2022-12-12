@@ -10,8 +10,6 @@
 
 #include <stdint.h>
 
-uint32_t rls_get_position(void);
-
-__interrupt void spiRxFIFOISR(void);
+float rls_get_position(uint16_t* error_bitfield);
 
 #endif /* DEVICE_COMMS_RLS_COMMS_H_ */

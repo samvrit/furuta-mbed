@@ -6,6 +6,7 @@
 #include "gpio_init.h"
 #include "dac_init.h"
 #include "spi_init.h"
+#include "motor_control.h"
 
 #include "rls_comms.h"
 #include "core_controls.h"
@@ -18,7 +19,7 @@
 // Globals
 
 #pragma DATA_SECTION(cla_inputs,"CpuToCla1MsgRAM");
-struct cla_inputs_S cla_inputs = {.enable = false, .torque_cmd = 0.0f, .pwm_override_enable = false, .pwm_override_cmpa = 0U};
+struct cla_inputs_S cla_inputs;
 
 #pragma DATA_SECTION(cla_outputs,"Cla1ToCpuMsgRAM");
 struct cla_outputs_S cla_outputs;
@@ -27,7 +28,8 @@ struct cla_outputs_S cla_outputs;
 struct cpu_cla_shared_S cpu_cla_shared = {.integrator = 0.0f};
 
 uint16_t dac_value = 4095;
-uint32_t rls_position = 0U;
+float rls_position = 0.0f;
+uint16_t rls_error_bitfield = 0U;
 
 
 void main(void)
@@ -67,11 +69,13 @@ void main(void)
     EINT;
     ERTM;
 
+    motor_control_init();
+
     for(;;)
     {
         DAC_setShadowValue(DACA_BASE, dac_value);
 
-        rls_position = rls_get_position();
+        rls_position = rls_get_position(&rls_error_bitfield);
 
         DEVICE_DELAY_US(10000U);
     }
