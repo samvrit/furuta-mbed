@@ -22,6 +22,12 @@ void initGPIO(void)
     GPIO_setPadConfig(2, GPIO_PIN_TYPE_PULLUP);
     GPIO_setDirectionMode(2, GPIO_DIR_MODE_OUT);
 
+    // nFAULT (motor)
+    GPIO_setPinConfig(GPIO_123_GPIO123);
+    GPIO_setPadConfig(123, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(123, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(123, GPIO_QUAL_ASYNC);
+
     // SPI-A (RLS)
     GPIO_setPinConfig(GPIO_58_SPISIMOA);
     GPIO_setPadConfig(58, GPIO_PIN_TYPE_STD);

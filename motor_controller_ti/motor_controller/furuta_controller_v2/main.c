@@ -30,6 +30,7 @@ struct cpu_cla_shared_S cpu_cla_shared = {.integrator = 0.0f};
 uint16_t dac_value = 4095;
 float rls_position = 0.0f;
 uint16_t rls_error_bitfield = 0U;
+uint16_t motor_fault = 0;
 
 
 void main(void)
@@ -77,6 +78,6 @@ void main(void)
 
         rls_position = rls_get_position(&rls_error_bitfield);
 
-        DEVICE_DELAY_US(10000U);
+        motor_fault = GPIO_readPin(123);
     }
 }
