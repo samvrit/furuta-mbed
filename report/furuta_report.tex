@@ -77,29 +77,29 @@ $b$ & $0.0151$ & $Nm/rad/s$ \\
 
 \subsection{Parameter Derivations}
 
-\subsubsection{Torque Constant}
+\subsubsection{Torque Constant ($K_t$)}
 \begin{equation}
 K_t = \frac{\text{stall-torque}}{\text{stall-current}}
 \end{equation}
 
-\subsubsection{Back-EMF Constant}
+\subsubsection{Back-EMF Constant ($K_v$)}
 \begin{equation}
 K_v = \frac{\text{nameplate voltage}}{\text{nameplate speed}}
 \end{equation}
 
-\subsubsection{Winding Inductance and Resistance}
+\subsubsection{Winding Inductance ($L$) and Resistance ($R$)}
 \begin{equation}
 R = \frac{\text{nameplate voltage}}{\text{stall current}}
 \end{equation}
 The inductance was provided by the manufacturer. It is also possible to measure the inductance using an LCR meter.
 
-\subsubsection{Rotor Inertia}
+\subsubsection{Rotor Inertia ($J$)}
 From the CAD model, the dimensions (volume and length) of the rotor were obtained. Assuming that the rotor is made of stainless steel, and using the density for stainless steel as $\rho = 7,500 kg/m^3$, the mass was determined. Using mass and length, the rotor inertia was estimated using
 \begin{equation}
 J = \frac{1}{12} \cdot m \cdot l^2
 \end{equation}
 
-\subsubsection{Coefficient of Viscous Friction}
+\subsubsection{Coefficient of Viscous Friction ($b$)}
 \begin{equation}
 b = \frac{\text{no-load-current} \cdot K_t}{\text{no-load-speed}}
 \end{equation}
@@ -109,9 +109,15 @@ b = \frac{\text{no-load-current} \cdot K_t}{\text{no-load-speed}}
 
 \section{Mathematical Model of DC Motor}	\label{sec:math_model}
 
-Since the winding current is controlled by applying a certain voltage at the motor terminals, it is beneficial to look at the transfer function $\frac{I(s)}{V(s)}$. Following represents the current-voltage dynamics of a DC motor \cite{motor_control_umich_lecture}:\\
+Since the winding current is controlled by applying a certain voltage at the motor terminals, it is beneficial to look at the transfer function $\frac{I(s)}{V(s)}$. Figure \ref{fig:dc_motor_transfer_fn} represents the current-voltage dynamics of a DC motor \cite{motor_control_umich_lecture}:\\
 
-\includegraphics{dc_motor_transfer_fn}
+\begin{figure}[h]
+\centering
+\includegraphics{dc_motor_transfer_fn}	
+\caption{Motor transfer function}
+\label{fig:dc_motor_transfer_fn}
+\end{figure}
+
 
 The combined transfer function is as follows:
 
@@ -134,11 +140,86 @@ V_b &= \text{back emf} \nonumber \\
 
 Equation \ref{eq:motor_plant_transfer_fn} represents the plant dynamics for the controller that we wish to design.
 
-\section{Motor Controller Design and Analysis}
+\section{Motor Controller Design and Analysis}	\label{sec:motor_control_analysis}
 
-\begin{center}
-  \makebox[\textwidth]{\includegraphics[width=\linewidth]{motor_control_diagram}}
-\end{center}
+The winding current is controlled by applying an appropriate pulse-width-modulated (PWM) voltage ($V_t$) at the motor terminals. The duty cycle of the PWM is calculated by a PI control loop using the current sense as feedback. We shall consider the load disturbance ($d$) and measurement noise ($n$) to analyze the disturbance rejection and noise sensitivity of the controller. We shall look at the bode plots and step responses of the gang of four transfer functions \cite{gang_of_four}.
+
+\begin{figure}
+\centering
+\includegraphics{motor_control_diagram}	
+\caption{Current control diagram}
+\label{fig:motor_control_diagram}
+\end{figure}
+
+\subsection{Plant Characteristics}
+Figures \ref{fig:motor_plant_bode} and \ref{fig:motor_plant_step_response} show the plant characteristics without the influence of a controller.
+\subsubsection{Transfer Function}
+\begin{equation}
+\frac{I(s)}{V(s)} = \frac{1.2e-08 s + 0.0151}{2.76e-11 s^2 + 3.476e-05 s + 1.688}
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{motor_plant_bode}	
+\caption{Bode plot of the motor transfer function}
+\label{fig:motor_plant_bode}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{motor_plant_step_response}	
+\caption{Step response of the motor transfer function. Rise time = $8e-3$ seconds, settling time = $8.8e-3$ seconds}
+\label{fig:motor_plant_step_response}
+\end{figure}
+
+\subsection{Closed Loop Characteristics}
+Figures \ref{fig:motor_closed_loop_bode} and \ref{fig:motor_closed_loop_step_response} show the closed loop characteristics with PI control loop.
+\subsubsection{Transfer Function}
+\begin{equation}
+\frac{I(s)}{I_{ref}(s)} = \frac{1.543e-17 s^5 + 3.962e-11 s^4 + 2.735e-05 s^3 + 2.47 s^2 + 5.999e04 s}{7.618e-22 s^6 + 1.934e-15 s^5 + 1.341e-09 s^4 + 1.447e-4 s^3 + 5.321 s^2 + 5.999e04 s}
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{motor_closed_loop_bode}	
+\caption{Bode plot of the closed loop transfer function}
+\label{fig:motor_closed_loop_bode}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{motor_closed_loop_step_response}	
+\caption{Step response of the closed loop transfer function. Time to reach 66\% = $5.22e-5$ seconds, time to reach 90\% = $1.07e-4$ seconds }
+\label{fig:motor_closed_loop_step_response}
+\end{figure}
+
+
+\subsection{Noise Sensitivity Characteristics}
+Figures \ref{fig:motor_noise_sensitivity_bode} and \ref{fig:motor_noise_sensitivity_step_response} show the noise sensitivity characteristics. We can see that low frequency noise is well-attenuated, and a step in noise is short-lived (about $1e-4$ seconds).
+\subsubsection{Transfer Function}
+\begin{equation}
+\frac{I(s)}{N(s)} = \frac{2.76e-11 s^3 + 3.476e-05 s^2 + 1.688 s}{2.76e-11 s^3 + 3.532e-05 s^2 + 2.42 s + 3.553e04}
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{motor_noise_sensitivity_bode}	
+\caption{Bode plot of the noise sensitivity transfer function}
+\label{fig:motor_noise_sensitivity_bode}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.6]{motor_noise_sensitivity_step_response}	
+\caption{Step response of the noise sensitivity transfer function}
+\label{fig:motor_noise_sensitivity_step_response}
+\end{figure}
+
+
+
+
+
+
 
 \bibliographystyle{plain} 
 \bibliography{furuta_bib}

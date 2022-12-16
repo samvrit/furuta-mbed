@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
 <ipe version="70206" creator="Ipe 7.2.7">
-<info created="D:20221213224750" modified="D:20221213225011"/>
+<info created="D:20221213224750" modified="D:20221214212154"/>
 <ipestyle name="basic">
 <symbol name="arrow/arc(spx)">
 <path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
@@ -254,104 +254,107 @@ h
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<path layer="alpha" matrix="1 0 0 1 -12 0" stroke="black">
+<path layer="alpha" matrix="0.55 0 0 0.75 104 172" stroke="black">
 160 704 m
 160 672 l
 240 672 l
 240 704 l
 h
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black">
+<path matrix="0.821429 0 0 0.875 22.8571 88" stroke="black">
 352 704 m
 352 672 l
 464 672 l
 464 704 l
 h
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black">
+<path matrix="1 0 0 1 -28 0" stroke="black">
 11.3137 0 0 11.3137 304 688 e
 </path>
-<path stroke="black">
+<path matrix="1 0 0 1 56 0" stroke="black">
 11.3137 0 0 11.3137 96 688 e
 </path>
-<path stroke="black" arrow="normal/normal">
+<path matrix="1 0 0 1 56 0" stroke="black" arrow="normal/normal">
 28 688 m
 84 688 l
 </path>
-<path matrix="0.769231 0 0 1 24.9231 0" stroke="black" arrow="normal/normal">
+<path matrix="0.538462 0 0 1 105.846 0" stroke="black" arrow="normal/normal">
 108 688 m
 160 688 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black" arrow="normal/normal">
-240 688 m
-292 688 l
-</path>
-<path matrix="1 0 0 1 -12 0" stroke="black" arrow="normal/normal">
+<path matrix="0.666667 0 0 1 77.3332 0" stroke="black" arrow="normal/normal">
 316 688 m
 352 688 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black" arrow="normal/normal">
+<path matrix="0.666667 0 0 1 94.6667 0" stroke="black" arrow="normal/normal">
 464 688 m
 500 688 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black" arrow="normal/normal">
+<path matrix="1 0 0 1 -72 0" stroke="black" arrow="normal/normal">
 524 688 m
 576 688 l
 </path>
-<path stroke="black" arrow="normal/normal">
+<path matrix="0.741071 0 0 1 80.8571 0" stroke="black" arrow="normal/normal">
 544 688 m
 544 640 l
 96 640 l
 96 676 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black" arrow="normal/normal">
+<path matrix="1 0 0 1 -28 0" stroke="black" arrow="normal/normal">
 304 720 m
 304 700 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black" arrow="normal/normal">
+<path matrix="1 0 0 1 -72 0" stroke="black" arrow="normal/normal">
 512 720 m
 512 700 l
 </path>
-<path stroke="black">
+<path matrix="1 0 0 1 56 0" stroke="black">
 88 696 m
 104 680 l
 </path>
-<path stroke="black">
+<path matrix="1 0 0 1 56 0" stroke="black">
 88 680 m
 104 696 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black">
+<path matrix="1 0 0 1 -28 0" stroke="black">
 296 696 m
 312 680 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black">
+<path matrix="1 0 0 1 -28 0" stroke="black">
 296 680 m
 312 696 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black">
+<path matrix="1 0 0 1 -72 0" stroke="black">
 504 696 m
 520 680 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black">
+<path matrix="1 0 0 1 -72 0" stroke="black">
 504 680 m
 520 696 l
 </path>
-<path matrix="1 0 0 1 -12 0" stroke="black">
+<path matrix="1 0 0 1 -72 0" stroke="black">
 11.3137 0 0 11.3137 512 688 e
 </path>
-<text matrix="1 0 0 1 -12 0" transformations="translations" pos="304 728" stroke="black" type="label" width="5.185" height="6.918" depth="0" valign="baseline">$d$</text>
-<text matrix="1 0 0 1 -12 0" transformations="translations" pos="512 728" stroke="black" type="label" width="5.98" height="4.289" depth="0" valign="baseline">$n$</text>
-<text matrix="1 0 0 1 -28 -4" transformations="translations" pos="188 688" stroke="black" type="label" width="48.932" height="12.484" depth="4.95" valign="baseline" size="Large" style="math">K_p + \frac{K_i}{s}</text>
-<text matrix="1 0 0 1 -40 -4" transformations="translations" pos="384 688" stroke="black" type="label" width="106.353" height="12.565" depth="7.44" valign="baseline" size="Large" style="math">\frac{sJ + b}{(sL + R)\cdot(sJ + b) + K_t \cdot K_v}</text>
-<text matrix="1 0 0 1 -12 0" transformations="translations" pos="396 712" stroke="black" type="label" width="23.661" height="6.918" depth="0" valign="baseline">Plant</text>
-<text matrix="1 0 0 1 -12 0" transformations="translations" pos="180 712" stroke="black" type="label" width="44.057" height="6.918" depth="0" valign="baseline">Controller</text>
-<text matrix="1 0 0 1 -20 -4" transformations="translations" pos="24 696" stroke="black" type="label" width="79.369" height="6.918" depth="0" valign="baseline">Current Reference</text>
-<text matrix="1 0 0 1 -16 -4" transformations="translations" pos="532 696" stroke="black" type="label" width="69.517" height="6.815" depth="1.93" valign="baseline">Current Output</text>
-<text matrix="1 0 0 1 -2.45008 -6.45008" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
-<text matrix="1 0 0 1 2.69508 -0.490015" transformations="translations" pos="92 680" stroke="black" type="label" width="3.321" height="4.289" depth="0" valign="baseline">-</text>
-<text matrix="1 0 0 1 193.066 -6.69459" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
-<text matrix="1 0 0 1 199.926 0.655639" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
-<text matrix="1 0 0 1 408.443 0.685077" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
-<text matrix="1 0 0 1 400.905 -6.28822" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
+<text matrix="1 0 0 1 -32 -4" transformations="translations" pos="304 728" stroke="black" type="label" width="5.185" height="6.918" depth="0" valign="baseline" style="math">d</text>
+<text matrix="1 0 0 1 -76 -4" transformations="translations" pos="512 728" stroke="black" type="label" width="5.98" height="4.289" depth="0" valign="baseline" style="math">n</text>
+<text matrix="1 0 0 1 8 -4" transformations="translations" pos="188 688" stroke="black" type="label" width="37.484" height="8.856" depth="3.43" valign="baseline" style="math">K_p + \frac{K_i}{s}</text>
+<text matrix="1 0 0 1 -68 0" transformations="translations" pos="384 688" stroke="black" type="label" width="86.487" height="8.765" depth="5.18" valign="baseline" style="math">\frac{sJ + b}{(sL + R)\cdot(sJ + b) + K_t \cdot K_v}</text>
+<text matrix="1 0 0 1 -72 -4" transformations="translations" pos="396 712" stroke="black" type="label" width="62.018" height="6.808" depth="0" valign="baseline">DC Motor TF</text>
+<text matrix="1 0 0 -1.75 4 1954" transformations="translations" pos="180 712" stroke="black" type="label" width="57.756" height="6.918" depth="0" valign="baseline">PI Controller</text>
+<text matrix="1 0 0 1 36 -4" transformations="translations" pos="24 696" stroke="black" type="label" width="79.369" height="6.918" depth="0" valign="baseline">Current Reference</text>
+<text matrix="1 0 0 1 -76 -4" transformations="translations" pos="532 696" stroke="black" type="label" width="69.517" height="6.815" depth="1.93" valign="baseline">Current Output</text>
+<text matrix="1 0 0 1 53.5499 -6.45008" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
+<text matrix="1 0 0 1 58.6951 -0.490015" transformations="translations" pos="92 680" stroke="black" type="label" width="3.321" height="4.289" depth="0" valign="baseline">-</text>
+<text matrix="1 0 0 1 177.066 -6.69459" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
+<text matrix="1 0 0 1 183.926 0.655639" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
+<text matrix="1 0 0 1 348.443 0.685077" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
+<text matrix="1 0 0 1 340.905 -6.28822" transformations="translations" pos="88 692" stroke="black" type="label" width="7.749" height="5.812" depth="0.83" valign="baseline">+</text>
+<text matrix="1 0 0 -1.75 4 1954" transformations="translations" pos="180 712" stroke="black" type="label" width="57.756" height="6.918" depth="0" valign="baseline">PI Controller</text>
+<text matrix="1 0 0 1 0 -4" transformations="translations" pos="172 696" stroke="black" type="label" width="4.639" height="4.289" depth="0" valign="baseline">$e$</text>
+<text transformations="translations" pos="244 692" stroke="black" type="label" width="9.319" height="6.812" depth="1.49" valign="baseline">$V_t$</text>
+<path stroke="black" arrow="normal/normal">
+236 688 m
+264 688 l
+</path>
 </page>
 </ipe>
