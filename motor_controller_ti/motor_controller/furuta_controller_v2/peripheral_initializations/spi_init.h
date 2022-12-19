@@ -9,5 +9,6 @@
 #define PERIPHERAL_INITIALIZATIONS_SPI_INIT_H_
 
 void initSPIA();
+void initSPIB();
 
 #endif /* PERIPHERAL_INITIALIZATIONS_SPI_INIT_H_ */

@@ -16,13 +16,15 @@ struct cla_inputs_S
     float torque_cmd;
     bool enable;
     bool overrides_enable;
-    bool pwm_override_cmpa;
-    uint16_t direction_override;
+    float override_duty_percent;
+    uint16_t override_direction;
 };
 
 struct cla_outputs_S
 {
     float current_feedback;
+    float v_bridge;
+    float duty;
 };
 
 struct cpu_cla_shared_S

@@ -12,8 +12,8 @@
 void motor_control_init(void)
 {
     cla_inputs.enable = false;
-    cla_inputs.direction_override = 0;
+    cla_inputs.override_direction = 0;
     cla_inputs.overrides_enable = false;
-    cla_inputs.pwm_override_cmpa = MOTOR_CONTROL_TBPRD;
+    cla_inputs.override_duty_percent = 0.0f;
     cla_inputs.torque_cmd = 0.0f;
 }

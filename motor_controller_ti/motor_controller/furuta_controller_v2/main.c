@@ -9,6 +9,7 @@
 #include "motor_control.h"
 
 #include "rls_comms.h"
+#include "esp_comms.h"
 #include "core_controls.h"
 
 #include "driverlib.h"
@@ -30,6 +31,9 @@ struct cpu_cla_shared_S cpu_cla_shared = {.integrator = 0.0f};
 uint16_t dac_value = 4095;
 float rls_position = 0.0f;
 uint16_t rls_error_bitfield = 0U;
+
+float esp_position = 0.0f;
+
 uint16_t motor_fault = 0;
 
 
@@ -59,6 +63,8 @@ void main(void)
 
     initSPIA();
 
+    initSPIB();
+
     cla_configClaMemory();
 
     cla_initCpu1Cla1();
@@ -77,6 +83,8 @@ void main(void)
         DAC_setShadowValue(DACA_BASE, dac_value);
 
         rls_position = rls_get_position(&rls_error_bitfield);
+
+        esp_position = esp_get_data();
 
         motor_fault = GPIO_readPin(123);
     }

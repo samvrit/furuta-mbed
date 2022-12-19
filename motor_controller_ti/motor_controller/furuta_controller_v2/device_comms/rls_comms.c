@@ -15,25 +15,20 @@
 
 #define SPI_N_WORDS (4U)
 
-// Local variables
-
-
 // Local functions
-
-static void cs_deassert(void)
+static inline void cs_deassert(void)
 {
     GPIO_writePin(61, 0U);
     DEVICE_DELAY_US(1);
 }
 
-static void cs_assert(void)
+static inline void cs_assert(void)
 {
     DEVICE_DELAY_US(1);
     GPIO_writePin(61, 1U);
 }
 
 // Global functions
-
 float rls_get_position(uint16_t* error_bitfield)
 {
     const uint16_t sData[SPI_N_WORDS] = {0x6400U, 0x0U, 0x0U, 0x0U};

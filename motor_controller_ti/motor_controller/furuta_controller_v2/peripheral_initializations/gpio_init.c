@@ -48,5 +48,26 @@ void initGPIO(void)
     GPIO_setPadConfig(61, GPIO_PIN_TYPE_STD);
     GPIO_setDirectionMode(61, GPIO_DIR_MODE_OUT);
     GPIO_setMasterCore(60, GPIO_CORE_CPU1);
+
+    // SPI-B (ESP)
+    GPIO_setPinConfig(GPIO_63_SPISIMOB);
+    GPIO_setPadConfig(63, GPIO_PIN_TYPE_STD);
+    GPIO_setDirectionMode(63, GPIO_DIR_MODE_OUT);
+    GPIO_setMasterCore(63, GPIO_CORE_CPU1);
+
+    GPIO_setPinConfig(GPIO_64_SPISOMIB);
+    GPIO_setDirectionMode(64, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(64, GPIO_QUAL_ASYNC);
+    GPIO_setMasterCore(64, GPIO_CORE_CPU1);
+
+    GPIO_setPinConfig(GPIO_65_SPICLKB);
+    GPIO_setPadConfig(65, GPIO_PIN_TYPE_STD);
+    GPIO_setDirectionMode(65, GPIO_DIR_MODE_OUT);
+    GPIO_setMasterCore(65, GPIO_CORE_CPU1);
+
+    GPIO_setPinConfig(GPIO_66_GPIO66);
+    GPIO_setPadConfig(66, GPIO_PIN_TYPE_STD);
+    GPIO_setDirectionMode(66, GPIO_DIR_MODE_OUT);
+    GPIO_setMasterCore(66, GPIO_CORE_CPU1);
 }
 
