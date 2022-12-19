@@ -42,6 +42,7 @@ float rls_get_position(uint16_t* error_bitfield)
         SPI_writeDataBlockingNonFIFO(SPIA_BASE, sData[i]);
         const uint16_t receive_data = SPI_readDataBlockingNonFIFO(SPIA_BASE);
 
+        // Received data is big-endian. Convert it to little-endian
         const uint16_t shift_count = 8U * ((SPI_N_WORDS - 1U) - i);
 
         raw_data_temp |= ( ((uint32_t)receive_data & 0xFFU) << shift_count );
