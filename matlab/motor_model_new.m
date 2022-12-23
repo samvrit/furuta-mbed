@@ -10,8 +10,8 @@ B = 0.0151; % Nm/rad/s
 s = tf('s');
 motor_tf = (s*J+B)/((s*L+R)*(s*J+B) + Kt*Kv);
 
-Kp = 46.576;
-Ki = 2352902.968;
+Kp = 4.4257;
+Ki = 223640.2937;
 
 pi_tf = (s*Kp + Ki)/s;
 
@@ -21,7 +21,7 @@ disturbance_tf = (motor_tf) / (1 + motor_tf*pi_tf);
 
 noise_sensitivity_tf = 1 / (1 + motor_tf*pi_tf);
 
-foa_tf = 1/(5e-5*s + 1);
+foa_tf = 1/(5e-4*s + 1);
 
 % figure
 % step(closed_loop_tf, foa_tf);

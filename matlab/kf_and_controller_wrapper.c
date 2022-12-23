@@ -149,7 +149,7 @@ void kf_and_controller_Update_wrapper(const real_T *u0,
         measurement_lpf[i] += (measurement[i] - measurement_lpf[i]) * 0.09090909091f;
     }
 
-    const bool linearity = fabsf(measurement[1]) < DEG_TO_RAD(20.0f);
+    const bool linearity = fabsf(measurement[1]) < DEG_TO_RAD(40.0f);
     
     // covariance_matrix_step();
     const float torque_cmd_pre = kf_control_output(kf_states.x_hat, Ts, &kf_input);
