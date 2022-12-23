@@ -101,7 +101,7 @@ static inline void set_counter_compare_and_direction_pin(const float duty_percen
     if (override_enable)
     {
         const float override_duty_percent_saturated = SAT(override_duty_percent, 0.98f, 0.0f);
-        const float counter_compare = MOTOR_CONTROL_TBPRD - (fabsf(override_duty_percent_saturated) * MOTOR_CONTROL_TBPRD);
+        const float counter_compare = MOTOR_CONTROL_TBPRD - (override_duty_percent_saturated * MOTOR_CONTROL_TBPRD);
         EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
         GpioDataRegs.GPADAT.bit.GPIO1 = override_direction;
     }

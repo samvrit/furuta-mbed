@@ -10,4 +10,8 @@
 
 void motor_control_init(void);
 
+void motor_control_motor_enable(void);
+void motor_control_motor_disable(void);
+void motor_control_fault_reset(void);
+
 #endif /* MOTOR_CONTROL_MOTOR_CONTROL_H_ */
