@@ -38,9 +38,9 @@
 
 #define TIMER_DIVIDER         16  //  Hardware timer clock divider
 
-#define RECEIVER_DEVICE (1U)
+// #define RECEIVER_DEVICE (1U)
 // #define TRANSMIT_DEVICE1 (1U)
-// #define TRANSMIT_DEVICE2 (1U)
+#define TRANSMIT_DEVICE2 (1U)
 
 #define GPIO_MOSI 13
 #define GPIO_MISO 12
@@ -52,24 +52,22 @@
 #define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0))
 #endif // (RECEIVER_DEVICE)
 
-#define PI (3.1415f)
-#define ANGLE_SCALING_FACTOR (2.0f * PI / 65535.0f)
-
 // Local types
-union uint32_to_float_T
+union angle_value_to_raw_U
 {
-    float value;
-    uint8_t raw[4];
+    uint16_t value;
+    uint8_t raw[2];
 };
 
 static uint8_t peer_mac[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-#if (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
-union uint32_to_float_T angle_to_send = { .value = 0.0f };
-uint8_t ccw_cmd_set = 0;
-#else
 static const char *TAG = "espnow_example";
-union uint32_to_float_T angle_received = { .value = 0.0f };
+
+#if (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
+union angle_value_to_raw_U angle_to_send = { .value = 0.0f };
+uint8_t calibrate_cmd_set = 0;
+#else
+union angle_value_to_raw_U angle_received = { .value = 0.0f };
 #endif // (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
 
 /* WiFi should start before using ESPNOW */
@@ -89,8 +87,8 @@ static void example_wifi_init(void)
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     // Write direction register for the MPS MA730GQ device to increase angle when turning counter clockwise
-    const uint8_t ccw_cmd[2] = {0xFF, 0xFF};
-    esp_now_send(peer_mac, &ccw_cmd, 2U);
+    const uint8_t calibrate_cmd[5] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    esp_now_send(peer_mac, calibrate_cmd, 5U);
 }
 #endif // (RECEIVER_DEVICE)
 
@@ -104,11 +102,11 @@ static void example_espnow_send_cb(const uint8_t *mac_addr, esp_now_send_status_
 static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
 #if (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
-    if(len == 2)
+    if(len == 5)
     {
-        if((data[0] == 0xFF) && (data[1] == 0xFF))
+        if((data[0] == 0xFF) && (data[1] == 0xFF) && (data[2] == 0xFF) && (data[3] == 0xFF) && (data[4] == 0xFF))
         {
-            ccw_cmd_set = 1U;
+            calibrate_cmd_set = 1U;
         }
     }
 #endif // (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
@@ -128,24 +126,25 @@ static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data,
     }
     timer_pause(TIMER_GROUP_0, TIMER_0);
 
-    esp_now_send(peer_mac, angle_to_send.raw, 4U);
+    esp_now_send(peer_mac, angle_to_send.raw, 2U);
 
 #elif (RECEIVER_DEVICE)
-
-    for(uint8_t i = 0; i < 4; i++)
+    if(len == 2)
     {
-        angle_received.raw[i] = data[i];
+        for(uint8_t i = 0; i < len; i++)
+        {
+            angle_received.raw[i] = data[i];
+        }
+
+        ESP_LOGI(TAG, "Angle received from %02X %02X %02X %02X %02X %02X: %u\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5], angle_received.value);
     }
-
-    ESP_LOGI(TAG, "Angle received from %02X %02X %02X %02X %02X %02X: %f\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5], angle_received.value);
-
 #endif // RECEIVER_DEVICE
 }
 
 #if (TRANSMIT_DEVICE1)
 static void periodic_timer_callback(void* arg)
 {
-    esp_now_send(peer_mac, angle_to_send.raw, 4U);
+    esp_now_send(peer_mac, angle_to_send.raw, 2U);
 }
 #endif // (TRANSMIT_DEVICE1)
 
@@ -188,21 +187,65 @@ static void mps_comms(void *pvParameter)
 
     for(;;)
     {
-        if(ccw_cmd_set) // set counter clockwise as the direction in which the angle increases
+        t.tx_data[0] = 0x0;
+        t.tx_data[1] = 0x0;
+        spi_device_transmit(handle, &t);
+        uint16_t angle_little_endian = (t.rx_data[0] << 8U) | t.rx_data[1];
+        angle_to_send.value = angle_little_endian;
+
+        if(calibrate_cmd_set)
         {
-            ccw_cmd_set = 0U;
-            t.tx_data[0] = 0x89;
-            t.tx_data[1] = 0x80;
+            calibrate_cmd_set = 0U;
+
+            const uint32_t angle_to_set = (((uint32_t)angle_little_endian + 32768U) % 65535U);
+
+            const uint8_t angle_to_set_bits_0_7 = (angle_to_set & 0xFFU);
+            const uint8_t angle_to_set_bits_8_15 = ((angle_to_set & 0xFF00U) >> 8U);
+
+            t.tx_data[0] = 0x80U;
+            t.tx_data[1] = angle_to_set_bits_0_7;
+
             spi_device_transmit(handle, &t);
-        }
-        else
-        {
-            t.tx_data[0] = 0x0;
-            t.tx_data[1] = 0x0;
+
+            vTaskDelay(20 / portTICK_RATE_MS);
+
+            // acknowledge 
+            t.tx_data[0] = 0x0U;
+            t.tx_data[1] = 0x0U;
             spi_device_transmit(handle, &t);
-            uint16_t angle_little_endian = (t.rx_data[0] << 8U) | t.rx_data[1];
-            const float angle = angle_little_endian * ANGLE_SCALING_FACTOR;
-            angle_to_send.value = angle;
+
+            vTaskDelay(1 / portTICK_RATE_MS);
+
+            t.tx_data[0] = 0x81U;
+            t.tx_data[1] = angle_to_set_bits_8_15;
+
+            spi_device_transmit(handle, &t);
+
+            vTaskDelay(20 / portTICK_RATE_MS);
+
+            // acknowledge 
+            t.tx_data[0] = 0x0U;
+            t.tx_data[1] = 0x0U;
+            spi_device_transmit(handle, &t);
+
+            vTaskDelay(1 / portTICK_RATE_MS);
+            
+            // set counter clockwise as the direction in which the angle increases
+            t.tx_data[0] = 0x89U;
+            t.tx_data[1] = 0x80U;
+            spi_device_transmit(handle, &t);
+
+            vTaskDelay(20 / portTICK_RATE_MS);
+
+            // acknowledge 
+            t.tx_data[0] = 0x0U;
+            t.tx_data[1] = 0x0U;
+            spi_device_transmit(handle, &t);
+
+            if(t.rx_data[0] == 0x80U)
+            {
+                ESP_LOGI(TAG, "CCW direction set");
+            }
         }
         vTaskDelay(1 / portTICK_RATE_MS);
     }
