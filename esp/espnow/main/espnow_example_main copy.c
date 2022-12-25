@@ -38,14 +38,19 @@
 
 #define TIMER_DIVIDER         16  //  Hardware timer clock divider
 
-// #define RECEIVER_DEVICE (1U)
+#define RECEIVER_DEVICE (1U)
 // #define TRANSMIT_DEVICE1 (1U)
-#define TRANSMIT_DEVICE2 (1U)
+// #define TRANSMIT_DEVICE2 (1U)
 
 #define GPIO_MOSI 13
 #define GPIO_MISO 12
 #define GPIO_SCLK 14
 #define GPIO_CS 15
+
+#if (RECEIVER_DEVICE)
+#define GPIO_INPUT_IO_0     (0U)
+#define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0))
+#endif // (RECEIVER_DEVICE)
 
 #define PI (3.1415f)
 #define ANGLE_SCALING_FACTOR (2.0f * PI / 65535.0f)
@@ -57,13 +62,13 @@ union uint32_to_float_T
     uint8_t raw[4];
 };
 
-static const char *TAG = "espnow_example";
-
 static uint8_t peer_mac[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 #if (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
 union uint32_to_float_T angle_to_send = { .value = 0.0f };
+uint8_t ccw_cmd_set = 0;
 #else
+static const char *TAG = "espnow_example";
 union uint32_to_float_T angle_received = { .value = 0.0f };
 #endif // (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
 
@@ -80,6 +85,15 @@ static void example_wifi_init(void)
     esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR);
 }
 
+#if (RECEIVER_DEVICE)
+static void IRAM_ATTR gpio_isr_handler(void* arg)
+{
+    // Write direction register for the MPS MA730GQ device to increase angle when turning counter clockwise
+    const uint8_t ccw_cmd[2] = {0xFF, 0xFF};
+    esp_now_send(peer_mac, &ccw_cmd, 2U);
+}
+#endif // (RECEIVER_DEVICE)
+
 /* ESPNOW sending or receiving callback function is called in WiFi task.
  * Users should not do lengthy operations from this task. Instead, post
  * necessary data to a queue and handle it from a lower priority task. */
@@ -89,6 +103,16 @@ static void example_espnow_send_cb(const uint8_t *mac_addr, esp_now_send_status_
 
 static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
+#if (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
+    if(len == 2)
+    {
+        if((data[0] == 0xFF) && (data[1] == 0xFF))
+        {
+            ccw_cmd_set = 1U;
+        }
+    }
+#endif // (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
+
 #if (TRANSMIT_DEVICE2)  // For transmit device 2, wait for 1ms after transmit device 1 has broadcast its position so as to not interfere
 
     timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL);
@@ -164,11 +188,23 @@ static void mps_comms(void *pvParameter)
 
     for(;;)
     {
-        spi_device_transmit(handle, &t);
-        uint16_t angle_little_endian = (t.rx_data[0] << 8U) | t.rx_data[1];
-        const float angle = angle_little_endian * ANGLE_SCALING_FACTOR;
+        if(ccw_cmd_set) // set counter clockwise as the direction in which the angle increases
+        {
+            ccw_cmd_set = 0U;
+            t.tx_data[0] = 0x89;
+            t.tx_data[1] = 0x80;
+            spi_device_transmit(handle, &t);
+        }
+        else
+        {
+            t.tx_data[0] = 0x0;
+            t.tx_data[1] = 0x0;
+            spi_device_transmit(handle, &t);
+            uint16_t angle_little_endian = (t.rx_data[0] << 8U) | t.rx_data[1];
+            const float angle = angle_little_endian * ANGLE_SCALING_FACTOR;
+            angle_to_send.value = angle;
+        }
         vTaskDelay(1 / portTICK_RATE_MS);
-        angle_to_send.value = angle;
     }
 }
 #endif // (TRANSMIT_DEVICE1 || TRANSMIT_DEVICE2)
@@ -216,6 +252,16 @@ void app_main(void)
     io_conf.pull_down_en = 1;
     io_conf.pull_up_en = 0;
     gpio_config(&io_conf);
+
+#if (RECEIVER_DEVICE)
+    io_conf.intr_type = GPIO_PIN_INTR_POSEDGE;
+    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL; 
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pull_up_en = 1;
+    gpio_config(&io_conf);
+
+    gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, NULL);
+#endif // (RECEIVER_DEVICE)
 
     timer_config_t config = {
         .divider = TIMER_DIVIDER,
