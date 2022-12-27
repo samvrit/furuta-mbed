@@ -12,6 +12,20 @@ menu "Example Configuration"
             bool "Softap"
     endchoice
 
+    choice DEVICE_MODE
+        prompt "ESP device mode"
+        default RECEIVER_DEVICE
+        help
+            Device mode.
+
+        config RECEIVER_DEVICE
+            bool "Receiver device"
+        config TRANSMIT_DEVICE1
+            bool "Transmit device 1"
+        config TRANSMIT_DEVICE2
+            bool "Transmit device 2"
+    endchoice
+
     config ESPNOW_PMK
         string "ESPNOW primary master key"
         default "pmk1234567890123"
