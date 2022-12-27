@@ -11,18 +11,18 @@ void espnow_task(void *pvParameter)
 
     for(;;)
     {
-        if(xQueueReceive(*espnow_queue_handle, &received_data, portMAX_DELAY) == pdTRUE)
+        if(xQueueReceive(*espnow_queue_handle, &received_data, 0) == pdTRUE) // non-blocking
         {
             switch (received_data.received_data_category)
             {
-            case RECEIVED_DATA_CALIBRATE_COMMAND:
+                case RECEIVED_DATA_CALIBRATE_COMMAND:
                 {
                     // Calibrate routine
                     break;
                 }
                 
-            case RECEIVED_DATA_ANGLE:
-            default:
+                case RECEIVED_DATA_ANGLE:
+                default:
                 {
                     // received angle process
                     break;
