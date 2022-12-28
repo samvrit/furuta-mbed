@@ -27,11 +27,11 @@ void wifi_init(void)
 
 esp_err_t espnow_init(void)
 {
+    espnow_queue = xQueueCreate(QUEUE_SIZE, sizeof(received_data_S));
+    
     /* Initialize ESPNOW and register sending and receiving callback function. */
     esp_now_init();
     esp_now_register_recv_cb(espnow_recv_cb);
-
-    espnow_queue = xQueueCreate(QUEUE_SIZE, sizeof(received_data_S));
 
     /* Set primary master key. */
     esp_now_set_pmk((uint8_t *)CONFIG_ESPNOW_PMK);
