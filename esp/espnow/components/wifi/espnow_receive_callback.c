@@ -1,14 +1,11 @@
 #include "espnow_receive_callback.h"
 #include "wifi_init.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
+#include "queues_and_semaphores.h"
 
 #define TICKS_TO_WAIT (512)
 
 void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
-    xQueueHandle * espnow_queue_handle = get_espnow_queue_handle();
-
     received_data_S received_data;
 
     if(len == 5)
@@ -16,7 +13,7 @@ void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
         if((data[0] == 0xFF) && (data[1] == 0xFF) && (data[2] == 0xFF) && (data[3] == 0xFF) && (data[4] == 0xFF))
         {
             received_data.received_data_category = RECEIVED_DATA_CALIBRATE_COMMAND;
-            xQueueSend(*espnow_queue_handle, &received_data, TICKS_TO_WAIT);
+            xQueueSend(espnow_receive_queue, &received_data, TICKS_TO_WAIT);
         }
     }
     else if (len == 2)
@@ -32,6 +29,6 @@ void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
         {
             received_data.mac[i] = mac_addr[i];
         }
-        xQueueSend(*espnow_queue_handle, &received_data, TICKS_TO_WAIT);
+        xQueueSend(espnow_receive_queue, &received_data, TICKS_TO_WAIT);
     }
 }

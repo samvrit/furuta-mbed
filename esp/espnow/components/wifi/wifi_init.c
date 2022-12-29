@@ -5,12 +5,15 @@
 
 #include "esp_now.h"
 #include "espnow_receive_callback.h"
+#include "queues_and_semaphores.h"
+
+#include "freertos/queue.h"
 
 #define QUEUE_SIZE (6)
 
 static uint8_t peer_mac[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-xQueueHandle espnow_queue;
+QueueHandle_t espnow_receive_queue = NULL;
 
 /* WiFi should start before using ESPNOW */
 void wifi_init(void)
@@ -27,7 +30,7 @@ void wifi_init(void)
 
 esp_err_t espnow_init(void)
 {
-    espnow_queue = xQueueCreate(QUEUE_SIZE, sizeof(received_data_S));
+    espnow_receive_queue = xQueueCreate(QUEUE_SIZE, sizeof(received_data_S));
     
     /* Initialize ESPNOW and register sending and receiving callback function. */
     esp_now_init();
@@ -50,9 +53,4 @@ esp_err_t espnow_init(void)
     esp_now_add_peer(&peer);
 
     return ESP_OK;
-}
-
-xQueueHandle * get_espnow_queue_handle(void)
-{
-    return &espnow_queue;
 }

@@ -1,20 +1,32 @@
 #include <stdint.h>
 
+#include "queues_and_semaphores.h"
 #include "mps_task.h"
 #include "espnow_task.h"
 
-#include "freertos/timers.h"
 #include "driver/spi_master.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #define GPIO_MOSI 13
 #define GPIO_MISO 12
 #define GPIO_SCLK 14
 #define GPIO_CS 15
 
+#define MPS_QUEUE_SIZE (1)
+
 #if (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)
+
+QueueHandle_t mps_comms_queue = NULL;
+
+SemaphoreHandle_t mps_calibration_semaphore = NULL;
 
 void mps_comms(void *pvParameter)
 {
+    mps_comms_queue = xQueueCreate(MPS_QUEUE_SIZE, sizeof(uint16_t));
+
+    mps_calibration_semaphore = xSemaphoreCreateBinary();
+
     spi_device_handle_t handle;
 
     //Configuration for the SPI bus
@@ -49,9 +61,6 @@ void mps_comms(void *pvParameter)
 
     spi_bus_add_device(HSPI_HOST, &devcfg, &handle);
 
-    xQueueHandle * mps_queue_handle = espnow_get_mps_queue_handle();
-    SemaphoreHandle_t * mps_calibrate_semaphore_handle = espnow_get_mps_calibrate_semaphore_handle();
-
     for(;;)
     {
         t.tx_data[0] = 0x0;
@@ -59,12 +68,12 @@ void mps_comms(void *pvParameter)
         spi_device_transmit(handle, &t);
         uint16_t angle_little_endian = (t.rx_data[0] << 8U) | t.rx_data[1];
 
-        if (mps_queue_handle != NULL)
+        if (mps_comms_queue != NULL)
         {
-            xQueueOverwrite(*mps_queue_handle, &angle_little_endian);
+            xQueueOverwrite(mps_comms_queue, &angle_little_endian);
         }
         
-        if(xSemaphoreTake(*mps_calibrate_semaphore_handle, 0) == pdTRUE)
+        if((mps_calibration_semaphore != NULL) && (xSemaphoreTake(mps_calibration_semaphore, 0) == pdTRUE))
         {
             const uint32_t angle_to_set = (((uint32_t)angle_little_endian + 32768U) % 65535U);
 
@@ -76,42 +85,43 @@ void mps_comms(void *pvParameter)
 
             spi_device_transmit(handle, &t);
 
-            vTaskDelay(20 / portTICK_RATE_MS);
+            vTaskDelay(20 / portTICK_PERIOD_MS);
 
             // acknowledge 
             t.tx_data[0] = 0x0U;
             t.tx_data[1] = 0x0U;
             spi_device_transmit(handle, &t);
 
-            vTaskDelay(1 / portTICK_RATE_MS);
+            vTaskDelay(1 / portTICK_PERIOD_MS);
 
             t.tx_data[0] = 0x81U;
             t.tx_data[1] = angle_to_set_bits_8_15;
 
             spi_device_transmit(handle, &t);
 
-            vTaskDelay(20 / portTICK_RATE_MS);
+            vTaskDelay(20 / portTICK_PERIOD_MS);
 
             // acknowledge 
             t.tx_data[0] = 0x0U;
             t.tx_data[1] = 0x0U;
             spi_device_transmit(handle, &t);
 
-            vTaskDelay(1 / portTICK_RATE_MS);
+            vTaskDelay(1 / portTICK_PERIOD_MS);
             
             // set counter clockwise as the direction in which the angle increases
             t.tx_data[0] = 0x89U;
             t.tx_data[1] = 0x80U;
             spi_device_transmit(handle, &t);
 
-            vTaskDelay(20 / portTICK_RATE_MS);
+            vTaskDelay(20 / portTICK_PERIOD_MS);
 
             // acknowledge 
             t.tx_data[0] = 0x0U;
             t.tx_data[1] = 0x0U;
             spi_device_transmit(handle, &t);
         }
-        vTaskDelay(1 / portTICK_RATE_MS);
+        
+        taskYIELD();
     }
 }
 #endif // (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)

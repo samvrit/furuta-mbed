@@ -29,8 +29,7 @@
 #include "wifi_init.h"
 #include "espnow_task.h"
 #include "mps_task.h"
-
-#define TIMER_DIVIDER         16  //  Hardware timer clock divider
+#include "c2000_comms_task.h"
 
 void app_main(void)
 {
@@ -50,4 +49,8 @@ void app_main(void)
 #if (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)
     xTaskCreate(mps_comms, "mps_comms", 4096, NULL, 4, NULL);
 #endif // (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)
+
+#if (CONFIG_RECEIVER_DEVICE)
+    xTaskCreate(c2000_comms, "c2000_comms", 4096, NULL, 4, NULL);
+#endif // (CONFIG_RECEIVER_DEVICE)
 }
