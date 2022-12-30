@@ -2,10 +2,6 @@
 #include "wifi_init.h"
 #include "queues_and_semaphores.h"
 
-#include "esp_log.h"
-
-static const char *RECEIVER_TAG = "RECEIVER";
-
 #define TICKS_TO_WAIT (512)
 
 void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)

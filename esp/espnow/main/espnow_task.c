@@ -15,8 +15,6 @@ static uint8_t peer_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 #if (CONFIG_TRANSMIT_DEVICE1)
 
-static const char *TRANSMIT_TAG = "TX";
-
 SemaphoreHandle_t timer_semaphore = NULL;
 
 static void periodic_timer_callback(TimerHandle_t xTimer)
@@ -89,7 +87,6 @@ void espnow_task(void *pvParameter)
 
             if((mps_comms_queue != NULL) && (xQueueReceive(mps_comms_queue, &angle_to_send.value, 0) == pdTRUE))
             {
-                ESP_LOGI(TRANSMIT_TAG, "%u\n", angle_to_send.value);
                 esp_now_send(peer_mac, angle_to_send.raw, 2U);
             }
         }
