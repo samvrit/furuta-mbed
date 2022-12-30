@@ -13,7 +13,7 @@
 // Defines
 #define SPI_N_WORDS (4U)
 
-#define ANGLE_SCALING (9.587526218e-5f) // [rad/count] equal to (2*pi / 2^16-1)
+#define ESP_POSITION_SCALING  (3.835186051e-4f)  // [rad/count] equal to (2*pi)/(2^14-1)
 
 // Local functions
 static void cs_deassert(void)
@@ -47,7 +47,7 @@ void esp_get_data(float * angle1, float * angle2)
 
     cs_assert();
 
-    *angle1 = (raw_data_temp & 0xFFFFU) * ANGLE_SCALING;
+    *angle1 = (raw_data_temp & 0xFFFFU) * ESP_POSITION_SCALING;
 
-    *angle2 = (raw_data_temp >> 16U) * ANGLE_SCALING;
+    *angle2 = (raw_data_temp >> 16U) * ESP_POSITION_SCALING;
 }
