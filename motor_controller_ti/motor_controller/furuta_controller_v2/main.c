@@ -32,7 +32,8 @@ uint16_t dac_value = 4095;
 float rls_position = 0.0f;
 uint16_t rls_error_bitfield = 0U;
 
-float esp_position = 0.0f;
+float esp_position1 = 0.0f;
+float esp_position2 = 0.0f;
 
 uint16_t motor_fault = 0;
 
@@ -84,7 +85,7 @@ void main(void)
 
         rls_position = rls_get_position(&rls_error_bitfield);
 
-        esp_position = esp_get_data();
+        esp_get_data(&esp_position1, &esp_position2);
 
         motor_fault = GPIO_readPin(123);
     }

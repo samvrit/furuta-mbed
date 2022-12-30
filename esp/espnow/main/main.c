@@ -44,13 +44,13 @@ void app_main(void)
     wifi_init();
     espnow_init();
 
-    xTaskCreate(espnow_task, "espnow_task", 4096, NULL, 5, NULL);
-
+    xTaskCreatePinnedToCore(espnow_task, "espnow_task", 4096, NULL, 5, NULL, 0);
+    
 #if (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)
-    xTaskCreate(mps_comms, "mps_comms", 4096, NULL, 4, NULL);
+    xTaskCreatePinnedToCore(mps_comms, "mps_comms", 4096, NULL, 4, NULL, 1);
 #endif // (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)
 
 #if (CONFIG_RECEIVER_DEVICE)
-    xTaskCreate(c2000_comms, "c2000_comms", 4096, NULL, 4, NULL);
+    xTaskCreatePinnedToCore(c2000_comms, "c2000_comms", 4096, NULL, 4, NULL, 1);
 #endif // (CONFIG_RECEIVER_DEVICE)
 }

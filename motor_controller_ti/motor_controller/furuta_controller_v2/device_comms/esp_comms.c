@@ -13,15 +13,7 @@
 // Defines
 #define SPI_N_WORDS (4U)
 
-// Local types
-union uint32_to_float_T
-{
-    float value;
-    uint32_t raw;
-};
-
-// Local variables
-union uint32_to_float_T esp_data;
+#define ANGLE_SCALING (9.587526218e-5f) // [rad/count] equal to (2*pi / 2^16-1)
 
 // Local functions
 static void cs_deassert(void)
@@ -35,7 +27,7 @@ static void cs_assert(void)
 }
 
 // Global functions
-float esp_get_data(void)
+void esp_get_data(float * angle1, float * angle2)
 {
     const uint16_t sData[SPI_N_WORDS] = {0x4100U, 0x4200U, 0x4300U, 0x4400U};   // Dummy characters (ABCD)
 
@@ -55,7 +47,7 @@ float esp_get_data(void)
 
     cs_assert();
 
-    esp_data.raw = raw_data_temp;
+    *angle1 = (raw_data_temp & 0xFFFFU) * ANGLE_SCALING;
 
-    return esp_data.value;
+    *angle2 = (raw_data_temp >> 16U) * ANGLE_SCALING;
 }

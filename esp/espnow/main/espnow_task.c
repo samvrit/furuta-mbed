@@ -4,6 +4,7 @@
 #include "espnow_receive_callback.h"
 #include "wifi_init.h"
 #include "esp_now.h"
+#include "esp_log.h"
 #include "queues_and_semaphores.h"
 
 #include "freertos/timers.h"
@@ -13,6 +14,9 @@
 static uint8_t peer_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 #if (CONFIG_TRANSMIT_DEVICE1)
+
+static const char *TRANSMIT_TAG = "TX";
+
 SemaphoreHandle_t timer_semaphore = NULL;
 
 static void periodic_timer_callback(TimerHandle_t xTimer)
@@ -22,6 +26,8 @@ static void periodic_timer_callback(TimerHandle_t xTimer)
 #endif // (CONFIG_TRANSMIT_DEVICE1)
 
 #if (CONFIG_RECEIVER_DEVICE)
+
+static const char *GPIO_TAG = "GPIO";
 
 #define GPIO_INPUT_IO_0     (0U)
 #define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0))
@@ -53,9 +59,10 @@ void espnow_task(void *pvParameter)
         {
             // Write direction register for the MPS MA730GQ device to increase angle when turning counter clockwise
             const uint8_t calibrate_cmd[5] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+            ESP_LOGI(GPIO_TAG, "Sending calbrate command.\n");
             esp_now_send(peer_mac, calibrate_cmd, 5U);
         }
-        taskYIELD();
+        vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
 
@@ -82,6 +89,7 @@ void espnow_task(void *pvParameter)
 
             if((mps_comms_queue != NULL) && (xQueueReceive(mps_comms_queue, &angle_to_send.value, 0) == pdTRUE))
             {
+                ESP_LOGI(TRANSMIT_TAG, "%u\n", angle_to_send.value);
                 esp_now_send(peer_mac, angle_to_send.raw, 2U);
             }
         }
@@ -117,8 +125,8 @@ void espnow_task(void *pvParameter)
                 };
             }
         }
-        
-        taskYIELD();
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
 

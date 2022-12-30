@@ -1,9 +1,11 @@
 #include <stdint.h>
+#include <string.h>
 
 #include "c2000_comms_task.h"
 #include "queues_and_semaphores.h"
 #include "espnow_receive_callback.h"
 
+#include "esp_log.h"
 #include "driver/spi_slave.h"
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
@@ -16,11 +18,7 @@
 
 #if (CONFIG_RECEIVER_DEVICE)
 
-union data_to_send_U 
-{
-    uint16_t value[2];
-    uint8_t raw[4];
-}
+static const char *RECEIVER_TAG = "RECEIVER";
 
 void c2000_comms(void *pvParameter)
 {
@@ -63,11 +61,13 @@ void c2000_comms(void *pvParameter)
             {
                 case RECEIVED_DATA_ANGLE:
                 {
+                    ESP_LOGI(RECEIVER_TAG, "%02X: %u\n", received_data.mac[5], received_data.angle.value);
+
                     if(received_data.mac[5] == 0xEC)    // from transmit device 1
                     {
                         angles_combined |= received_data.angle.value;
                     }
-                    else if (received_data.mac[5] == 0x28)  // from transmit device 2
+                    else //if (received_data.mac[5] == 0x28)  // from transmit device 2
                     {
                         angles_combined |= ((uint32_t)received_data.angle.value << 16U);
                     }
@@ -88,7 +88,7 @@ void c2000_comms(void *pvParameter)
         t.tx_buffer=(const void *)&angles_combined;
         t.rx_buffer=recvbuf;
 
-        spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
+        // spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
 
         taskYIELD();
     }

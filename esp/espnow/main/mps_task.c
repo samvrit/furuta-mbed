@@ -1,9 +1,11 @@
 #include <stdint.h>
+#include <math.h>
 
 #include "queues_and_semaphores.h"
 #include "mps_task.h"
 #include "espnow_task.h"
 
+#include "esp_log.h"
 #include "driver/spi_master.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -16,6 +18,8 @@
 #define MPS_QUEUE_SIZE (1)
 
 #if (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)
+
+static const char *MPS_TAG = "MPS";
 
 QueueHandle_t mps_comms_queue = NULL;
 
@@ -66,7 +70,7 @@ void mps_comms(void *pvParameter)
         t.tx_data[0] = 0x0;
         t.tx_data[1] = 0x0;
         spi_device_transmit(handle, &t);
-        uint16_t angle_little_endian = (t.rx_data[0] << 8U) | t.rx_data[1];
+        uint16_t angle_little_endian = (t.rx_data[0] << 6U) | (t.rx_data[1] >> 2);
 
         if (mps_comms_queue != NULL)
         {
@@ -75,10 +79,17 @@ void mps_comms(void *pvParameter)
         
         if((mps_calibration_semaphore != NULL) && (xSemaphoreTake(mps_calibration_semaphore, 0) == pdTRUE))
         {
-            const uint32_t angle_to_set = (((uint32_t)angle_little_endian + 32768U) % 65535U);
+#if (CONFIG_TRANSMIT_DEVICE1)
+            const float angle_to_set = fmodf(((float)angle_little_endian + 8192.0f), 16384.0f);
+#else
+            const uint16_t angle_to_set = angle_little_endian;
+#endif // (CONFIG_TRANSMIT_DEVICE1)
+            const uint16_t angle_to_set_uint = 65535U - ( ( angle_to_set / 16384.0f ) * 65535U );
 
-            const uint8_t angle_to_set_bits_0_7 = (angle_to_set & 0xFFU);
-            const uint8_t angle_to_set_bits_8_15 = ((angle_to_set & 0xFF00U) >> 8U);
+            ESP_LOGI(MPS_TAG, "angle: %u, angle_to_set: %u\n", angle_little_endian, angle_to_set_uint);
+
+            const uint8_t angle_to_set_bits_0_7 = (angle_to_set_uint & 0xFFU);
+            const uint8_t angle_to_set_bits_8_15 = (angle_to_set_uint >> 8U);
 
             t.tx_data[0] = 0x80U;
             t.tx_data[1] = angle_to_set_bits_0_7;
@@ -120,8 +131,8 @@ void mps_comms(void *pvParameter)
             t.tx_data[1] = 0x0U;
             spi_device_transmit(handle, &t);
         }
-        
-        taskYIELD();
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
 #endif // (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)

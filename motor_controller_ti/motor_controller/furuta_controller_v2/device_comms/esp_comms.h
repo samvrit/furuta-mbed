@@ -8,6 +8,6 @@
 #ifndef DEVICE_COMMS_ESP_COMMS_H_
 #define DEVICE_COMMS_ESP_COMMS_H_
 
-float esp_get_data(void);
+void esp_get_data(float * angle1, float * angle2);
 
 #endif /* DEVICE_COMMS_ESP_COMMS_H_ */
