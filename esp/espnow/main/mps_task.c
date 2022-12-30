@@ -1,11 +1,10 @@
 #include <stdint.h>
-#include <math.h>
 
 #include "queues_and_semaphores.h"
 #include "mps_task.h"
 #include "espnow_task.h"
+#include "mps_comms.h"
 
-#include "esp_log.h"
 #include "driver/spi_master.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -18,8 +17,6 @@
 #define MPS_QUEUE_SIZE (1)
 
 #if (CONFIG_TRANSMIT_DEVICE1 || CONFIG_TRANSMIT_DEVICE2)
-
-static const char *MPS_TAG = "MPS";
 
 QueueHandle_t mps_comms_queue = NULL;
 
@@ -51,26 +48,13 @@ void mps_comms(void *pvParameter)
         .queue_size=3
     };
 
-    spi_transaction_t t;
-
-    t.length = 16U;
-    t.flags = (SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA);
-
-    for(uint8_t i = 0U; i < 4U; i++)
-    {
-        t.tx_data[i] = 0x0U;
-    }
-
     spi_bus_initialize(HSPI_HOST, &buscfg, 0);
 
     spi_bus_add_device(HSPI_HOST, &devcfg, &handle);
 
     for(;;)
     {
-        t.tx_data[0] = 0x0;
-        t.tx_data[1] = 0x0;
-        spi_device_transmit(handle, &t);
-        uint16_t angle_little_endian = (t.rx_data[0] << 6U) | (t.rx_data[1] >> 2);
+        const uint16_t angle_little_endian = mps_get_angle(&handle);
 
         if (mps_comms_queue != NULL)
         {
@@ -79,57 +63,9 @@ void mps_comms(void *pvParameter)
         
         if((mps_calibration_semaphore != NULL) && (xSemaphoreTake(mps_calibration_semaphore, 0) == pdTRUE))
         {
-#if (CONFIG_TRANSMIT_DEVICE1)
-            const float angle_to_set = fmodf(((float)angle_little_endian + 8192.0f), 16384.0f);
-#else
-            const uint16_t angle_to_set = angle_little_endian;
-#endif // (CONFIG_TRANSMIT_DEVICE1)
-            const uint16_t angle_to_set_uint = 65535U - ( ( angle_to_set / 16384.0f ) * 65535U );
-
-            ESP_LOGI(MPS_TAG, "angle: %u, angle_to_set: %u\n", angle_little_endian, angle_to_set_uint);
-
-            const uint8_t angle_to_set_bits_0_7 = (angle_to_set_uint & 0xFFU);
-            const uint8_t angle_to_set_bits_8_15 = (angle_to_set_uint >> 8U);
-
-            t.tx_data[0] = 0x80U;
-            t.tx_data[1] = angle_to_set_bits_0_7;
-
-            spi_device_transmit(handle, &t);
-
-            vTaskDelay(20 / portTICK_PERIOD_MS);
-
-            // acknowledge 
-            t.tx_data[0] = 0x0U;
-            t.tx_data[1] = 0x0U;
-            spi_device_transmit(handle, &t);
-
-            vTaskDelay(1 / portTICK_PERIOD_MS);
-
-            t.tx_data[0] = 0x81U;
-            t.tx_data[1] = angle_to_set_bits_8_15;
-
-            spi_device_transmit(handle, &t);
-
-            vTaskDelay(20 / portTICK_PERIOD_MS);
-
-            // acknowledge 
-            t.tx_data[0] = 0x0U;
-            t.tx_data[1] = 0x0U;
-            spi_device_transmit(handle, &t);
-
-            vTaskDelay(1 / portTICK_PERIOD_MS);
+            mps_set_zero_position_to_current_position(&handle);
             
-            // set counter clockwise as the direction in which the angle increases
-            t.tx_data[0] = 0x89U;
-            t.tx_data[1] = 0x80U;
-            spi_device_transmit(handle, &t);
-
-            vTaskDelay(20 / portTICK_PERIOD_MS);
-
-            // acknowledge 
-            t.tx_data[0] = 0x0U;
-            t.tx_data[1] = 0x0U;
-            spi_device_transmit(handle, &t);
+            mps_set_ccw_as_incrementing(&handle);
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
