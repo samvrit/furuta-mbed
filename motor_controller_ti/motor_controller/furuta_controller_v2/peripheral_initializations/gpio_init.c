@@ -75,5 +75,13 @@ void initGPIO(void)
     GPIO_setPadConfig(66, GPIO_PIN_TYPE_STD);
     GPIO_setDirectionMode(66, GPIO_DIR_MODE_OUT);
     GPIO_setMasterCore(66, GPIO_CORE_CPU1);
+
+    // SCI-B
+    GPIO_setPinConfig(GPIO_19_SCIRXDB);
+    GPIO_setDirectionMode(19, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(19, GPIO_QUAL_ASYNC);
+
+    GPIO_setPinConfig(GPIO_18_SCITXDB);
+    GPIO_setDirectionMode(18, GPIO_DIR_MODE_OUT);
 }
 

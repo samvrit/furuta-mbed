@@ -6,11 +6,11 @@
 #include "gpio_init.h"
 #include "dac_init.h"
 #include "spi_init.h"
+#include "sci_init.h"
 #include "motor_control.h"
 
-#include "rls_comms.h"
-#include "esp_comms.h"
 #include "core_controls.h"
+#include "host_comms.h"
 
 #include "driverlib.h"
 #include "device.h"
@@ -29,11 +29,6 @@ struct cla_outputs_S cla_outputs;
 struct cpu_cla_shared_S cpu_cla_shared = {.integrator = 0.0f};
 
 uint16_t dac_value = 4095;
-float rls_position = 0.0f;
-uint16_t rls_error_bitfield = 0U;
-
-float esp_position1 = 0.0f;
-float esp_position2 = 0.0f;
 
 uint16_t motor_fault = 0;
 
@@ -72,6 +67,8 @@ void main(void)
 
     configureDAC();
 
+    initSCI();
+
     // Enable Global Interrupts (INTM) and realtime interrupt (DGBM)
 
     EINT;
@@ -81,12 +78,6 @@ void main(void)
 
     for(;;)
     {
-        DAC_setShadowValue(DACA_BASE, dac_value);
 
-        rls_position = rls_get_position(&rls_error_bitfield);
-
-        esp_get_data(&esp_position1, &esp_position2);
-
-        motor_fault = GPIO_readPin(123);
     }
 }

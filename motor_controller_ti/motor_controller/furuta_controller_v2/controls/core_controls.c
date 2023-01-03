@@ -1,17 +1,24 @@
 // Includes
 #include "core_controls.h"
 #include "observer_controller.h"
+#include "rls_comms.h"
+#include "esp_comms.h"
+#include "host_comms.h"
 #include <string.h>
 
 #include "driverlib.h"
 
+// Defines
+
+#define TICK_1KHZ_AT_10KHZ (10U)
+#define TICK_10HZ_AT_10KHZ (1000U)
 
 // Private data
 
 const float Ts = 1e-4f;
 float torque_cmd = 0.0f;
-
-// Public Functions
+float measurements[N_STATES] = {0.0f};
+uint16_t rls_error_bitfield = 0U;
 
 kf_input_S kf_input;
 kf_states_S kf_states;
@@ -47,21 +54,55 @@ const float K[N_STATES][N_STATES] = {   {3.162278,  -677.257131,    -1339.746051
 const float Q = 7.5e-5f;
 const float R = 1.21e-6f;
 
+// Private function declarations
+void update_measurements(void);
+
+// ISR functions
 
 __interrupt void epwm3ISR(void)
 {
-    GPIO_writePin(2, 1);
+    static uint32_t tick_1kHz = 0U;
+    static uint32_t tick_10Hz = 0U;
 
-    const float measurement[6] = { 0 };
-    kf_observer_step(measurement, true, &kf_input, &kf_states);
+    kf_observer_step(measurements, true, &kf_input, &kf_states);
 
     torque_cmd = kf_control_output(kf_states.x_hat, Ts, &kf_input);
 
-    GPIO_writePin(2, 0);
+    if(++tick_1kHz == TICK_1KHZ_AT_10KHZ)
+    {
+        tick_1kHz = 0U;
+        update_measurements();
+    }
+
+    if(++tick_10Hz == TICK_10HZ_AT_10KHZ)
+    {
+        tick_10Hz = 0U;
+
+        uint16_t motor_fault_flag = GPIO_readPin(123);
+
+        send_data_to_host(kf_states.x_hat, measurements, rls_error_bitfield, motor_fault_flag);
+    }
 
     EPWM_clearEventTriggerInterruptFlag(EPWM3_BASE);
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP3);
 }
+
+// Private functions
+
+void update_measurements(void)
+{
+    float esp_position1 = 0.0f;
+    float esp_position2 = 0.0f;
+
+    const float rls_position = rls_get_position(&rls_error_bitfield);
+    esp_get_data(&esp_position1, &esp_position2);
+
+    measurements[0] = rls_position;
+    measurements[1] = esp_position1;
+    measurements[2] = esp_position2;
+}
+
+// Public Functions
 
 void controller_init(void)
 {
@@ -82,3 +123,25 @@ void controller_init(void)
         kf_covariance_matrix_step(&kf_input, &kf_states);
     }
 }
+
+void controller_get_measurements(float measurements_output[3])
+{
+    for (uint16_t i = 0; i < 3; i++)
+    {
+        measurements_output[i] = measurements[i];
+    }
+}
+
+void controller_get_state_estimate(float x_hat_output[6])
+{
+    for(uint16_t i = 0; i < 6; i++)
+    {
+        x_hat_output[i] = kf_states.x_hat[i];
+    }
+}
+
+uint16_t controller_get_rls_error_bitfield(void)
+{
+    return rls_error_bitfield;
+}
+
