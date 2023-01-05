@@ -43,13 +43,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
         case WM_CLOSE:
+            if(com_currently_connected)
+            {
+                const char stream = 't';
+                WriteFile(hCom, &stream, 1, NULL, NULL);
+            }
             CloseHandle(hCom);
             DestroyWindow(hwnd);
         case WM_COMMAND:
         {
             if (wParam == ZERO_OFFSET_BTN_ID)
             {
-                printf("Button click\n");
+                const char stream = 'c';
+                WriteFile(hCom, &stream, 1, NULL, NULL);
             }
             else if (wParam == COM_CONNECT_BTN_ID)
             {
@@ -79,23 +85,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         snprintf(text, 50, "Connecting to COM %s failed with error: %d.\n", com_port, GetLastError());
                         SetWindowText(info_message, text);
                     }
+                    else
+                    {
+                        GetCommState(hCom, &dcb);
 
-                    GetCommState(hCom, &dcb);
+                        dcb.BaudRate = baud_rate;     //  baud rate
+                        dcb.ByteSize = 8;             //  data size, xmit and rcv
+                        dcb.Parity   = NOPARITY;      //  parity bit
+                        dcb.StopBits = ONESTOPBIT;    //  stop bit
 
-                    dcb.BaudRate = baud_rate;     //  baud rate
-                    dcb.ByteSize = 8;             //  data size, xmit and rcv
-                    dcb.Parity   = NOPARITY;      //  parity bit
-                    dcb.StopBits = ONESTOPBIT;    //  stop bit
+                        SetCommState(hCom, &dcb);
 
-                    SetCommState(hCom, &dcb);
+                        SetWindowText(com_connect_btn, "DISCONNECT");
+                        SetWindowText(info_message, "COM connection established");
 
-                    SetWindowText(com_connect_btn, "DISCONNECT");
-                    SetWindowText(info_message, "COM connection established");
+                        EnableWindow(streaming_btn, true);
 
-                    com_currently_connected = true;
+                        com_currently_connected = true;
+                    }
                 }
                 else
                 {
+                    const char stream = 't';
+                    WriteFile(hCom, &stream, 1, NULL, NULL);
+
+                    SetWindowText(streaming_btn, "START STREAMING");
+                    SetWindowText(info_message, "Stopped streaming");
+
+                    currently_streaming = false;
+
+                    EnableWindow(streaming_btn, false);
+
                     CloseHandle(hCom);
                     SetWindowText(com_connect_btn, "CONNECT");
                     SetWindowText(info_message, "COM disconnected");
@@ -376,6 +396,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     y_position += 50;
 
     streaming_btn = CreateWindow("BUTTON", "START STREAMING", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 10, y_position, 200, 50, hwnd, (HMENU) STREAMING_BTN_ID, NULL, NULL);
+    EnableWindow(streaming_btn, false);
 
     y_position += 100;
 
@@ -392,10 +413,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     {
         ExitProcess(3);
     }
-
-    // COM port stuff
-
-    
 
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
