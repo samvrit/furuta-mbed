@@ -368,7 +368,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         snprintf(text, 20, "x_hat[%d]", i);
         CreateWindow("STATIC", text, WS_VISIBLE | WS_CHILD, 10, y_position, 80, 30, hwnd, NULL, NULL, NULL);
 
-        x_hat_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
+        x_hat_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
     }
 
     y_position += 50;
@@ -380,18 +380,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         snprintf(text, 20, "meas[%d]", i);
         CreateWindow("STATIC", text, WS_VISIBLE | WS_CHILD, 10, y_position, 80, 30, hwnd, NULL, NULL, NULL);
 
-        measurement_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
+        measurement_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
     }
 
     y_position += 50;
 
     CreateWindow("STATIC", "RLS Fault", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 30, hwnd, NULL, NULL, NULL);
-    rls_fault_bitfield = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
+    rls_fault_bitfield = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
 
     y_position += 50;
 
     CreateWindow("STATIC", "Motor Fault", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 30, hwnd, NULL, NULL, NULL);
-    motor_fault_flag = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
+    motor_fault_flag = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
 
     y_position += 50;
 
