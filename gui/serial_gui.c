@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <math.h>
 #include <stdio.h>
 #include <tchar.h>
 #include <stdbool.h>
@@ -8,6 +9,8 @@
 #define ZERO_OFFSET_BTN_ID (1)
 #define STREAMING_BTN_ID (2)
 #define COM_CONNECT_BTN_ID (3)
+
+#define MEASUREMENT_LABEL_ID (4)
 
 HWND hwnd;
 
@@ -24,6 +27,9 @@ HWND info_message;
 
 HANDLE hCom;
 
+static HBRUSH hbrBkgnd_regular = NULL;
+static HBRUSH hbrBkgnd_green = NULL;
+
 // Types
 
 union uint_to_float_U
@@ -35,6 +41,8 @@ union uint_to_float_U
 // Global variable declarations
 bool currently_streaming = false;
 bool com_currently_connected = false;
+
+bool meas1_within_bounds = false;
 
 // Step 4: the Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -154,6 +162,38 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             break;
         }
+        case WM_CTLCOLORSTATIC:
+        {
+            HDC hdcStatic = (HDC) wParam;
+            SetTextColor(hdcStatic, RGB(0,0,0));
+            SetBkMode(hdcStatic, TRANSPARENT);
+
+            if(hbrBkgnd_green == NULL)
+            {
+                hbrBkgnd_green = CreateSolidBrush(RGB(200,255,200));
+            }
+            if(hbrBkgnd_regular == NULL)
+            {
+                hbrBkgnd_regular = CreateSolidBrush(RGB(220,220,220));
+            }
+
+            if(lParam == (LPARAM)measurement_label[0])
+            {
+                if(meas1_within_bounds)
+                {
+                    return (INT_PTR)hbrBkgnd_green;
+                }
+                else
+                {
+                    return (INT_PTR)hbrBkgnd_regular;
+                }
+            }
+            else
+            {
+                return (INT_PTR)hbrBkgnd_regular;
+            }
+            break;
+        }
         case WM_DESTROY:
             PostQuitMessage(0);
         break;
@@ -255,6 +295,8 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
                     snprintf(text, 10, "%.4f", data.value);
 
                     SetWindowText(measurement_label[0], text);
+
+                    meas1_within_bounds = fabsf(data.value) < 0.5f ? true : false;
 
                     break;
                 }
@@ -387,7 +429,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         snprintf(text, 20, "meas[%d]", i);
         CreateWindow("STATIC", text, WS_VISIBLE | WS_CHILD, 10, y_position, 80, 30, hwnd, NULL, NULL, NULL);
 
-        measurement_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
+        measurement_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, (HMENU) MEASUREMENT_LABEL_ID, NULL, NULL);
     }
 
     y_position += 50;
