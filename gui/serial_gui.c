@@ -10,8 +10,6 @@
 #define STREAMING_BTN_ID (2)
 #define COM_CONNECT_BTN_ID (3)
 
-#define MEASUREMENT_LABEL_ID (4)
-
 HWND hwnd;
 
 HWND com_port_edit;
@@ -429,7 +427,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         snprintf(text, 20, "meas[%d]", i);
         CreateWindow("STATIC", text, WS_VISIBLE | WS_CHILD, 10, y_position, 80, 30, hwnd, NULL, NULL, NULL);
 
-        measurement_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, (HMENU) MEASUREMENT_LABEL_ID, NULL, NULL);
+        measurement_label[i] = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 30, hwnd, NULL, NULL, NULL);
     }
 
     y_position += 50;
