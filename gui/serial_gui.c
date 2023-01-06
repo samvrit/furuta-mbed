@@ -9,8 +9,6 @@
 #define STREAMING_BTN_ID (2)
 #define COM_CONNECT_BTN_ID (3)
 
-#define IDT_TIMER1 (1)
-
 HWND hwnd;
 
 HWND com_port_edit;
@@ -21,6 +19,7 @@ HWND rls_fault_bitfield;
 HWND motor_fault_flag;
 HWND streaming_btn;
 HWND com_connect_btn;
+HWND zero_offset_btn;
 HWND info_message;
 
 HANDLE hCom;
@@ -96,10 +95,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                         SetCommState(hCom, &dcb);
 
+                        // command to stop streaming, in case a stream command has previously persisted on the device
+                        const char stream = 't';
+                        WriteFile(hCom, &stream, 1, NULL, NULL);
+
+                        PurgeComm(hCom, PURGE_TXABORT | PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXCLEAR);
+
                         SetWindowText(com_connect_btn, "DISCONNECT");
                         SetWindowText(info_message, "COM connection established");
 
                         EnableWindow(streaming_btn, true);
+                        EnableWindow(zero_offset_btn, true);
 
                         com_currently_connected = true;
                     }
@@ -115,6 +121,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     currently_streaming = false;
 
                     EnableWindow(streaming_btn, false);
+                    EnableWindow(zero_offset_btn, false);
 
                     CloseHandle(hCom);
                     SetWindowText(com_connect_btn, "CONNECT");
@@ -145,8 +152,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     currently_streaming = false;
                 }
             }
+            break;
         }
-        break;
         case WM_DESTROY:
             PostQuitMessage(0);
         break;
@@ -404,7 +411,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 
     // Right side stuff
-    HWND zero_offset_btn = CreateWindow("BUTTON", "SET ZERO OFFSET", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 700, 10, 200, 50, hwnd, (HMENU) ZERO_OFFSET_BTN_ID, NULL, NULL);
+    zero_offset_btn = CreateWindow("BUTTON", "SET ZERO OFFSET", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 700, 10, 200, 50, hwnd, (HMENU) ZERO_OFFSET_BTN_ID, NULL, NULL);
+    EnableWindow(zero_offset_btn, false);
 
     // Thread stuff
     DWORD * hThread = CreateThread(NULL, 0, MyThreadFunction, NULL, 0, NULL);   // returns the thread identifier 

@@ -63,6 +63,8 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
 {
     static uint16_t index = 0;
 
+    const uint16_t fifo_empty_bins = SCI_FIFO_TX16 - SCI_getTxFIFOStatus(SCIB_BASE);
+
     if(host_rx_command_start_info_streaming)
     {
         switch(index)
@@ -71,14 +73,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = x_hat[0] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'a');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'a');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -86,14 +91,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = x_hat[1] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'b');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'b');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -101,14 +109,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = x_hat[2] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'c');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'c');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -116,14 +127,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = x_hat[3] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'd');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'd');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -131,14 +145,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = x_hat[4] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'e');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'e');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -146,14 +163,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = x_hat[5] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'f');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'f');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -161,14 +181,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = measurements[0] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'g');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'g');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -176,14 +199,17 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = measurements[1] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'h');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'h');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
@@ -191,27 +217,36 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 union float_to_uint_U data_to_send = { .value = measurements[2] };
 
-                SCI_writeCharNonBlocking(SCIB_BASE, 'i');   // identifier char
-
-                for(uint16_t i = 0; i < 2; i++)
+                if(fifo_empty_bins >= 5U)
                 {
-                    const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
-                    const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-                    SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'i');   // identifier char
+
+                    for(uint16_t i = 0; i < 2; i++)
+                    {
+                        const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
+                        const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
+                        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+                    }
                 }
                 break;
             }
             case 9:
             {
-                SCI_writeCharNonBlocking(SCIB_BASE, 'j');   // identifier char
-                SCI_writeCharNonBlocking(SCIB_BASE, rls_error_bitfield);
+                if(fifo_empty_bins >= 2U)
+                {
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'j');   // identifier char
+                    SCI_writeCharNonBlocking(SCIB_BASE, rls_error_bitfield);
+                }
                 break;
             }
             case 10:
             {
-                SCI_writeCharNonBlocking(SCIB_BASE, 'k');   // identifier char
-                SCI_writeCharNonBlocking(SCIB_BASE, motor_fault_flag);
+                if(fifo_empty_bins >= 2U)
+                {
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'k');   // identifier char
+                    SCI_writeCharNonBlocking(SCIB_BASE, motor_fault_flag);
+                }
                 break;
             }
             default:

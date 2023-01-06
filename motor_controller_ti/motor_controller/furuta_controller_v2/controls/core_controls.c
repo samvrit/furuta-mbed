@@ -11,8 +11,6 @@
 // Defines
 
 #define TICK_1KHZ_AT_10KHZ (10U)
-#define TICK_10HZ_AT_10KHZ (1000U)
-
 // Private data
 
 const float Ts = 1e-4f;
@@ -62,7 +60,6 @@ void update_measurements(void);
 __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
-    static uint32_t tick_10Hz = 0U;
 
     kf_observer_step(measurements, true, &kf_input, &kf_states);
 
@@ -72,11 +69,6 @@ __interrupt void epwm3ISR(void)
     {
         tick_1kHz = 0U;
         update_measurements();
-    }
-
-    if(++tick_10Hz == TICK_10HZ_AT_10KHZ)
-    {
-        tick_10Hz = 0U;
 
         uint16_t motor_fault_flag = GPIO_readPin(123);
 
