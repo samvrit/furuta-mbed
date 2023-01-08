@@ -51,6 +51,11 @@ void c2000_comms(void *pvParameter)
 
     uint32_t angles_combined = 0U;
 
+    // blocking SPI slave transmit to ensure that the host is ready
+    esp_err_t spi_error = spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
+
+    c2000_host_active = (ESP_OK == spi_error);
+
     for(;;)
     {
         received_data_S received_data;
@@ -88,7 +93,7 @@ void c2000_comms(void *pvParameter)
         t.tx_buffer=(const void *)&angles_combined;
         t.rx_buffer=recvbuf;
 
-        // spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
+        spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
 
         taskYIELD();
     }
