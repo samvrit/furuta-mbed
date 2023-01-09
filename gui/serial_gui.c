@@ -350,13 +350,25 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
                     char text[10] = "";
                     snprintf(text, 10, "%.4f", data.value);
 
+                    SetWindowText(torque_cmd_label, text);
+
+                    break;
+                }
+                case 'h':
+                {
+                    union uint_to_float_U data = { .value = 0.0f };
+                    ReadFile(hCom, data.raw, 4, NULL, NULL);
+
+                    char text[10] = "";
+                    snprintf(text, 10, "%.4f", data.value);
+
                     SetWindowText(measurement_label[0], text);
 
                     meas1_within_bounds = fabsf(data.value) < DEG2RAD(ANGLES_WITHIN_BOUNDS_DEG) ? true : false;
 
                     break;
                 }
-                case 'h':
+                case 'i':
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -370,7 +382,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'i':
+                case 'j':
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -384,7 +396,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'j':
+                case 'k':
                 {
                     uint8_t data = 0U;
                     ReadFile(hCom, &data, 1, NULL, NULL);
@@ -398,7 +410,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'k':
+                case 'l':
                 {
                     uint8_t data = 0U;
                     ReadFile(hCom, &data, 1, NULL, NULL);

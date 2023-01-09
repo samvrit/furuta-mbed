@@ -72,7 +72,7 @@ __interrupt void epwm3ISR(void)
 
         uint16_t motor_fault_flag = GPIO_readPin(123);
 
-        send_data_to_host(kf_states.x_hat, measurements, rls_error_bitfield, motor_fault_flag);
+        send_data_to_host(kf_states.x_hat, measurements, torque_cmd, rls_error_bitfield, !motor_fault_flag);
     }
 
     EPWM_clearEventTriggerInterruptFlag(EPWM3_BASE);

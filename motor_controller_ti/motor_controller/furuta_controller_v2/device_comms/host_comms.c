@@ -75,7 +75,7 @@ __interrupt void scibRXFIFOISR(void)
 }
 
 // Public functions
-void send_data_to_host(const float x_hat[6], const float measurements[6], const uint16_t rls_error_bitfield, const uint16_t motor_fault_flag)
+void send_data_to_host(const float x_hat[6], const float measurements[6], const float torque_cmd, const uint16_t rls_error_bitfield, const uint16_t motor_fault_flag)
 {
     static uint16_t index = 0;
 
@@ -137,7 +137,7 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 if(fifo_empty_bins >= 5U)
                 {
-                    send_float(measurements[0], 'g');
+                    send_float(torque_cmd, 'g');
                 }
                 break;
             }
@@ -145,7 +145,7 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 if(fifo_empty_bins >= 5U)
                 {
-                    send_float(measurements[1], 'h');
+                    send_float(measurements[0], 'h');
                 }
                 break;
             }
@@ -153,16 +153,15 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
             {
                 if(fifo_empty_bins >= 5U)
                 {
-                    send_float(measurements[2], 'i');
+                    send_float(measurements[1], 'i');
                 }
                 break;
             }
             case 9:
             {
-                if(fifo_empty_bins >= 2U)
+                if(fifo_empty_bins >= 5U)
                 {
-                    SCI_writeCharNonBlocking(SCIB_BASE, 'j');   // identifier char
-                    SCI_writeCharNonBlocking(SCIB_BASE, rls_error_bitfield);
+                    send_float(measurements[2], 'j');
                 }
                 break;
             }
@@ -171,6 +170,15 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
                 if(fifo_empty_bins >= 2U)
                 {
                     SCI_writeCharNonBlocking(SCIB_BASE, 'k');   // identifier char
+                    SCI_writeCharNonBlocking(SCIB_BASE, rls_error_bitfield);
+                }
+                break;
+            }
+            case 11:
+            {
+                if(fifo_empty_bins >= 2U)
+                {
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'l');   // identifier char
                     SCI_writeCharNonBlocking(SCIB_BASE, motor_fault_flag);
                 }
                 break;
@@ -179,7 +187,7 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
                 break;
         }
 
-        if (++index == 11U)
+        if (++index == 12U)
         {
             index = 0U;
         }
