@@ -4,10 +4,6 @@
 
 #define TICKS_TO_WAIT (512)
 
-#if (CONFIG_RECEIVER_DEVICE)
-bool c2000_host_active = false;
-#endif // (CONFIG_RECEIVER_DEVICE)
-
 void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
     received_data_S received_data;
@@ -33,13 +29,6 @@ void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
         {
             received_data.mac[i] = mac_addr[i];
         }
-#if (CONFIG_RECEIVER_DEVICE)
-        if(c2000_host_active)
-        {
-            xQueueSend(espnow_receive_queue, &received_data, TICKS_TO_WAIT);
-        }
-#else
         xQueueSend(espnow_receive_queue, &received_data, TICKS_TO_WAIT);
-#endif // (CONFIG_RECEIVER_DEVICE)
     }
 }

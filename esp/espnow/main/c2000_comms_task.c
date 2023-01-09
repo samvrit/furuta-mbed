@@ -18,7 +18,8 @@
 
 #if (CONFIG_RECEIVER_DEVICE)
 
-static const char *RECEIVER_TAG = "RECEIVER";
+static const char *RECEIVER_TAG = "RX";
+static const char *C2000_TAG = "C2";
 
 void c2000_comms(void *pvParameter)
 {
@@ -49,15 +50,13 @@ void c2000_comms(void *pvParameter)
     spi_slave_transaction_t t;
     memset(&t, 0, sizeof(t));
 
-    uint32_t angles_combined = 0U;
-
     // blocking SPI slave transmit to ensure that the host is ready
     esp_err_t spi_error = spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
 
-    c2000_host_active = (ESP_OK == spi_error);
-
     for(;;)
     {
+        static uint32_t angles_combined = 0U;
+        
         received_data_S received_data;
 
         while((espnow_receive_queue != NULL) && (xQueueReceive(espnow_receive_queue, &received_data, 0) == pdTRUE)) // non-blocking

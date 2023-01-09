@@ -23,10 +23,6 @@ typedef struct
     angle_value_to_raw_U angle;
 } received_data_S;
 
-#if (CONFIG_RECEIVER_DEVICE)
-extern bool c2000_host_active;
-#endif // (CONFIG_RECEIVER_DEVICE)
-
 void espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len);
 
 #endif // ESPNOW_RECEIVE_CALLBACK_H
