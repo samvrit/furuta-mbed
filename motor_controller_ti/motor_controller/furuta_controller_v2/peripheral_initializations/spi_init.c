@@ -30,7 +30,7 @@ void initSPIB()
     SPI_disableModule(SPIB_BASE);
 
     // SPI configuration. Use a 500kHz SPICLK and 16-bit word size.
-    SPI_setConfig(SPIB_BASE, DEVICE_LSPCLK_FREQ, SPI_PROT_POL0PHA0, SPI_MODE_MASTER, 10000000, 8);
+    SPI_setConfig(SPIB_BASE, DEVICE_LSPCLK_FREQ, SPI_PROT_POL0PHA0, SPI_MODE_MASTER, 10000000, 14);
     SPI_disableLoopback(SPIB_BASE);
     SPI_setEmulationMode(SPIB_BASE, SPI_EMULATION_STOP_AFTER_TRANSMIT);
 

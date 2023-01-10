@@ -50,7 +50,9 @@ float rls_get_position(uint16_t* error_bitfield)
 
     cs_assert();
 
-    const float position = (raw_data_temp >> 18U) * RLS_POSITION_SCALING;
+    const uint16_t position_raw = (raw_data_temp >> 18U);
+
+    const float position = position_raw * RLS_POSITION_SCALING;
 
     *error_bitfield = ((raw_data_temp & 0xFF00U) >> 8U);
 

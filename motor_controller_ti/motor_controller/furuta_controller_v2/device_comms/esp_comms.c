@@ -11,7 +11,7 @@
 #include "device.h"
 
 // Defines
-#define SPI_N_WORDS (4U)
+#define SPI_N_WORDS (2U)
 
 #define ESP_POSITION_SCALING  (3.835186051e-4f)  // [rad/count] equal to (2*pi)/(2^14-1)
 
@@ -29,25 +29,19 @@ static void cs_assert(void)
 // Global functions
 void esp_get_data(float * angle1, float * angle2)
 {
-    const uint16_t sData[SPI_N_WORDS] = {0x4100U, 0x4200U, 0x4300U, 0x4400U};   // Dummy characters (ABCD)
+    const uint16_t sData[SPI_N_WORDS] = {0x4100U, 0x4200U};   // Dummy characters (AB)
 
     cs_deassert();
 
-    uint32_t raw_data_temp = 0U;
+    SPI_writeDataBlockingNonFIFO(SPIB_BASE, sData[0]);
+    const uint16_t angle1_raw = SPI_readDataBlockingNonFIFO(SPIB_BASE);
 
-    for(int i = 0; i < SPI_N_WORDS; i++)
-    {
-        SPI_writeDataBlockingNonFIFO(SPIB_BASE, sData[i]);
-        const uint16_t receive_data = SPI_readDataBlockingNonFIFO(SPIB_BASE);
-
-        const uint16_t shift_count = 8U * i;
-
-        raw_data_temp |= ( ((uint32_t)receive_data & 0xFFU) << shift_count );
-    }
+    SPI_writeDataBlockingNonFIFO(SPIB_BASE, sData[1]);
+    const uint16_t angle2_raw = SPI_readDataBlockingNonFIFO(SPIB_BASE);
 
     cs_assert();
 
-    *angle1 = (raw_data_temp & 0xFFFFU) * ESP_POSITION_SCALING;
+    *angle1 = angle1_raw * ESP_POSITION_SCALING;
 
-    *angle2 = (raw_data_temp >> 16U) * ESP_POSITION_SCALING;
+    *angle2 = angle2_raw * ESP_POSITION_SCALING;
 }

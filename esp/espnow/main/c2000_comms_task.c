@@ -50,6 +50,8 @@ void c2000_comms(void *pvParameter)
     spi_slave_transaction_t t;
     memset(&t, 0, sizeof(t));
 
+    t.length = 28;
+
     // blocking SPI slave transmit to ensure that the host is ready
     esp_err_t spi_error = spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
 
@@ -73,7 +75,7 @@ void c2000_comms(void *pvParameter)
                     }
                     else //if (received_data.mac[5] == 0x28)  // from transmit device 2
                     {
-                        angles_combined |= ((uint32_t)received_data.angle.value << 16U);
+                        angles_combined |= ((uint32_t)received_data.angle.value << 14U);
                     }
                     break;
                 }
@@ -85,12 +87,10 @@ void c2000_comms(void *pvParameter)
             }
         }
 
-        uint8_t recvbuf[4];
-        memset(recvbuf, 0x0, 4*sizeof(uint8_t));
+        uint32_t recvbuf = 0U;
 
-        t.length=32;
         t.tx_buffer=(const void *)&angles_combined;
-        t.rx_buffer=recvbuf;
+        t.rx_buffer=(const void *)&recvbuf;
 
         spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
 
