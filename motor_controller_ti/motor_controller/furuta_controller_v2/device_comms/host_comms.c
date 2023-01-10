@@ -75,7 +75,7 @@ __interrupt void scibRXFIFOISR(void)
 }
 
 // Public functions
-void send_data_to_host(const float x_hat[6], const float measurements[6], const float torque_cmd, const uint16_t rls_error_bitfield, const uint16_t motor_fault_flag)
+void send_data_to_host(const float x_hat[6], const float measurements[6], const float torque_cmd, const uint16_t controller_state, const uint16_t rls_error_bitfield, const uint16_t motor_fault_flag)
 {
     static uint16_t index = 0;
 
@@ -183,11 +183,20 @@ void send_data_to_host(const float x_hat[6], const float measurements[6], const 
                 }
                 break;
             }
+            case 12:
+            {
+                if(fifo_empty_bins >= 2U)
+                {
+                    SCI_writeCharNonBlocking(SCIB_BASE, 'm');   // identifier char
+                    SCI_writeCharNonBlocking(SCIB_BASE, controller_state);
+                }
+                break;
+            }
             default:
                 break;
         }
 
-        if (++index == 12U)
+        if (++index == 13U)
         {
             index = 0U;
         }

@@ -4,6 +4,7 @@
 #include "rls_comms.h"
 #include "esp_comms.h"
 #include "host_comms.h"
+#include "state_machine.h"
 #include <string.h>
 
 #include "driverlib.h"
@@ -61,19 +62,28 @@ __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
 
-    kf_observer_step(measurements, true, &kf_input, &kf_states);
-
-    torque_cmd = kf_control_output(kf_states.x_hat, Ts, &kf_input);
+    controller_state_E controller_state;
+    uint16_t motor_fault_flag;
 
     if(++tick_1kHz == TICK_1KHZ_AT_10KHZ)
     {
         tick_1kHz = 0U;
         update_measurements();
 
-        uint16_t motor_fault_flag = GPIO_readPin(123);
+        controller_state = state_machine_step(measurements);
 
-        send_data_to_host(kf_states.x_hat, measurements, torque_cmd, rls_error_bitfield, !motor_fault_flag);
+        motor_fault_flag = !GPIO_readPin(123);  // active low
+
+        send_data_to_host(kf_states.x_hat, measurements, torque_cmd, (uint16_t)controller_state, rls_error_bitfield, motor_fault_flag);
     }
+
+    const bool enable = (CONTROLLER_ACTIVE == controller_state) && (!motor_fault_flag);
+
+    kf_observer_step(measurements, enable, &kf_input, &kf_states);
+
+    const float torque_cmd_from_controller = kf_control_output(kf_states.x_hat, Ts, &kf_input);
+
+    torque_cmd = enable ? torque_cmd_from_controller : 0.0f;
 
     EPWM_clearEventTriggerInterruptFlag(EPWM3_BASE);
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP3);

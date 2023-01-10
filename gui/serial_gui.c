@@ -23,6 +23,7 @@ HWND torque_cmd_label;
 HWND measurement_label[3];
 HWND rls_fault_bitfield_label;
 HWND motor_fault_flag_label;
+HWND controller_state_label;
 HWND streaming_btn;
 HWND com_connect_btn;
 HWND zero_offset_btn;
@@ -51,6 +52,7 @@ bool meas2_within_bounds = false;
 bool meas3_within_bounds = false;
 bool rls_fault_flag = false;
 bool motor_fault_flag = false;
+bool controller_active = false;
 
 // Step 4: the Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -244,6 +246,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     return (INT_PTR)hbrBkgnd_regular;
                 }
             }
+			else if (lParam == (LPARAM)controller_state_label)
+            {
+                if(controller_active)
+                {
+                    return (INT_PTR)hbrBkgnd_green; 
+                }
+                else
+                {
+                    return (INT_PTR)hbrBkgnd_regular;
+                }
+            }
             else
             {
                 return (INT_PTR)hbrBkgnd_regular;
@@ -424,6 +437,22 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
+				case 'm':
+                {
+                    uint8_t data = 0U;
+                    ReadFile(hCom, &data, 1, NULL, NULL);
+
+                    char text[10] = "";
+                    snprintf(text, 10, "%u", data);
+
+                    controller_active = (data == 2U) ? true : false;
+
+                    SetWindowText(controller_state_label, text);
+
+                    break;
+                }
+				default:
+					break;
             }
         }    
     }
@@ -464,7 +493,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         g_szClassName,
         "Furuta Interface GUI",
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 820, 500,
+        CW_USEDEFAULT, CW_USEDEFAULT, 820, 530,
         NULL, NULL, hInstance, NULL);
 
     if(hwnd == NULL)
@@ -523,6 +552,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     CreateWindow("STATIC", "Motor Fault", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
     motor_fault_flag_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
+	
+	y_position += 30;
+
+    CreateWindow("STATIC", "Cntrl State", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
+    controller_state_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
 
     y_position += 40;
 
