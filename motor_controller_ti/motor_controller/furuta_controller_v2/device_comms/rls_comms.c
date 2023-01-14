@@ -6,6 +6,7 @@
  */
 
 #include "rls_comms.h"
+#include "host_comms.h"
 
 #include "driverlib.h"
 #include "device.h"
@@ -14,6 +15,8 @@
 #define RLS_POSITION_SCALING  (3.835186051e-4f)  // [rad/count] equal to (2*pi)/(2^14-1)
 
 #define SPI_N_WORDS (4U)
+
+uint16_t position_offset = 0U;
 
 // Local functions
 static inline void cs_deassert(void)
@@ -52,7 +55,18 @@ float rls_get_position(uint16_t* error_bitfield)
 
     const uint16_t position_raw = (raw_data_temp >> 18U);
 
-    const float position = position_raw * RLS_POSITION_SCALING;
+    if(host_rx_command_zero_position_offset)
+    {
+        host_rx_command_zero_position_offset = 0U;
+
+        position_offset = position_raw;
+    }
+
+    const int16_t diff = position_raw - position_offset;
+
+    const uint16_t position_after_correction = (diff < 0) ? (16384U + diff) : diff;
+
+    const float position = position_after_correction * RLS_POSITION_SCALING;
 
     *error_bitfield = ((raw_data_temp & 0xFF00U) >> 8U);
 
