@@ -16,13 +16,23 @@
 #define GPIO_SCLK 14
 #define GPIO_CS 15
 
+#define GPIO_CS_IO_CONFIG ((1ULL) << (GPIO_CS))
+
+#define SPI_MS_TO_WAIT (100 / portTICK_RATE_MS)
+
 #if (CONFIG_RECEIVER_DEVICE)
 
-static const char *RECEIVER_TAG = "RX";
-static const char *C2000_TAG = "C2";
+SemaphoreHandle_t spi_cs_interrupt_semaphore = NULL;
+
+static void IRAM_ATTR spi_cs_isr_handler(void* arg)
+{
+    xSemaphoreGiveFromISR(spi_cs_interrupt_semaphore, NULL);
+}
 
 void c2000_comms(void *pvParameter)
 {
+    spi_cs_interrupt_semaphore = xSemaphoreCreateBinary();
+
     //Configuration for the SPI bus
     spi_bus_config_t buscfg={
         .mosi_io_num=GPIO_MOSI,
@@ -34,7 +44,7 @@ void c2000_comms(void *pvParameter)
     spi_slave_interface_config_t slvcfg={
         .mode=0,
         .spics_io_num=GPIO_CS,
-        .queue_size=1,
+        .queue_size=3,
         .flags=0,
         .post_setup_cb=NULL,
         .post_trans_cb=NULL
@@ -45,20 +55,33 @@ void c2000_comms(void *pvParameter)
     gpio_set_pull_mode(GPIO_SCLK, GPIO_PULLUP_ONLY);
     gpio_set_pull_mode(GPIO_CS, GPIO_PULLUP_ONLY);
 
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_PIN_INTR_NEGEDGE;
+    io_conf.pin_bit_mask = GPIO_CS_IO_CONFIG; 
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pull_up_en = 1;
+    gpio_config(&io_conf);
+
+    gpio_install_isr_service(0);
+
+    gpio_isr_handler_add(GPIO_CS, spi_cs_isr_handler, NULL);
+
     spi_slave_initialize(HSPI_HOST, &buscfg, &slvcfg, 0);
 
     spi_slave_transaction_t t;
     memset(&t, 0, sizeof(t));
 
-    t.length = 28;
+    t.length = 32;
 
     // blocking SPI slave transmit to ensure that the host is ready
-    esp_err_t spi_error = spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
+    spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
+
+    uint16_t angle1 = 0U;
+    uint16_t angle2 = 0U;
+    uint32_t angles_combined = 0U;
 
     for(;;)
-    {
-        static uint32_t angles_combined = 0U;
-        
+    {        
         received_data_S received_data;
 
         while((espnow_receive_queue != NULL) && (xQueueReceive(espnow_receive_queue, &received_data, 0) == pdTRUE)) // non-blocking
@@ -67,15 +90,13 @@ void c2000_comms(void *pvParameter)
             {
                 case RECEIVED_DATA_ANGLE:
                 {
-                    ESP_LOGI(RECEIVER_TAG, "%02X: %u\n", received_data.mac[5], received_data.angle.value);
-
                     if(received_data.mac[5] == 0xEC)    // from transmit device 1
                     {
-                        angles_combined |= received_data.angle.value;
+                        angle1 = received_data.angle.value;
                     }
                     else //if (received_data.mac[5] == 0x28)  // from transmit device 2
                     {
-                        angles_combined |= ((uint32_t)received_data.angle.value << 14U);
+                        angle2 = received_data.angle.value;
                     }
                     break;
                 }
@@ -85,14 +106,30 @@ void c2000_comms(void *pvParameter)
                     break;
                 }
             }
+
+            taskYIELD();
         }
 
-        uint32_t recvbuf = 0U;
+        taskYIELD();
 
-        t.tx_buffer=(const void *)&angles_combined;
-        t.rx_buffer=(const void *)&recvbuf;
+        if((spi_cs_interrupt_semaphore != NULL) && (xSemaphoreTake(spi_cs_interrupt_semaphore, 0) == pdTRUE))
+        {
+            WORD_ALIGNED_ATTR uint8_t recvbuf[4] = {0U};
+            WORD_ALIGNED_ATTR uint8_t sendbuf[4] = {0U};
 
-        spi_slave_transmit(HSPI_HOST, &t, portMAX_DELAY);
+            if( (angle1 <= 16383U) && (angle2 <= 16383U) )
+            {
+                angles_combined = ((uint32_t)angle2 << 16U) | angle1;
+            }
+
+            memcpy(sendbuf, &angles_combined, 4*sizeof(uint8_t));
+
+            t.length = 32;
+            t.tx_buffer=sendbuf;
+            t.rx_buffer=recvbuf;
+
+            spi_slave_transmit(HSPI_HOST, &t, SPI_MS_TO_WAIT);
+        }
 
         taskYIELD();
     }

@@ -12,6 +12,7 @@
 // Defines
 
 #define TICK_1KHZ_AT_10KHZ (10U)
+#define TICK_100HZ_AT_10KHZ (100U)
 // Private data
 
 const float Ts = 1e-4f;
@@ -54,13 +55,15 @@ const float Q = 7.5e-5f;
 const float R = 1.21e-6f;
 
 // Private function declarations
-void update_measurements(void);
+void update_measurements_1kHz(void);
+void update_measurements_100Hz(void);
 
 // ISR functions
 
 __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
+    static uint32_t tick_100Hz = 0U;
 
     controller_state_E controller_state;
     uint16_t motor_fault_flag;
@@ -68,13 +71,19 @@ __interrupt void epwm3ISR(void)
     if(++tick_1kHz == TICK_1KHZ_AT_10KHZ)
     {
         tick_1kHz = 0U;
-        update_measurements();
+        update_measurements_1kHz();
 
         controller_state = state_machine_step(measurements);
 
         motor_fault_flag = !GPIO_readPin(123);  // active low
 
         send_data_to_host(kf_states.x_hat, measurements, torque_cmd, (uint16_t)controller_state, rls_error_bitfield, motor_fault_flag);
+    }
+
+    if(++tick_100Hz == TICK_100HZ_AT_10KHZ)
+    {
+        tick_100Hz = 0U;
+        update_measurements_100Hz();
     }
 
     const bool enable = (CONTROLLER_ACTIVE == controller_state) && (!motor_fault_flag);
@@ -91,15 +100,21 @@ __interrupt void epwm3ISR(void)
 
 // Private functions
 
-void update_measurements(void)
+void update_measurements_1kHz(void)
+{
+    const float rls_position = rls_get_position(&rls_error_bitfield);
+
+    measurements[0] = rls_position;
+
+}
+
+void update_measurements_100Hz(void)
 {
     float esp_position1 = 0.0f;
     float esp_position2 = 0.0f;
 
-    const float rls_position = rls_get_position(&rls_error_bitfield);
     esp_get_data(&esp_position1, &esp_position2);
 
-    measurements[0] = rls_position;
     measurements[1] = esp_position1;
     measurements[2] = esp_position2;
 }

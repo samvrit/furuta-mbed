@@ -24,7 +24,7 @@
 #define TIMER_1SEC_1KHZ (1000U)
 #define TIMER_4SEC_1KHZ (4000U)
 
-uint32_t standby_timer = 0U;
+uint32_t init_timer = 0U;
 uint32_t qualifying_timer = 0U;
 
 static bool timer_step(const bool condition, uint32_t threshold, uint32_t * timer_state)
@@ -60,19 +60,28 @@ static bool check_measurements_within_bounds(const float measurements[3], const 
 
 controller_state_E state_machine_step(const float measurements[3])
 {
-    static controller_state_E state = CONTROLLER_STANDBY;
+    static controller_state_E state = CONTROLLER_INIT;
 
     switch(state)
     {
+        case CONTROLLER_INIT:
+        {
+            const bool init_timer_expired = timer_step(true, TIMER_1SEC_1KHZ, &init_timer);
+
+            if(init_timer_expired)
+            {
+                init_timer = 0U;
+                state = CONTROLLER_STANDBY;
+            }
+
+            break;
+        }
         case CONTROLLER_STANDBY:
         {
-            const bool standby_timer_expired = timer_step(true, TIMER_1SEC_1KHZ, &standby_timer);
-
             const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_10DEG, ANGLES_WITHIN_BOUNDS_2DEG, ANGLES_WITHIN_BOUNDS_2DEG);
 
-            if(standby_timer_expired && measurements_within_bounds)
+            if(measurements_within_bounds)
             {
-                standby_timer = 0U;
                 state = CONTROLLER_QUALIFYING;
             }
 
@@ -84,7 +93,12 @@ controller_state_E state_machine_step(const float measurements[3])
 
             const bool qualifying_timer_expired = timer_step(measurements_within_bounds, TIMER_4SEC_1KHZ, &qualifying_timer);
 
-            if(qualifying_timer_expired)
+            if(!measurements_within_bounds)
+            {
+                qualifying_timer = 0U;
+                state = CONTROLLER_STANDBY;
+            }
+            else if(qualifying_timer_expired)
             {
                 qualifying_timer = 0U;
                 state = CONTROLLER_ACTIVE;

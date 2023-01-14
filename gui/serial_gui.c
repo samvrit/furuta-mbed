@@ -445,7 +445,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
                     char text[10] = "";
                     snprintf(text, 10, "%u", data);
 
-                    controller_active = (data == 2U) ? true : false;
+                    controller_active = (data == 3U) ? true : false;
 
                     SetWindowText(controller_state_label, text);
 

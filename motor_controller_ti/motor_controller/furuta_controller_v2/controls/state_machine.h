@@ -12,9 +12,10 @@
 
 typedef enum
 {
-    CONTROLLER_STANDBY = 0U,
-    CONTROLLER_QUALIFYING = 1U,
-    CONTROLLER_ACTIVE = 2U
+    CONTROLLER_INIT = 0U,
+    CONTROLLER_STANDBY = 1U,
+    CONTROLLER_QUALIFYING = 2U,
+    CONTROLLER_ACTIVE = 3U
 } controller_state_E;
 
 controller_state_E state_machine_step(const float measurements[3]);
