@@ -11,9 +11,12 @@
 #include "device.h"
 
 // Defines
+#define PI (3.141592654f)
+#define TWO_PI (2.0f * PI)
+
 #define SPI_N_WORDS (4U)
 
-#define ESP_POSITION_SCALING  (3.835186051e-4f)  // [rad/count] equal to (2*pi)/(2^14-1)
+#define ESP_POSITION_SCALING  (3.83495197e-4f)  // [rad/count] equal to (2*pi)/(2^14)
 
 uint16_t angles_combined = 0U;
 
@@ -28,6 +31,14 @@ static void cs_assert(void)
 {
     DEVICE_DELAY_US(10);
     GPIO_writePin(66, 1U);
+}
+
+// wraps angle from -pi to +pi
+static inline float wrap_angle(const float angle)
+{
+    const float output = (angle > PI) ? (angle - TWO_PI) : angle;
+
+    return output;
 }
 
 // Global functions
@@ -56,13 +67,15 @@ void esp_get_data(float * angle1, float * angle2)
     const uint16_t angle1_temp = (raw_data_temp & 0xFFFFU);
     const uint16_t angle2_temp = (raw_data_temp >> 16U);
 
-    if(angle1_temp <= 0x3FFFU)
+    if(angle1_temp <= 16383U)  // check for sane values (0 to 2^14-1)
     {
-        *angle1 = angle1_temp * ESP_POSITION_SCALING;
+        const float angle1_0_to_pi = angle1_temp * ESP_POSITION_SCALING;
+        *angle1 = wrap_angle(angle1_0_to_pi);
     }
 
-    if(angle2_temp <= 0x3FFFU)
+    if(angle2_temp <= 16383U)  // check for sane values (0 to 2^14-1)
     {
-        *angle2 = angle2_temp * ESP_POSITION_SCALING;
+        const float angle2_0_to_pi = angle2_temp * ESP_POSITION_SCALING;
+        *angle2 = wrap_angle(angle2_0_to_pi);
     }
 }
