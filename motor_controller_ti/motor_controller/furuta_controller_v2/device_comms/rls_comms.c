@@ -12,9 +12,6 @@
 #include "device.h"
 
 // Defines
-#define PI (3.141592654f)
-#define TWO_PI (2.0f * PI)
-
 #define RLS_POSITION_SCALING  (3.83495197e-4f)  // [rad/count] equal to (2*pi)/(2^14)
 
 #define SPI_N_WORDS (4U)
@@ -34,10 +31,10 @@ static inline void cs_assert(void)
     GPIO_writePin(61, 1U);
 }
 
-// wraps angle from -pi to +pi
-static inline float wrap_angle(const float angle)
+// wraps a 14-bit unsigned integer from 0-16384 to an integer with the range -8192 to +8192
+static inline int16_t wrap_count(const uint16_t count)
 {
-    const float output = (angle > PI) ? (angle - TWO_PI) : angle;
+    const int16_t output = (count > 8192) ? ((int32_t)count - 16384) : count;
 
     return output;
 }
@@ -77,11 +74,11 @@ float rls_get_position(uint16_t* error_bitfield)
 
     const uint16_t position_after_correction = (diff < 0) ? (16384U + diff) : diff;
 
-    const float position_0_to_pi = position_after_correction * RLS_POSITION_SCALING;
+    const int16_t position_int = wrap_count(position_after_correction);
 
-    const float position_wrapped = wrap_angle(position_0_to_pi);
+    const float position = position_int * RLS_POSITION_SCALING;
 
     *error_bitfield = ((raw_data_temp & 0xFF00U) >> 8U);
 
-    return position_wrapped;
+    return position;
 }

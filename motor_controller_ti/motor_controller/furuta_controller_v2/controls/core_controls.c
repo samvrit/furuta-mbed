@@ -102,21 +102,12 @@ __interrupt void epwm3ISR(void)
 
 void update_measurements_1kHz(void)
 {
-    const float rls_position = rls_get_position(&rls_error_bitfield);
-
-    measurements[0] = rls_position;
-
+    measurements[0] = rls_get_position(&rls_error_bitfield);
 }
 
 void update_measurements_100Hz(void)
 {
-    float esp_position1 = 0.0f;
-    float esp_position2 = 0.0f;
-
-    esp_get_data(&esp_position1, &esp_position2);
-
-    measurements[1] = esp_position1;
-    measurements[2] = esp_position2;
+    esp_get_data(&measurements[1], &measurements[2]);
 }
 
 // Public Functions

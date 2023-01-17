@@ -11,9 +11,6 @@
 #include "device.h"
 
 // Defines
-#define PI (3.141592654f)
-#define TWO_PI (2.0f * PI)
-
 #define SPI_N_WORDS (4U)
 
 #define ESP_POSITION_SCALING  (3.83495197e-4f)  // [rad/count] equal to (2*pi)/(2^14)
@@ -24,19 +21,19 @@ uint16_t angles_combined = 0U;
 static void cs_deassert(void)
 {
     GPIO_writePin(66, 0U);
-    DEVICE_DELAY_US(10);
+    DEVICE_DELAY_US(5);
 }
 
 static void cs_assert(void)
 {
-    DEVICE_DELAY_US(10);
+    DEVICE_DELAY_US(5);
     GPIO_writePin(66, 1U);
 }
 
-// wraps angle from -pi to +pi
-static inline float wrap_angle(const float angle)
+// wraps a 14-bit unsigned integer from 0-16384 to an integer with the range -8192 to +8192
+static inline int16_t wrap_count(const uint16_t count)
 {
-    const float output = (angle > PI) ? (angle - TWO_PI) : angle;
+    const int16_t output = (count > 8192) ? ((int32_t)count - 16384) : count;
 
     return output;
 }
@@ -69,13 +66,13 @@ void esp_get_data(float * angle1, float * angle2)
 
     if(angle1_temp <= 16383U)  // check for sane values (0 to 2^14-1)
     {
-        const float angle1_0_to_pi = angle1_temp * ESP_POSITION_SCALING;
-        *angle1 = wrap_angle(angle1_0_to_pi);
+        const int16_t angle1_int = wrap_count(angle1_temp);
+        *angle1 = angle1_int * ESP_POSITION_SCALING;;
     }
 
     if(angle2_temp <= 16383U)  // check for sane values (0 to 2^14-1)
     {
-        const float angle2_0_to_pi = angle2_temp * ESP_POSITION_SCALING;
-        *angle2 = wrap_angle(angle2_0_to_pi);
+        const int16_t angle2_int = wrap_count((angle2_temp & 0x3FFFU));
+        *angle2 = angle2_int * ESP_POSITION_SCALING;
     }
 }
