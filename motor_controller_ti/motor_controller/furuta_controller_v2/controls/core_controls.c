@@ -10,6 +10,7 @@
 #include "driverlib.h"
 
 // Defines
+#define MEASUREMENTS_LPF_A (0.09090909091f)
 
 #define TICK_1KHZ_AT_10KHZ (10U)
 #define TICK_100HZ_AT_10KHZ (100U)
@@ -18,6 +19,7 @@
 const float Ts = 1e-4f;
 float torque_cmd = 0.0f;
 float measurements[N_STATES] = {0.0f};
+float measurements_lpf[N_STATES] = {0.0f};
 uint16_t rls_error_bitfield = 0U;
 
 kf_input_S kf_input;
@@ -68,6 +70,8 @@ __interrupt void epwm3ISR(void)
     controller_state_E controller_state;
     uint16_t motor_fault_flag;
 
+    GPIO_writePin(2U, 1U);
+
     if(++tick_1kHz == TICK_1KHZ_AT_10KHZ)
     {
         tick_1kHz = 0U;
@@ -86,13 +90,21 @@ __interrupt void epwm3ISR(void)
         update_measurements_100Hz();
     }
 
+    #pragma UNROLL(6)
+    for (uint16_t i = 0; i < N_STATES; i++)
+    {
+        measurements_lpf[i] += (measurements[i] - measurements_lpf[i]) * MEASUREMENTS_LPF_A;
+    }
+
     const bool enable = (CONTROLLER_ACTIVE == controller_state) && (!motor_fault_flag);
 
-    kf_observer_step(measurements, enable, &kf_input, &kf_states);
+    kf_observer_step(measurements_lpf, enable, &kf_input, &kf_states);
 
     const float torque_cmd_from_controller = kf_control_output(kf_states.x_hat, Ts, &kf_input);
 
     torque_cmd = enable ? torque_cmd_from_controller : 0.0f;
+
+    GPIO_writePin(2U, 0U);
 
     EPWM_clearEventTriggerInterruptFlag(EPWM3_BASE);
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP3);
