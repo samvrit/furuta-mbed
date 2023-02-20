@@ -12,7 +12,7 @@
 // Defines
 #define MEASUREMENTS_LPF_A (0.09090909091f)
 
-#define TICK_1KHZ_AT_10KHZ (10U)
+#define TICK_1KHZ_AT_10KHZ (5U)
 #define TICK_100HZ_AT_10KHZ (100U)
 // Private data
 
@@ -57,7 +57,6 @@ const float Q = 7.5e-5f;
 const float R = 1.21e-6f;
 
 // Private function declarations
-void update_measurements_1kHz(void);
 void update_measurements_100Hz(void);
 
 // ISR functions
@@ -75,7 +74,8 @@ __interrupt void epwm3ISR(void)
     if(++tick_1kHz == TICK_1KHZ_AT_10KHZ)
     {
         tick_1kHz = 0U;
-        update_measurements_1kHz();
+
+        measurements[0] = rls_get_position(&rls_error_bitfield);
 
         controller_state = state_machine_step(measurements);
 
@@ -111,11 +111,6 @@ __interrupt void epwm3ISR(void)
 }
 
 // Private functions
-
-void update_measurements_1kHz(void)
-{
-    measurements[0] = rls_get_position(&rls_error_bitfield);
-}
 
 void update_measurements_100Hz(void)
 {

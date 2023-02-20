@@ -164,6 +164,7 @@
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/peripheral_initializations"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/controls"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/motor_control"/>
+									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/drivers"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/kalman_filter_lqr_lib"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}/device_comms"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}"/>

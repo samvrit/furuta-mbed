@@ -7,7 +7,9 @@
 #include "dac_init.h"
 #include "spi_init.h"
 #include "sci_init.h"
+
 #include "motor_control.h"
+#include "dac_driver.h"
 
 #include "core_controls.h"
 #include "host_comms.h"
@@ -78,6 +80,6 @@ void main(void)
 
     for(;;)
     {
-
+        dac_driver_set_value(DAC_BASE_A, cla_outputs.v_bridge, 15.0f);
     }
 }
