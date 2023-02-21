@@ -24,6 +24,10 @@ HWND measurement_label[3];
 HWND rls_fault_bitfield_label;
 HWND motor_fault_flag_label;
 HWND controller_state_label;
+HWND current_fb_label;
+HWND v_bridge_label;
+HWND duty_ratio_label;
+
 HWND streaming_btn;
 HWND com_connect_btn;
 HWND zero_offset_btn;
@@ -36,6 +40,33 @@ static HBRUSH hbrBkgnd_green = NULL;
 static HBRUSH hbrBkgnd_red = NULL;
 
 // Types
+
+enum host_data_E
+{
+    X_HAT_0,
+    X_HAT_1,
+    X_HAT_2,
+    X_HAT_3,
+    X_HAT_4,
+    X_HAT_5,
+
+    TORQUE_CMD,
+
+    MEASUREMENTS_0,
+    MEASUREMENTS_1,
+    MEASUREMENTS_2,
+
+    RLS_ERROR_BITFIELD,
+    MOTOR_FAULT_FLAG,
+
+    CONTROLLER_STATE,
+
+    CURRENT_FB,
+    V_BRIDGE,
+    DUTY_RATIO,
+
+    DATA_MAX,
+};
 
 union uint_to_float_U
 {
@@ -283,7 +314,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
             switch(id)
             {
-                case 'a':
+                case X_HAT_0:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -295,7 +326,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'b':
+                case X_HAT_1:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -307,7 +338,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'c':
+                case X_HAT_2:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -319,7 +350,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'd':
+                case X_HAT_3:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -331,7 +362,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'e':
+                case X_HAT_4:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -343,7 +374,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'f':
+                case X_HAT_5:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -355,7 +386,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'g':
+                case TORQUE_CMD:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -367,7 +398,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'h':
+                case MEASUREMENTS_0:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -381,7 +412,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'i':
+                case MEASUREMENTS_1:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -395,7 +426,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'j':
+                case MEASUREMENTS_2:
                 {
                     union uint_to_float_U data = { .value = 0.0f };
                     ReadFile(hCom, data.raw, 4, NULL, NULL);
@@ -409,7 +440,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'k':
+                case RLS_ERROR_BITFIELD:
                 {
                     uint8_t data = 0U;
                     ReadFile(hCom, &data, 1, NULL, NULL);
@@ -423,7 +454,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-                case 'l':
+                case MOTOR_FAULT_FLAG:
                 {
                     uint8_t data = 0U;
                     ReadFile(hCom, &data, 1, NULL, NULL);
@@ -437,7 +468,7 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
-				case 'm':
+				case CONTROLLER_STATE:
                 {
                     uint8_t data = 0U;
                     ReadFile(hCom, &data, 1, NULL, NULL);
@@ -448,6 +479,42 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
                     controller_active = (data == 3U) ? true : false;
 
                     SetWindowText(controller_state_label, text);
+
+                    break;
+                }
+				case CURRENT_FB:
+                {
+                    union uint_to_float_U data = { .value = 0.0f };
+                    ReadFile(hCom, data.raw, 4, NULL, NULL);
+
+                    char text[10] = "";
+                    snprintf(text, 10, "%.4f", data.value);
+
+                    SetWindowText(current_fb_label, text);
+
+                    break;
+                }
+				case V_BRIDGE:
+                {
+                    union uint_to_float_U data = { .value = 0.0f };
+                    ReadFile(hCom, data.raw, 4, NULL, NULL);
+
+                    char text[10] = "";
+                    snprintf(text, 10, "%.4f", data.value);
+
+                    SetWindowText(v_bridge_label, text);
+
+                    break;
+                }
+				case DUTY_RATIO:
+                {
+                    union uint_to_float_U data = { .value = 0.0f };
+                    ReadFile(hCom, data.raw, 4, NULL, NULL);
+
+                    char text[10] = "";
+                    snprintf(text, 10, "%.4f", data.value);
+
+                    SetWindowText(duty_ratio_label, text);
 
                     break;
                 }
@@ -493,7 +560,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         g_szClassName,
         "Furuta Interface GUI",
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 820, 530,
+        CW_USEDEFAULT, CW_USEDEFAULT, 820, 590,
         NULL, NULL, hInstance, NULL);
 
     if(hwnd == NULL)
@@ -548,7 +615,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     CreateWindow("STATIC", "RLS Fault", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
     rls_fault_bitfield_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
 
-    y_position += 30;
+    y_position += 20;
 
     CreateWindow("STATIC", "Motor Fault", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
     motor_fault_flag_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
@@ -557,6 +624,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     CreateWindow("STATIC", "Cntrl State", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
     controller_state_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
+
+    y_position += 30;
+
+    CreateWindow("STATIC", "Current Fb", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
+    current_fb_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
+
+    y_position += 20;
+
+    CreateWindow("STATIC", "Bridge Volt", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
+    v_bridge_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
+
+    y_position += 20;
+
+    CreateWindow("STATIC", "Duty Ratio", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
+    duty_ratio_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD | TA_RIGHT, 100, y_position, 100, 20, hwnd, NULL, NULL, NULL);
 
     y_position += 40;
 

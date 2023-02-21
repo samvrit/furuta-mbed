@@ -80,6 +80,10 @@ void main(void)
 
     for(;;)
     {
-        dac_driver_set_value(DAC_BASE_A, cla_outputs.v_bridge, 15.0f);
+        if(task_100Hz_flag)
+        {
+            task_100Hz_flag = 0U;
+            host_comms_100Hz_task();
+        }
     }
 }

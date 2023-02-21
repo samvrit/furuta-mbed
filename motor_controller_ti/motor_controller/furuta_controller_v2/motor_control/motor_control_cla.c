@@ -1,6 +1,7 @@
 // Included Files
 #include "cpu_cla_shared.h"
 #include "epwm_global.h"
+#include "dac_driver.h"
 
 
 // Defines
@@ -53,6 +54,8 @@ __interrupt void motor_torque_control(void)
     cla_outputs.v_bridge = v_bridge;
     cla_outputs.duty = duty_percent;
     cla_outputs.current_feedback = current_feedback;
+
+    dac_driver_set_value(DAC_BASE_A, v_bridge, 15.0f);
 }
 
 // Private functions

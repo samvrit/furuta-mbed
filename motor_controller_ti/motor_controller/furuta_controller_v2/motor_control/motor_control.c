@@ -45,3 +45,43 @@ void motor_control_fault_reset(void)
 
     GPIO_writePin(122, 1U);
 }
+
+float motor_control_get_current_fb(void)
+{
+    return cla_outputs.current_feedback;
+}
+
+float motor_control_get_v_bridge(void)
+{
+    return cla_outputs.v_bridge;
+}
+
+float motor_control_get_duty_ratio(void)
+{
+    return cla_outputs.duty;
+}
+
+void motor_control_set_enable(const uint16_t enable)
+{
+    cla_inputs.enable = enable;
+}
+
+void motor_control_set_override_enable(const uint16_t enable)
+{
+    cla_inputs.overrides_enable = enable;
+}
+
+void motor_control_set_override_duty_ratio(const float duty)
+{
+    cla_inputs.override_duty_percent = duty;
+}
+
+void motor_control_set_override_direction(const uint16_t direction)
+{
+    cla_inputs.override_direction = direction;
+}
+
+void motor_control_set_torque_cmd(const float torque_cmd)
+{
+    cla_inputs.torque_cmd = torque_cmd;
+}
