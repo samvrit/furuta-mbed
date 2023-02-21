@@ -9,6 +9,11 @@
 #define ZERO_OFFSET_BTN_ID (1)
 #define STREAMING_BTN_ID (2)
 #define COM_CONNECT_BTN_ID (3)
+#define DUTY_OVERRIDE_BTN_ID (4)
+#define TORQUE_CMD_BTN_ID (5)
+#define OVERRIDES_TOGGLE_BTN_ID (6)
+#define DIRECTION_TOGGLE_BTN_ID (7)
+#define MOTOR_ENABLE_TOGGLE_BTN_ID (8)
 
 #define PI (3.1415f)
 #define DEG2RAD(x) ((x) * (2.0f * PI / 360.0f ))
@@ -17,6 +22,8 @@
 HWND hwnd;
 
 HWND com_port_edit;
+HWND duty_ratio_override_edit;
+HWND torque_cmd_edit;
 HWND com_port_baud_rate;
 HWND x_hat_label[6];
 HWND torque_cmd_label;
@@ -28,6 +35,11 @@ HWND current_fb_label;
 HWND v_bridge_label;
 HWND duty_ratio_label;
 
+HWND direction_btn;
+HWND overrides_toggle_btn;
+HWND motor_enable_toggle_btn;
+HWND torque_cmd_btn;
+HWND duty_override_btn;
 HWND streaming_btn;
 HWND com_connect_btn;
 HWND zero_offset_btn;
@@ -68,6 +80,19 @@ enum host_data_E
     DATA_MAX,
 };
 
+enum host_commands_E
+{
+    ZERO_POSITION_OFFSET = 1,
+    START_STREAMING_DATA,
+    STOP_STREAMING_DATA,
+
+    DUTY_RATIO_OVERRIDE,
+    DIRECTION_TOGGLE,
+    TORQUE_CMD_OVERRIDE,
+    MOTOR_ENABLE_TOGGLE,
+    OVERRIDE_TOGGLE,
+};
+
 union uint_to_float_U
 {
     float value;
@@ -84,6 +109,10 @@ bool meas3_within_bounds = false;
 bool rls_fault_flag = false;
 bool motor_fault_flag = false;
 bool controller_active = false;
+
+uint16_t direction_override_val = 0U;
+uint16_t override_enable_val = 0U;
+uint16_t motor_enable_val = 0U;
 
 // Step 4: the Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -102,8 +131,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             if (wParam == ZERO_OFFSET_BTN_ID)
             {
-                const char stream = 'c';
-                WriteFile(hCom, &stream, 1, NULL, NULL);
+                const uint8_t data_to_send[5] = { (uint8_t)ZERO_POSITION_OFFSET, 0U, 0U, 0U, 0U };
+
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
             }
             else if (wParam == COM_CONNECT_BTN_ID)
             {
@@ -145,8 +175,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         SetCommState(hCom, &dcb);
 
                         // command to stop streaming, in case a stream command has previously persisted on the device
-                        const char stream = 't';
-                        WriteFile(hCom, &stream, 1, NULL, NULL);
+                        const uint8_t data_to_send[5] = { (uint8_t)STOP_STREAMING_DATA, 0U, 0U, 0U, 0U };
+                        WriteFile(hCom, &data_to_send, 5, NULL, NULL);
 
                         PurgeComm(hCom, PURGE_TXABORT | PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXCLEAR);
 
@@ -155,14 +185,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                         EnableWindow(streaming_btn, true);
                         EnableWindow(zero_offset_btn, true);
+                        EnableWindow(direction_btn, true);
+                        EnableWindow(overrides_toggle_btn, true);
+                        EnableWindow(motor_enable_toggle_btn, true);
+                        EnableWindow(torque_cmd_btn, true);
+                        EnableWindow(duty_override_btn, true);
 
                         com_currently_connected = true;
                     }
                 }
                 else
                 {
-                    const char stream = 't';
-                    WriteFile(hCom, &stream, 1, NULL, NULL);
+                    const uint8_t data_to_send[5] = { (uint8_t)STOP_STREAMING_DATA, 0U, 0U, 0U, 0U };
+                    WriteFile(hCom, &data_to_send, 5, NULL, NULL);
 
                     SetWindowText(streaming_btn, "START STREAMING");
                     SetWindowText(info_message, "Stopped streaming");
@@ -171,6 +206,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     EnableWindow(streaming_btn, false);
                     EnableWindow(zero_offset_btn, false);
+                    EnableWindow(direction_btn, false);
+                    EnableWindow(overrides_toggle_btn, false);
+                    EnableWindow(motor_enable_toggle_btn, false);
+                    EnableWindow(torque_cmd_btn, false);
+                    EnableWindow(duty_override_btn, false);
 
                     CloseHandle(hCom);
                     SetWindowText(com_connect_btn, "CONNECT");
@@ -182,8 +222,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
                 if(!currently_streaming)
                 {
-                    const char stream = 's';
-                    WriteFile(hCom, &stream, 1, NULL, NULL);
+                    const uint8_t data_to_send[5] = { (uint8_t)START_STREAMING_DATA, 0U, 0U, 0U, 0U };
+                    WriteFile(hCom, &data_to_send, 5, NULL, NULL);
 
                     SetWindowText(streaming_btn, "STOP STREAMING");
                     SetWindowText(info_message, "Started streaming");
@@ -192,13 +232,80 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
                 else
                 {
-                    const char stream = 't';
-                    WriteFile(hCom, &stream, 1, NULL, NULL);
+                    const uint8_t data_to_send[5] = { (uint8_t)STOP_STREAMING_DATA, 0U, 0U, 0U, 0U };
+                    WriteFile(hCom, &data_to_send, 5, NULL, NULL);
 
                     SetWindowText(streaming_btn, "START STREAMING");
                     SetWindowText(info_message, "Stopped streaming");
 
                     currently_streaming = false;
+                }
+            }
+            else if (wParam == DUTY_OVERRIDE_BTN_ID)
+            {
+                char string[10] = "";
+                GetWindowText(duty_ratio_override_edit, string, 10);
+                union uint_to_float_U float_data = { .value = atof(string) };
+
+                const uint8_t data_to_send[5] = { (uint8_t)DUTY_RATIO_OVERRIDE, float_data.raw[0], float_data.raw[1], float_data.raw[2], float_data.raw[3] };
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
+
+                SetWindowText(info_message, "Set duty ratio override");
+            }
+            else if (wParam == TORQUE_CMD_BTN_ID)
+            {
+                char string[10] = "";
+                GetWindowText(torque_cmd_edit, string, 10);
+                union uint_to_float_U float_data = { .value = atof(string) };
+
+                const uint8_t data_to_send[5] = { (uint8_t)TORQUE_CMD, float_data.raw[0], float_data.raw[1], float_data.raw[2], float_data.raw[3] };
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
+
+                SetWindowText(info_message, "Set torque command override");
+            }
+            else if (wParam == DIRECTION_TOGGLE_BTN_ID)
+            {
+                direction_override_val = !direction_override_val;
+                const uint8_t data_to_send[5] = { (uint8_t)DIRECTION_TOGGLE, direction_override_val, 0U, 0U, 0U};
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
+
+                char text[50] = "";
+                snprintf(text, 50, "Motor direction changed to %d", direction_override_val);
+
+                SetWindowText(info_message, text);
+            }
+            else if (wParam == OVERRIDES_TOGGLE_BTN_ID)
+            {
+                override_enable_val = !override_enable_val;
+                const uint8_t data_to_send[5] = { (uint8_t)OVERRIDE_TOGGLE, override_enable_val, 0U, 0U, 0U};
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
+
+                if(override_enable_val)
+                {
+                    SetWindowText(overrides_toggle_btn, "DISABLE OVERRIDES");
+                    SetWindowText(info_message, "Overrides enabled");
+                }
+                else
+                {
+                    SetWindowText(overrides_toggle_btn, "ENABLE OVERRIDES");
+                    SetWindowText(info_message, "Overrides disabled");
+                }
+            }
+            else if (wParam == MOTOR_ENABLE_TOGGLE_BTN_ID)
+            {
+                motor_enable_val = !motor_enable_val;
+                const uint8_t data_to_send[5] = { (uint8_t)MOTOR_ENABLE_TOGGLE, motor_enable_val, 0U, 0U, 0U};
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
+
+                if(motor_enable_val)
+                {
+                    SetWindowText(motor_enable_toggle_btn, "DISABLE MOTOR");
+                    SetWindowText(info_message, "Motor enabled");
+                }
+                else
+                {
+                    SetWindowText(motor_enable_toggle_btn, "ENABLE MOTOR");
+                    SetWindowText(info_message, "Motor disabled");
                 }
             }
             break;
@@ -653,6 +760,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     // Right side stuff
     zero_offset_btn = CreateWindow("BUTTON", "SET ZERO OFFSET", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, 10, 200, 30, hwnd, (HMENU) ZERO_OFFSET_BTN_ID, NULL, NULL);
     EnableWindow(zero_offset_btn, false);
+
+    y_position = 70;
+
+    duty_ratio_override_edit = CreateWindow("EDIT", "0.0", WS_VISIBLE | WS_CHILD, 500, y_position, 60, 20, hwnd, NULL, NULL, NULL);
+    duty_override_btn = CreateWindow("BUTTON", "SET DUTY", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 570, y_position, 100, 20, hwnd, (HMENU) DUTY_OVERRIDE_BTN_ID, NULL, NULL);
+    EnableWindow(duty_override_btn, false);
+
+    y_position += 30;
+
+    torque_cmd_edit = CreateWindow("EDIT", "0.0", WS_VISIBLE | WS_CHILD, 500, y_position, 60, 20, hwnd, NULL, NULL, NULL);
+    torque_cmd_btn = CreateWindow("BUTTON", "SET TORQUE", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 570, y_position, 100, 20, hwnd, (HMENU) TORQUE_CMD_BTN_ID, NULL, NULL);
+    EnableWindow(torque_cmd_btn, false);
+
+    y_position += 30;
+
+    direction_btn = CreateWindow("BUTTON", "CHANGE DIRECTION", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) DIRECTION_TOGGLE_BTN_ID, NULL, NULL);
+    EnableWindow(direction_btn, false);
+
+    y_position += 30;
+
+    overrides_toggle_btn = CreateWindow("BUTTON", "ENABLE OVERRIDES", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) OVERRIDES_TOGGLE_BTN_ID, NULL, NULL);
+    EnableWindow(overrides_toggle_btn, false);
+
+    y_position += 30;
+
+    motor_enable_toggle_btn = CreateWindow("BUTTON", "ENABLE MOTOR", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) MOTOR_ENABLE_TOGGLE_BTN_ID, NULL, NULL);
+    EnableWindow(motor_enable_toggle_btn, false);
 
     // Thread stuff
     DWORD * hThread = CreateThread(NULL, 0, MyThreadFunction, NULL, 0, NULL);   // returns the thread identifier 
