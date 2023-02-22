@@ -44,6 +44,19 @@ enum host_data_E
     DATA_MAX,
 };
 
+enum host_commands_E
+{
+    ZERO_POSITION_OFFSET = 1,
+    START_STREAMING_DATA,
+    STOP_STREAMING_DATA,
+
+    DUTY_RATIO_OVERRIDE,
+    DIRECTION_TOGGLE,
+    TORQUE_CMD_OVERRIDE,
+    MOTOR_ENABLE_TOGGLE,
+    OVERRIDE_TOGGLE,
+};
+
 union float_to_uint_U
 {
     float value;
@@ -58,47 +71,87 @@ static inline void send_float(const float value, const uint16_t id)
 {
     union float_to_uint_U data_to_send = { .value = value };
 
-    SCI_writeCharNonBlocking(SCIB_BASE, id);   // identifier char
+    SCI_writeCharNonBlocking(SCIA_BASE, id);   // identifier char
 
     for(uint16_t i = 0; i < 2; i++)
     {
         const uint16_t byte1 = __byte((int *)&data_to_send.raw[i], 0);
         const uint16_t byte2 = __byte((int *)&data_to_send.raw[i], 1);
-        SCI_writeCharNonBlocking(SCIB_BASE, byte1);
-        SCI_writeCharNonBlocking(SCIB_BASE, byte2);
+        SCI_writeCharNonBlocking(SCIA_BASE, byte1);
+        SCI_writeCharNonBlocking(SCIA_BASE, byte2);
     }
 }
 
 // ISR function
 __interrupt void scibRXFIFOISR(void)
 {
-    uint16_t received_data = 0U;
+    uint16_t received_data[5] = { 0U };
 
-    SCI_readCharArray(SCIB_BASE, &received_data, 1);
+    SCI_readCharArray(SCIA_BASE, (uint16_t *)&received_data, 5);
 
-    switch(received_data)
+    switch(received_data[0])
     {
-        case 'c':
+        case ZERO_POSITION_OFFSET:
             host_rx_command_zero_position_offset = 1U;
             break;
 
-        case 's':
+        case START_STREAMING_DATA:
             host_rx_command_start_info_streaming = 1U;
             break;
 
-        case 't':
+        case STOP_STREAMING_DATA:
             host_rx_command_start_info_streaming = 0U;
             break;
+
+        case DUTY_RATIO_OVERRIDE:
+        {
+            union float_to_uint_U uint_to_float;
+
+            uint_to_float.raw[0] = (received_data[2] << 8U) | received_data[1];
+            uint_to_float.raw[1] = (received_data[4] << 8U) | received_data[3];
+
+            motor_control_set_override_duty_ratio(uint_to_float.value);
+            break;
+        }
+
+        case TORQUE_CMD_OVERRIDE:
+        {
+            union float_to_uint_U uint_to_float;
+
+            uint_to_float.raw[0] = (received_data[2] << 8U) | received_data[1];
+            uint_to_float.raw[1] = (received_data[4] << 8U) | received_data[3];
+
+            motor_control_set_torque_cmd(uint_to_float.value);
+            break;
+        }
+
+        case DIRECTION_TOGGLE:
+        {
+            motor_control_set_override_direction(received_data[1]);
+            break;
+        }
+
+        case OVERRIDE_TOGGLE:
+        {
+            motor_control_set_override_enable(received_data[1]);
+            break;
+        }
+
+        case MOTOR_ENABLE_TOGGLE:
+        {
+            motor_control_set_enable(received_data[1]);
+            break;
+        }
 
         default:
             break;
     }
 
-    SCI_resetRxFIFO(SCIB_BASE);
+    SCI_resetRxFIFO(SCIA_BASE);
 
-    SCI_clearOverflowStatus(SCIB_BASE);
+    SCI_clearOverflowStatus(SCIA_BASE);
 
-    SCI_clearInterruptStatus(SCIB_BASE, SCI_INT_RXFF);
+    SCI_clearInterruptStatus(SCIA_BASE, SCI_INT_RXFF);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);
 }
@@ -120,7 +173,7 @@ static void send_data_to_host(void)
     const float v_bridge = motor_control_get_v_bridge();
     const float duty_ratio = motor_control_get_duty_ratio();
 
-    const uint16_t fifo_empty_bins = SCI_FIFO_TX16 - SCI_getTxFIFOStatus(SCIB_BASE);
+    const uint16_t fifo_empty_bins = SCI_FIFO_TX16 - SCI_getTxFIFOStatus(SCIA_BASE);
 
     if(host_rx_command_start_info_streaming)
     {
@@ -210,8 +263,8 @@ static void send_data_to_host(void)
             {
                 if(fifo_empty_bins >= 2U)
                 {
-                    SCI_writeCharNonBlocking(SCIB_BASE, RLS_ERROR_BITFIELD);   // identifier char
-                    SCI_writeCharNonBlocking(SCIB_BASE, rls_error_bitfield);
+                    SCI_writeCharNonBlocking(SCIA_BASE, RLS_ERROR_BITFIELD);   // identifier char
+                    SCI_writeCharNonBlocking(SCIA_BASE, rls_error_bitfield);
                 }
                 break;
             }
@@ -219,8 +272,8 @@ static void send_data_to_host(void)
             {
                 if(fifo_empty_bins >= 2U)
                 {
-                    SCI_writeCharNonBlocking(SCIB_BASE, MOTOR_FAULT_FLAG);   // identifier char
-                    SCI_writeCharNonBlocking(SCIB_BASE, motor_fault_flag);
+                    SCI_writeCharNonBlocking(SCIA_BASE, MOTOR_FAULT_FLAG);   // identifier char
+                    SCI_writeCharNonBlocking(SCIA_BASE, motor_fault_flag);
                 }
                 break;
             }
@@ -228,8 +281,8 @@ static void send_data_to_host(void)
             {
                 if(fifo_empty_bins >= 2U)
                 {
-                    SCI_writeCharNonBlocking(SCIB_BASE, CONTROLLER_STATE);   // identifier char
-                    SCI_writeCharNonBlocking(SCIB_BASE, controller_state);
+                    SCI_writeCharNonBlocking(SCIA_BASE, CONTROLLER_STATE);   // identifier char
+                    SCI_writeCharNonBlocking(SCIA_BASE, controller_state);
                 }
                 break;
             }
@@ -268,7 +321,7 @@ static void send_data_to_host(void)
     }
     else
     {
-        SCI_resetTxFIFO(SCIB_BASE);
+        SCI_resetTxFIFO(SCIA_BASE);
         index = (int16_t)X_HAT_0;
     }
 }

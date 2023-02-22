@@ -680,7 +680,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     int y_position = 10;
 
     CreateWindow("STATIC", "COM Port:", WS_VISIBLE | WS_CHILD, 10, y_position, 80, 20, hwnd, NULL, NULL, NULL);
-    com_port_edit = CreateWindow("EDIT", "COM3", WS_VISIBLE | WS_CHILD, 100, y_position, 60, 20, hwnd, NULL, NULL, NULL);
+    com_port_edit = CreateWindow("EDIT", "COM7", WS_VISIBLE | WS_CHILD, 100, y_position, 60, 20, hwnd, NULL, NULL, NULL);
     com_connect_btn = CreateWindow("BUTTON", "CONNECT", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 220, 10, 200, 30, hwnd, (HMENU) COM_CONNECT_BTN_ID, NULL, NULL);
 
     y_position += 20;

@@ -13,25 +13,25 @@
 
 void initSCI(void)
 {
-    Interrupt_register(INT_SCIB_RX, scibRXFIFOISR);
+    Interrupt_register(INT_SCIA_RX, scibRXFIFOISR);
 
     // 8 char bits, 1 stop bit, no parity. Baud rate is 115200.
-    SCI_setConfig(SCIB_BASE, DEVICE_LSPCLK_FREQ, 115200, (SCI_CONFIG_WLEN_8 | SCI_CONFIG_STOP_ONE | SCI_CONFIG_PAR_NONE));
-    SCI_enableModule(SCIB_BASE);
-    SCI_resetChannels(SCIB_BASE);
-    SCI_enableFIFO(SCIB_BASE);
+    SCI_setConfig(SCIA_BASE, DEVICE_LSPCLK_FREQ, 115200, (SCI_CONFIG_WLEN_8 | SCI_CONFIG_STOP_ONE | SCI_CONFIG_PAR_NONE));
+    SCI_enableModule(SCIA_BASE);
+    SCI_resetChannels(SCIA_BASE);
+    SCI_enableFIFO(SCIA_BASE);
 
     // RX and FIFO Interrupts Enabled
-    SCI_enableInterrupt(SCIB_BASE, SCI_INT_RXFF);
-    SCI_disableInterrupt(SCIB_BASE, SCI_INT_RXERR);
+    SCI_enableInterrupt(SCIA_BASE, SCI_INT_RXFF);
+    SCI_disableInterrupt(SCIA_BASE, SCI_INT_RXERR);
 
-    SCI_setFIFOInterruptLevel(SCIB_BASE, SCI_FIFO_TX16, SCI_FIFO_RX1);
-    SCI_performSoftwareReset(SCIB_BASE);
+    SCI_setFIFOInterruptLevel(SCIA_BASE, SCI_FIFO_TX16, SCI_FIFO_RX5);
+    SCI_performSoftwareReset(SCIA_BASE);
 
-    SCI_resetTxFIFO(SCIB_BASE);
-    SCI_resetRxFIFO(SCIB_BASE);
+    SCI_resetTxFIFO(SCIA_BASE);
+    SCI_resetRxFIFO(SCIA_BASE);
 
-    Interrupt_enable(INT_SCIB_RX);
+    Interrupt_enable(INT_SCIA_RX);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);
 }

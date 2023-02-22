@@ -71,12 +71,12 @@ void initGPIO(void)
     GPIO_setDirectionMode(66, GPIO_DIR_MODE_OUT);
     GPIO_setMasterCore(66, GPIO_CORE_CPU1);
 
-    // SCI-B
-    GPIO_setPinConfig(GPIO_19_SCIRXDB);
-    GPIO_setDirectionMode(19, GPIO_DIR_MODE_IN);
-    GPIO_setQualificationMode(19, GPIO_QUAL_ASYNC);
+    // SCI-A
+    GPIO_setPinConfig(GPIO_43_SCIRXDA);
+    GPIO_setDirectionMode(43, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(43, GPIO_QUAL_ASYNC);
 
-    GPIO_setPinConfig(GPIO_18_SCITXDB);
-    GPIO_setDirectionMode(18, GPIO_DIR_MODE_OUT);
+    GPIO_setPinConfig(GPIO_42_SCITXDA);
+    GPIO_setDirectionMode(42, GPIO_DIR_MODE_OUT);
 }
 
