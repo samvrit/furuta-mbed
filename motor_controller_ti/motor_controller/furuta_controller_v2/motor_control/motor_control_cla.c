@@ -6,12 +6,12 @@
 
 // Defines
 
-#define CURRENT_SCALING (0.003052503053f)   // [A/adc_resolution] = (3/4095)*(5/3)*(1/0.4)
+#define CURRENT_SCALING (0.003076923077f)   // [A/adc_resolution] = (3/4095)*(5/2.976)*(1/0.4)
 #define CURRENT_BIAS_LPF_A (1.6e-4f)    // 2s time constant at 12.5kHz
 #define TORQUE_CONSTANT (0.968f)    // [Nm/A]
 
 #define CURRENT_CONTROLLER_KP (0.1f)       // [V/A]
-#define CURRENT_CONTROLLER_KI (0.0001f)  // [V/A] this term is already multiplied by the timestep (1e-5)
+#define CURRENT_CONTROLLER_KI (0.1f)  // [V/A] this term is already multiplied by the timestep (1e-5)
 #define CURRENT_CONTROLLER_I_TERM_MAX (12.0f) // [V/A]
 
 #define V_BRIDGE_MAX (12.0f)    // [V] DC voltage
@@ -55,7 +55,7 @@ __interrupt void motor_torque_control(void)
     cla_outputs.duty = duty_percent;
     cla_outputs.current_feedback = current_feedback;
 
-    dac_driver_set_value(DAC_BASE_A, v_bridge, 15.0f);
+    dac_driver_set_value(DAC_BASE_A, current_ref, 6.0f);
 }
 
 // Private functions
@@ -94,7 +94,7 @@ static inline float pi_control(const float error)
 
 static inline float calculate_duty_percent(const float v_bridge)
 {
-    const float duty_percent = SAT((v_bridge / V_BRIDGE_MAX), 0.95f, 0.05f);
+    const float duty_percent = SAT((v_bridge / V_BRIDGE_MAX), 1.0f, -1.0f);
 
     return duty_percent;
 }
@@ -105,7 +105,7 @@ static inline void set_counter_compare_and_direction_pin(const float duty_percen
     {
         const float override_duty_percent_saturated = SAT(override_duty_percent, 0.98f, 0.0f);
         const float counter_compare = MOTOR_CONTROL_TBPRD - (override_duty_percent_saturated * MOTOR_CONTROL_TBPRD);
-        if (override_direction == 0U)
+        if (override_direction == 1U)
         {
             EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
             EPwm1Regs.CMPB.bit.CMPB = MOTOR_CONTROL_TBPRD;
@@ -119,7 +119,7 @@ static inline void set_counter_compare_and_direction_pin(const float duty_percen
     else if (enable)
     {
         const float counter_compare = MOTOR_CONTROL_TBPRD - (fabsf(duty_percent) * MOTOR_CONTROL_TBPRD);
-        if (duty_percent > 0.0f)
+        if (duty_percent < 0.0f)
         {
             EPwm1Regs.CMPA.bit.CMPA = __mf32toui16r(counter_compare);
             EPwm1Regs.CMPB.bit.CMPB = MOTOR_CONTROL_TBPRD;
