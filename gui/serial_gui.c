@@ -8,6 +8,9 @@
 
 #include "host_comms_shared.h"
 
+#define FAST_LOGGING_NUM_SIGNALS (2U)
+#define FAST_LOGGING_BUFFER_SIZE (5000U)
+
 #define ZERO_OFFSET_BTN_ID (1)
 #define STREAMING_BTN_ID (2)
 #define COM_CONNECT_BTN_ID (3)
@@ -16,7 +19,8 @@
 #define OVERRIDES_TOGGLE_BTN_ID (6)
 #define DIRECTION_TOGGLE_BTN_ID (7)
 #define MOTOR_ENABLE_TOGGLE_BTN_ID (8)
-#define TRIGGER_FAST_LOGGING_BTN_ID (9)
+#define RESET_MOTOR_BTN_ID (9)
+#define TRIGGER_FAST_LOGGING_BTN_ID (10)
 
 #define PI (3.1415f)
 #define DEG2RAD(x) ((x) * (2.0f * PI / 360.0f ))
@@ -44,6 +48,7 @@ HWND overrides_toggle_btn;
 HWND motor_enable_toggle_btn;
 HWND torque_cmd_btn;
 HWND duty_override_btn;
+HWND reset_motor_btn;
 HWND streaming_btn;
 HWND com_connect_btn;
 HWND zero_offset_btn;
@@ -80,7 +85,28 @@ uint16_t direction_override_val = 0U;
 uint16_t override_enable_val = 0U;
 uint16_t motor_enable_val = 0U;
 
-float fast_logging_signals[2][5000] = { { 0.0f } };
+float fast_logging_signals[FAST_LOGGING_NUM_SIGNALS][FAST_LOGGING_BUFFER_SIZE] = { { 0.0f } };
+
+FILE * logging_file_handles[FAST_LOGGING_NUM_SIGNALS] = { NULL, NULL };
+
+void write_signals_to_file(void)
+{
+    logging_file_handles[0] = fopen("logs/signal1.csv", "w+");
+    logging_file_handles[1] = fopen("logs/signal2.csv", "w+");
+
+    if ((logging_file_handles[0] != NULL) && (logging_file_handles[1] != NULL))
+    {
+        for(uint8_t i = 0; i < FAST_LOGGING_NUM_SIGNALS; i++)
+        {
+            for (uint8_t j= 0; j < FAST_LOGGING_BUFFER_SIZE; j++)
+            {
+                char text[10] = "";
+                snprintf(text, 10, "%f,\n", fast_logging_signals[i][j]);
+                fputs(text, logging_file_handles[i]);
+            }
+        }
+    }
+}
 
 // Step 4: the Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -156,6 +182,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         EnableWindow(direction_btn, true);
                         EnableWindow(overrides_toggle_btn, true);
                         EnableWindow(motor_enable_toggle_btn, true);
+                        EnableWindow(reset_motor_btn, true);
                         EnableWindow(torque_cmd_btn, true);
                         EnableWindow(duty_override_btn, true);
                         EnableWindow(trigger_fast_logging_btn, true);
@@ -178,6 +205,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     EnableWindow(direction_btn, false);
                     EnableWindow(overrides_toggle_btn, false);
                     EnableWindow(motor_enable_toggle_btn, false);
+                    EnableWindow(reset_motor_btn, false);
                     EnableWindow(torque_cmd_btn, false);
                     EnableWindow(duty_override_btn, false);
                     EnableWindow(trigger_fast_logging_btn, false);
@@ -277,6 +305,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     SetWindowText(motor_enable_toggle_btn, "ENABLE MOTOR");
                     SetWindowText(info_message, "Motor disabled");
                 }
+            }
+            else if (wParam == RESET_MOTOR_BTN_ID)
+            {
+                const uint8_t data_to_send[5] = { (uint8_t)RESET_MOTOR, 0U, 0U, 0U, 0U};
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
+
+                SetWindowText(info_message, "Reset motor");
             }
             else if (wParam == TRIGGER_FAST_LOGGING_BTN_ID)
             {
@@ -387,7 +422,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-DWORD WINAPI MyThreadFunction( LPVOID lpParam ) 
+DWORD WINAPI c2000_receive( LPVOID lpParam ) 
 {
     for(;;)
     {
@@ -634,8 +669,9 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
                 }
                 case FAST_LOGGING_SIGNALS_DONE:
                 {
-                    // TODO: write to file
                     fast_logging_index = 0U;
+
+                    write_signals_to_file();
 
                     break;
                 }
@@ -801,8 +837,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     motor_enable_toggle_btn = CreateWindow("BUTTON", "ENABLE MOTOR", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) MOTOR_ENABLE_TOGGLE_BTN_ID, NULL, NULL);
     EnableWindow(motor_enable_toggle_btn, false);
-    
+
     y_position += 30;
+
+    reset_motor_btn = CreateWindow("BUTTON", "RESET MOTOR", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) RESET_MOTOR_BTN_ID, NULL, NULL);
+    EnableWindow(reset_motor_btn, false);
+
+    // Logging trigger stuff
+    y_position = 400;
 
     trigger_fast_logging_btn = CreateWindow("BUTTON", "TRIGGER LOGGING", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) TRIGGER_FAST_LOGGING_BTN_ID, NULL, NULL);
     EnableWindow(trigger_fast_logging_btn, false);
@@ -811,9 +853,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     CreateWindow("STATIC", "Recv Buffer", WS_VISIBLE | WS_CHILD, 500, y_position, 100, 20, hwnd, NULL, NULL, NULL);
     buffer_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD, 610, y_position, 90, 20, hwnd, NULL, NULL, NULL);
-
+    
     // Thread stuff
-    DWORD * hThread = CreateThread(NULL, 0, MyThreadFunction, NULL, 0, NULL);   // returns the thread identifier 
+    DWORD * hThread = CreateThread(NULL, 0, c2000_receive, NULL, 0, NULL);   // returns the thread identifier
+    SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
 
     if (hThread == NULL) 
     {
