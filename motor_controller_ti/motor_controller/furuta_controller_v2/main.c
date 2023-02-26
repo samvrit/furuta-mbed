@@ -85,5 +85,11 @@ void main(void)
             task_100Hz_flag = 0U;
             host_comms_100Hz_task();
         }
+
+        if(task_5kHz_flag)
+        {
+            task_5kHz_flag = 0U;
+            host_comms_5kHz_task();
+        }
     }
 }

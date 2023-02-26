@@ -4,6 +4,7 @@
 #include "rls_comms.h"
 #include "esp_comms.h"
 #include "state_machine.h"
+#include "fast_logging.h"
 #include <string.h>
 
 #include "driverlib.h"
@@ -13,11 +14,13 @@
 
 #define TICK_1KHZ_AT_10KHZ (5U)
 #define TICK_100HZ_AT_10KHZ (100U)
+#define TICK_5KHZ_AT_10KHZ (2U)
 
 #define TIMESTEP (1e-4f)    // [s] 10kHz
 
 // Extern data declaration
-uint16_t task_100Hz_flag;
+uint16_t task_100Hz_flag = 0U;
+uint16_t task_5kHz_flag = 0U;
 
 // Private data
 
@@ -76,6 +79,7 @@ __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
     static uint32_t tick_100Hz = 0U;
+    static uint32_t tick_5kHz = 0U;
 
     GPIO_writePin(2U, 1U);
 
@@ -88,6 +92,11 @@ __interrupt void epwm3ISR(void)
         core_controls_data.controller_state = state_machine_step(core_controls_data.measurements);
 
         core_controls_data.motor_fault_flag = !GPIO_readPin(123);  // active low
+    }
+
+    if (++tick_5kHz == TICK_5KHZ_AT_10KHZ)
+    {
+        task_5kHz_flag = 1U;
     }
 
     if(++tick_100Hz == TICK_100HZ_AT_10KHZ)
@@ -110,6 +119,8 @@ __interrupt void epwm3ISR(void)
     const float torque_cmd_from_controller = kf_control_output(kf_states.x_hat, TIMESTEP, &kf_input);
 
     core_controls_data.torque_cmd = enable ? torque_cmd_from_controller : 0.0f;
+
+    const float logging_signals[2] = { core_controls_data.torque_cmd, (float)core_controls_data.controller_state };
 
     GPIO_writePin(2U, 0U);
 

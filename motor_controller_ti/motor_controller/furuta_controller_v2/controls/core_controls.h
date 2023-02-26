@@ -22,5 +22,6 @@ float controller_get_torque_cmd(void);
 uint16_t controller_get_controller_state(void);
 
 extern uint16_t task_100Hz_flag;
+extern uint16_t task_5kHz_flag;
 
 #endif /* CONTROLS_CORE_CONTROLS_H_ */

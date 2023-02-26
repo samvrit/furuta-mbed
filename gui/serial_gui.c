@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "host_comms_shared.h"
+
 #define ZERO_OFFSET_BTN_ID (1)
 #define STREAMING_BTN_ID (2)
 #define COM_CONNECT_BTN_ID (3)
@@ -14,6 +16,7 @@
 #define OVERRIDES_TOGGLE_BTN_ID (6)
 #define DIRECTION_TOGGLE_BTN_ID (7)
 #define MOTOR_ENABLE_TOGGLE_BTN_ID (8)
+#define TRIGGER_FAST_LOGGING_BTN_ID (9)
 
 #define PI (3.1415f)
 #define DEG2RAD(x) ((x) * (2.0f * PI / 360.0f ))
@@ -34,6 +37,7 @@ HWND controller_state_label;
 HWND current_fb_label;
 HWND v_bridge_label;
 HWND duty_ratio_label;
+HWND buffer_label;
 
 HWND direction_btn;
 HWND overrides_toggle_btn;
@@ -43,6 +47,7 @@ HWND duty_override_btn;
 HWND streaming_btn;
 HWND com_connect_btn;
 HWND zero_offset_btn;
+HWND trigger_fast_logging_btn;
 HWND info_message;
 
 HANDLE hCom;
@@ -52,47 +57,6 @@ static HBRUSH hbrBkgnd_green = NULL;
 static HBRUSH hbrBkgnd_red = NULL;
 
 // Types
-
-enum host_data_E
-{
-    X_HAT_0,
-    X_HAT_1,
-    X_HAT_2,
-    X_HAT_3,
-    X_HAT_4,
-    X_HAT_5,
-
-    TORQUE_CMD,
-
-    MEASUREMENTS_0,
-    MEASUREMENTS_1,
-    MEASUREMENTS_2,
-
-    RLS_ERROR_BITFIELD,
-    MOTOR_FAULT_FLAG,
-
-    CONTROLLER_STATE,
-
-    CURRENT_FB,
-    V_BRIDGE,
-    DUTY_RATIO,
-
-    DATA_MAX,
-};
-
-enum host_commands_E
-{
-    ZERO_POSITION_OFFSET = 1,
-    START_STREAMING_DATA,
-    STOP_STREAMING_DATA,
-
-    DUTY_RATIO_OVERRIDE,
-    DIRECTION_TOGGLE,
-    TORQUE_CMD_OVERRIDE,
-    MOTOR_ENABLE_TOGGLE,
-    OVERRIDE_TOGGLE,
-};
-
 union uint_to_float_U
 {
     float value;
@@ -110,9 +74,13 @@ bool rls_fault_flag = false;
 bool motor_fault_flag = false;
 bool controller_active = false;
 
+uint16_t fast_logging_index = 0U;
+
 uint16_t direction_override_val = 0U;
 uint16_t override_enable_val = 0U;
 uint16_t motor_enable_val = 0U;
+
+float fast_logging_signals[2][5000] = { { 0.0f } };
 
 // Step 4: the Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -190,6 +158,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         EnableWindow(motor_enable_toggle_btn, true);
                         EnableWindow(torque_cmd_btn, true);
                         EnableWindow(duty_override_btn, true);
+                        EnableWindow(trigger_fast_logging_btn, true);
 
                         com_currently_connected = true;
                     }
@@ -211,6 +180,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     EnableWindow(motor_enable_toggle_btn, false);
                     EnableWindow(torque_cmd_btn, false);
                     EnableWindow(duty_override_btn, false);
+                    EnableWindow(trigger_fast_logging_btn, false);
 
                     CloseHandle(hCom);
                     SetWindowText(com_connect_btn, "CONNECT");
@@ -307,6 +277,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     SetWindowText(motor_enable_toggle_btn, "ENABLE MOTOR");
                     SetWindowText(info_message, "Motor disabled");
                 }
+            }
+            else if (wParam == TRIGGER_FAST_LOGGING_BTN_ID)
+            {
+                const uint8_t data_to_send[5] = { (uint8_t)TRIGGER_FAST_LOGGING, 0U, 0U, 0U, 0U};
+                WriteFile(hCom, &data_to_send, 5, NULL, NULL);
+
+                SetWindowText(info_message, "Fast logging triggered");
             }
             break;
         }
@@ -625,6 +602,43 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 
                     break;
                 }
+                case FAST_LOGGING_SIGNALS_READY:
+                {
+                    fast_logging_index = 0U;
+                    break;
+                }
+                case FAST_LOGGING_SIGNAL1:
+                {
+                    union uint_to_float_U data = { .value = 0.0f };
+                    ReadFile(hCom, data.raw, 4, NULL, NULL);
+
+                    fast_logging_signals[0][fast_logging_index] = data.value;
+
+                    break;
+                }
+                case FAST_LOGGING_SIGNAL2:
+                {
+                    union uint_to_float_U data = { .value = 0.0f };
+                    ReadFile(hCom, data.raw, 4, NULL, NULL);
+
+                    fast_logging_signals[1][fast_logging_index] = data.value;
+
+                    char text[10] = "";
+                    snprintf(text, 10, "%d", fast_logging_index);
+
+                    SetWindowText(buffer_label, text);
+
+                    fast_logging_index++;
+
+                    break;
+                }
+                case FAST_LOGGING_SIGNALS_DONE:
+                {
+                    // TODO: write to file
+                    fast_logging_index = 0U;
+
+                    break;
+                }
 				default:
 					break;
             }
@@ -787,6 +801,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     motor_enable_toggle_btn = CreateWindow("BUTTON", "ENABLE MOTOR", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) MOTOR_ENABLE_TOGGLE_BTN_ID, NULL, NULL);
     EnableWindow(motor_enable_toggle_btn, false);
+    
+    y_position += 30;
+
+    trigger_fast_logging_btn = CreateWindow("BUTTON", "TRIGGER LOGGING", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 500, y_position, 200, 20, hwnd, (HMENU) TRIGGER_FAST_LOGGING_BTN_ID, NULL, NULL);
+    EnableWindow(trigger_fast_logging_btn, false);
+
+    y_position += 30;
+
+    CreateWindow("STATIC", "Recv Buffer", WS_VISIBLE | WS_CHILD, 500, y_position, 100, 20, hwnd, NULL, NULL, NULL);
+    buffer_label = CreateWindow("STATIC", "0", WS_VISIBLE | WS_CHILD, 610, y_position, 90, 20, hwnd, NULL, NULL, NULL);
 
     // Thread stuff
     DWORD * hThread = CreateThread(NULL, 0, MyThreadFunction, NULL, 0, NULL);   // returns the thread identifier 

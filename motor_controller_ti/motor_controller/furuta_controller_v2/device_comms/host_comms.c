@@ -6,6 +6,8 @@
  */
 
 #include "host_comms.h"
+#include "host_comms_shared.h"
+#include "fast_logging.h"
 #include "core_controls.h"
 #include "motor_control.h"
 
@@ -17,46 +19,6 @@ uint16_t host_rx_command_zero_position_offset = 0U;
 
 // Local types
 
-enum host_data_E
-{
-    X_HAT_0,
-    X_HAT_1,
-    X_HAT_2,
-    X_HAT_3,
-    X_HAT_4,
-    X_HAT_5,
-
-    TORQUE_CMD,
-
-    MEASUREMENTS_0,
-    MEASUREMENTS_1,
-    MEASUREMENTS_2,
-
-    RLS_ERROR_BITFIELD,
-    MOTOR_FAULT_FLAG,
-
-    CONTROLLER_STATE,
-
-    CURRENT_FB,
-    V_BRIDGE,
-    DUTY_RATIO,
-
-    DATA_MAX,
-};
-
-enum host_commands_E
-{
-    ZERO_POSITION_OFFSET = 1,
-    START_STREAMING_DATA,
-    STOP_STREAMING_DATA,
-
-    DUTY_RATIO_OVERRIDE,
-    DIRECTION_TOGGLE,
-    TORQUE_CMD_OVERRIDE,
-    MOTOR_ENABLE_TOGGLE,
-    OVERRIDE_TOGGLE,
-};
-
 union float_to_uint_U
 {
     float value;
@@ -65,6 +27,9 @@ union float_to_uint_U
 
 // Local variables
 uint16_t host_rx_command_start_info_streaming = 0U;
+uint16_t host_rx_command_trigger_fast_logging = 0U;
+
+fast_logging_states_E fast_logging_state;
 
 // Helper functions
 static inline void send_float(const float value, const uint16_t id)
@@ -143,6 +108,12 @@ __interrupt void scibRXFIFOISR(void)
             break;
         }
 
+        case TRIGGER_FAST_LOGGING:
+        {
+            host_rx_command_trigger_fast_logging = 1U;
+            break;
+        }
+
         default:
             break;
     }
@@ -158,7 +129,9 @@ __interrupt void scibRXFIFOISR(void)
 
 static void send_data_to_host(void)
 {
-    static int16_t index = (int16_t)X_HAT_0;
+    static int16_t slow_index = (int16_t)X_HAT_0;
+    static int16_t fast_index = (int16_t)FAST_LOGGING_SIGNALS_READY;
+    static uint16_t fast_logging_index = 0U;
 
     float x_hat[6] = { 0.0f };
     float measurements[3] = { 0.0f };
@@ -173,11 +146,16 @@ static void send_data_to_host(void)
     const float v_bridge = motor_control_get_v_bridge();
     const float duty_ratio = motor_control_get_duty_ratio();
 
+    const bool fast_logging_inactive = (fast_logging_state != FAST_LOGGING_BUFFER_FULL);
+    const bool fast_logging_ready = (fast_logging_state == FAST_LOGGING_BUFFER_FULL);
+
+    float *fast_logging_buffer = fast_logging_get_buffer();
+
     const uint16_t fifo_empty_bins = SCI_FIFO_TX16 - SCI_getTxFIFOStatus(SCIA_BASE);
 
-    if(host_rx_command_start_info_streaming)
+    if(host_rx_command_start_info_streaming && fast_logging_inactive)
     {
-        switch(index)
+        switch(slow_index)
         {
             case X_HAT_0:
             {
@@ -314,15 +292,70 @@ static void send_data_to_host(void)
                 break;
         }
 
-        if (++index == (int16_t)DATA_MAX)
+        if (++slow_index == (int16_t)SLOW_LOGGING_MAX)
         {
-            index = (int16_t)X_HAT_0;
+            slow_index = (int16_t)X_HAT_0;
+        }
+    }
+    else if (fast_logging_ready)
+    {
+        switch(fast_index)
+        {
+            case FAST_LOGGING_SIGNALS_READY:
+            {
+                if(fifo_empty_bins >= 1U)
+                {
+                    SCI_writeCharNonBlocking(SCIA_BASE, FAST_LOGGING_SIGNALS_READY);   // identifier char
+                }
+                break;
+            }
+            case FAST_LOGGING_SIGNAL1:
+            {
+                if(fifo_empty_bins >= 5U)
+                {
+                    send_float(fast_logging_buffer[fast_logging_index], FAST_LOGGING_SIGNAL1);
+                }
+                break;
+            }
+            case FAST_LOGGING_SIGNAL2:
+            {
+                if(fifo_empty_bins >= 5U)
+                {
+                    send_float(fast_logging_buffer[FAST_LOGGING_BUFFER_SIZE + fast_logging_index], FAST_LOGGING_SIGNAL2);
+                }
+
+                if (++fast_logging_index >= FAST_LOGGING_BUFFER_SIZE)
+                {
+                    fast_index = (int16_t)FAST_LOGGING_SIGNALS_DONE;
+                }
+
+                break;
+            }
+            case FAST_LOGGING_SIGNALS_DONE:
+            {
+                fast_logging_index = 0U;
+                fast_logging_clear_buffer();
+
+                if(fifo_empty_bins >= 1U)
+                {
+                    SCI_writeCharNonBlocking(SCIA_BASE, FAST_LOGGING_SIGNALS_DONE);   // identifier char
+                }
+
+                fast_index = FAST_LOGGING_SIGNALS_READY;
+
+                break;
+            }
+        }
+        if (++fast_index == (int16_t)FAST_LOGGING_MAX)
+        {
+            fast_index = (int16_t)FAST_LOGGING_SIGNAL1;
         }
     }
     else
     {
         SCI_resetTxFIFO(SCIA_BASE);
-        index = (int16_t)X_HAT_0;
+        slow_index = (int16_t)X_HAT_0;
+        fast_index = (int16_t)FAST_LOGGING_SIGNALS_READY;
     }
 }
 
@@ -330,6 +363,26 @@ static void send_data_to_host(void)
 void host_comms_100Hz_task(void)
 {
     send_data_to_host();
+}
+
+void host_comms_5kHz_task(void)
+{
+    const float torque_cmd = controller_get_torque_cmd();
+    const float current_fb = motor_control_get_current_fb();
+
+    const float signals[2] = { torque_cmd, current_fb };
+
+    bool trigger = false;
+
+    if(host_rx_command_trigger_fast_logging)
+    {
+        trigger = true;
+        host_rx_command_trigger_fast_logging = 0U;
+    }
+
+    fast_logging_step(false, trigger, signals);
+
+    trigger = false;
 }
 
 

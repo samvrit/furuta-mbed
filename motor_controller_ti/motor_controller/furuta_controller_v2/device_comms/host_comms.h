@@ -15,5 +15,6 @@ extern uint16_t host_rx_command_zero_position_offset;
 __interrupt void scibRXFIFOISR(void);
 
 void host_comms_100Hz_task(void);
+void host_comms_5kHz_task(void);
 
 #endif /* DEVICE_COMMS_HOST_COMMS_H_ */

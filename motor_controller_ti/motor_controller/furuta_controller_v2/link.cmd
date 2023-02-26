@@ -61,17 +61,20 @@ PAGE 1 :
    RAMLS2      		: origin = 0x009000,   length = 0x000800
    RAMLS3      		: origin = 0x009800,   length = 0x000800
 
-   RAMGS0           : origin = 0x00C000,   length = 0x001000
-   RAMGS1           : origin = 0x00D000,   length = 0x001000
-   RAMGS2           : origin = 0x00E000,   length = 0x001000
-   RAMGS3           : origin = 0x00F000,   length = 0x001000
-   RAMGS4           : origin = 0x010000,   length = 0x001000
-   RAMGS5           : origin = 0x011000,   length = 0x001000
-   RAMGS6           : origin = 0x012000,   length = 0x001000
-   RAMGS7           : origin = 0x013000,   length = 0x001000
-   RAMGS8           : origin = 0x014000,   length = 0x001000
-   RAMGS9           : origin = 0x015000,   length = 0x001000
-   RAMGS10          : origin = 0x016000,   length = 0x001000
+   RAMGSLOW : origin = 0x00C000, length = 0x3FFF
+   RAMGSHI  : origin = 0x010000, length = 0x6FFF
+
+//   RAMGS0           : origin = 0x00C000,   length = 0x001000
+//   RAMGS1           : origin = 0x00D000,   length = 0x001000
+//   RAMGS2           : origin = 0x00E000,   length = 0x001000
+//   RAMGS3           : origin = 0x00F000,   length = 0x001000
+//   RAMGS4           : origin = 0x010000,   length = 0x001000
+//   RAMGS5           : origin = 0x011000,   length = 0x001000
+//   RAMGS6           : origin = 0x012000,   length = 0x001000
+//   RAMGS7           : origin = 0x013000,   length = 0x001000
+//   RAMGS8           : origin = 0x014000,   length = 0x001000
+//   RAMGS9           : origin = 0x015000,   length = 0x001000
+//   RAMGS10          : origin = 0x016000,   length = 0x001000
    
 //   RAMGS11          : origin = 0x017000, length = 0x000FF8   /* Uncomment for F28374D, F28376D devices */
 
@@ -108,7 +111,7 @@ SECTIONS
    .init_array         : > FLASHB,       PAGE = 0, ALIGN(8)
    .bss                : > RAMLS2 | RAMLS3,       PAGE = 1
    .bss:output         : > RAMLS2,       PAGE = 1
-   .data               : > RAMLS2,       PAGE = 1
+   .data               : > RAMGSHI, PAGE = 1, ALIGN(8)
    .sysmem             : > RAMLS2,       PAGE = 1
    .const              : > FLASHB,       PAGE = 0, ALIGN(8)
 #else
@@ -120,7 +123,7 @@ SECTIONS
 
    .reset           : > RESET,     PAGE = 0, TYPE = DSECT /* not used, */
 
-   Filter_RegsFile  : > RAMGS0,	   PAGE = 1
+//   Filter_RegsFile  : > RAMGSLOW,	   PAGE = 1
    
    .em2_cs0         : > EMIF2_CS0n, PAGE = 1
    .em2_cs2         : > EMIF2_CS2n, PAGE = 1
@@ -187,10 +190,10 @@ SECTIONS
 #endif
 
    /* The following section definition are for SDFM examples */
-   Filter1_RegsFile : > RAMGS1,	PAGE = 1, fill=0x1111
-   Filter2_RegsFile : > RAMGS2,	PAGE = 1, fill=0x2222
-   Filter3_RegsFile : > RAMGS3,	PAGE = 1, fill=0x3333
-   Filter4_RegsFile : > RAMGS4,	PAGE = 1, fill=0x4444
+//   Filter1_RegsFile : > RAMGS1,	PAGE = 1, fill=0x1111
+//   Filter2_RegsFile : > RAMGS2,	PAGE = 1, fill=0x2222
+//   Filter3_RegsFile : > RAMGS3,	PAGE = 1, fill=0x3333
+//   Filter4_RegsFile : > RAMGS4,	PAGE = 1, fill=0x4444
 
 #ifdef CLA_C
    /* CLA C compiler sections */
