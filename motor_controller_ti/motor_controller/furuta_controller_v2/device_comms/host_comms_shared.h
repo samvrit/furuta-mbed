@@ -54,6 +54,7 @@ enum host_commands_E
     DIRECTION_TOGGLE,
     TORQUE_CMD_OVERRIDE,
     MOTOR_ENABLE_TOGGLE,
+    RESET_MOTOR,
     OVERRIDE_TOGGLE,
 };
 

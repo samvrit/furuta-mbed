@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 #define FAST_LOGGING_NUM_SIGNALS (2U)
-#define FAST_LOGGING_BUFFER_SIZE (5000U)
+#define FAST_LOGGING_BUFFER_SIZE (1000U)
 
 typedef enum
 {

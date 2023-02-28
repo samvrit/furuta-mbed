@@ -14,13 +14,12 @@
 
 #define TICK_1KHZ_AT_10KHZ (5U)
 #define TICK_100HZ_AT_10KHZ (100U)
-#define TICK_5KHZ_AT_10KHZ (2U)
 
 #define TIMESTEP (1e-4f)    // [s] 10kHz
 
 // Extern data declaration
 uint16_t task_100Hz_flag = 0U;
-uint16_t task_5kHz_flag = 0U;
+uint16_t task_1kHz_flag = 0U;
 
 // Private data
 
@@ -79,24 +78,19 @@ __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
     static uint32_t tick_100Hz = 0U;
-    static uint32_t tick_5kHz = 0U;
 
     GPIO_writePin(2U, 1U);
 
     if(++tick_1kHz == TICK_1KHZ_AT_10KHZ)
     {
         tick_1kHz = 0U;
+        task_1kHz_flag = 1U;
 
         core_controls_data.measurements[0] = rls_get_position(&core_controls_data.rls_error_bitfield);
 
         core_controls_data.controller_state = state_machine_step(core_controls_data.measurements);
 
         core_controls_data.motor_fault_flag = !GPIO_readPin(123);  // active low
-    }
-
-    if (++tick_5kHz == TICK_5KHZ_AT_10KHZ)
-    {
-        task_5kHz_flag = 1U;
     }
 
     if(++tick_100Hz == TICK_100HZ_AT_10KHZ)

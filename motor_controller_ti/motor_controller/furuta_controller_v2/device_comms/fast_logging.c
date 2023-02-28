@@ -13,6 +13,8 @@ static float buffer[FAST_LOGGING_NUM_SIGNALS][FAST_LOGGING_BUFFER_SIZE] = { { 0.
 
 static fast_logging_states_E state = FAST_LOGGING_STANDBY;
 
+static bool reset_state = false;
+
 fast_logging_states_E fast_logging_step(const bool enable, const bool trigger, const float signals[FAST_LOGGING_NUM_SIGNALS])
 {
     static uint16_t index = 0U;
@@ -30,12 +32,6 @@ fast_logging_states_E fast_logging_step(const bool enable, const bool trigger, c
         }
         case FAST_LOGGING_LOGGING:
         {
-            if (!enable)
-            {
-                state = FAST_LOGGING_STANDBY;
-                break;
-            }
-
             for (uint16_t i = 0; i < FAST_LOGGING_NUM_SIGNALS; i++)
             {
                 buffer[i][index] = signals[i];
@@ -51,6 +47,13 @@ fast_logging_states_E fast_logging_step(const bool enable, const bool trigger, c
         case FAST_LOGGING_BUFFER_FULL:
         {
             index = 0U;
+
+            if(reset_state)
+            {
+                reset_state = false;
+                state = FAST_LOGGING_STANDBY;
+            }
+
             break;
         }
         default:
@@ -76,5 +79,5 @@ void fast_logging_clear_buffer(void)
 
     }
 
-    state = FAST_LOGGING_STANDBY;
+    reset_state = true;
 }

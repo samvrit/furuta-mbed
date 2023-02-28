@@ -28,6 +28,7 @@ union float_to_uint_U
 // Local variables
 uint16_t host_rx_command_start_info_streaming = 0U;
 uint16_t host_rx_command_trigger_fast_logging = 0U;
+uint16_t host_rx_command_reset_motor = 0U;
 
 fast_logging_states_E fast_logging_state;
 
@@ -105,6 +106,12 @@ __interrupt void scibRXFIFOISR(void)
         case MOTOR_ENABLE_TOGGLE:
         {
             motor_control_set_enable(received_data[1]);
+            break;
+        }
+
+        case RESET_MOTOR:
+        {
+            host_rx_command_reset_motor = 1U;
             break;
         }
 
@@ -324,7 +331,7 @@ static void send_data_to_host(void)
                     send_float(fast_logging_buffer[FAST_LOGGING_BUFFER_SIZE + fast_logging_index], FAST_LOGGING_SIGNAL2);
                 }
 
-                if (++fast_logging_index >= FAST_LOGGING_BUFFER_SIZE)
+                if ((++fast_logging_index) >= FAST_LOGGING_BUFFER_SIZE)
                 {
                     fast_index = (int16_t)FAST_LOGGING_SIGNALS_DONE;
                 }
@@ -333,20 +340,27 @@ static void send_data_to_host(void)
             }
             case FAST_LOGGING_SIGNALS_DONE:
             {
-                fast_logging_index = 0U;
-                fast_logging_clear_buffer();
-
                 if(fifo_empty_bins >= 1U)
                 {
                     SCI_writeCharNonBlocking(SCIA_BASE, FAST_LOGGING_SIGNALS_DONE);   // identifier char
                 }
 
+                fast_logging_index = 0U;
+
                 fast_index = FAST_LOGGING_SIGNALS_READY;
+
+                fast_logging_clear_buffer();
 
                 break;
             }
+            default:
+                break;
         }
-        if (++fast_index == (int16_t)FAST_LOGGING_MAX)
+        if(fast_index == FAST_LOGGING_SIGNALS_DONE)
+        {
+            // Don't increment fast_index
+        }
+        else if (++fast_index == (int16_t)FAST_LOGGING_MAX)
         {
             fast_index = (int16_t)FAST_LOGGING_SIGNAL1;
         }
@@ -363,9 +377,15 @@ static void send_data_to_host(void)
 void host_comms_100Hz_task(void)
 {
     send_data_to_host();
+
+    if (host_rx_command_reset_motor)
+    {
+        host_rx_command_reset_motor = 0U;
+        motor_control_fault_reset();
+    }
 }
 
-void host_comms_5kHz_task(void)
+void host_comms_1kHz_task(void)
 {
     const float torque_cmd = controller_get_torque_cmd();
     const float current_fb = motor_control_get_current_fb();
@@ -374,13 +394,13 @@ void host_comms_5kHz_task(void)
 
     bool trigger = false;
 
-    if(host_rx_command_trigger_fast_logging)
+    if (host_rx_command_trigger_fast_logging)
     {
         trigger = true;
         host_rx_command_trigger_fast_logging = 0U;
     }
 
-    fast_logging_step(false, trigger, signals);
+    fast_logging_state = fast_logging_step(false, trigger, signals);
 
     trigger = false;
 }

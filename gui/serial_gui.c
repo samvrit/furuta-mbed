@@ -9,7 +9,7 @@
 #include "host_comms_shared.h"
 
 #define FAST_LOGGING_NUM_SIGNALS (2U)
-#define FAST_LOGGING_BUFFER_SIZE (5000U)
+#define FAST_LOGGING_BUFFER_SIZE (1000U)
 
 #define ZERO_OFFSET_BTN_ID (1)
 #define STREAMING_BTN_ID (2)
@@ -78,6 +78,8 @@ bool meas3_within_bounds = false;
 bool rls_fault_flag = false;
 bool motor_fault_flag = false;
 bool controller_active = false;
+
+bool fast_logging_triggered = false;
 
 uint16_t fast_logging_index = 0U;
 
@@ -318,6 +320,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 const uint8_t data_to_send[5] = { (uint8_t)TRIGGER_FAST_LOGGING, 0U, 0U, 0U, 0U};
                 WriteFile(hCom, &data_to_send, 5, NULL, NULL);
 
+                fast_logging_triggered = true;
+
                 SetWindowText(info_message, "Fast logging triggered");
             }
             break;
@@ -426,7 +430,7 @@ DWORD WINAPI c2000_receive( LPVOID lpParam )
 {
     for(;;)
     {
-        if (currently_streaming)
+        if (currently_streaming || fast_logging_triggered)
         {
             char id;
             ReadFile(hCom, &id, 1, NULL, NULL);
@@ -670,6 +674,10 @@ DWORD WINAPI c2000_receive( LPVOID lpParam )
                 case FAST_LOGGING_SIGNALS_DONE:
                 {
                     fast_logging_index = 0U;
+
+                    fast_logging_triggered = false;
+
+                    SetWindowText(info_message, "Writing logs to file");
 
                     write_signals_to_file();
 
