@@ -387,7 +387,7 @@ void host_comms_100Hz_task(void)
 
 void host_comms_1kHz_task(void)
 {
-    const float torque_cmd = controller_get_torque_cmd();
+    const float torque_cmd = motor_control_get_torque_cmd();
     const float current_fb = motor_control_get_current_fb();
 
     const float signals[2] = { torque_cmd, current_fb };

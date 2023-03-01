@@ -5,11 +5,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "host_comms_shared.h"
 
 #define FAST_LOGGING_NUM_SIGNALS (2U)
 #define FAST_LOGGING_BUFFER_SIZE (1000U)
+#define TIMESTEP (1e-3f)
 
 #define ZERO_OFFSET_BTN_ID (1)
 #define STREAMING_BTN_ID (2)
@@ -89,25 +91,26 @@ uint16_t motor_enable_val = 0U;
 
 float fast_logging_signals[FAST_LOGGING_NUM_SIGNALS][FAST_LOGGING_BUFFER_SIZE] = { { 0.0f } };
 
-FILE * logging_file_handles[FAST_LOGGING_NUM_SIGNALS] = { NULL, NULL };
-
 void write_signals_to_file(void)
 {
-    logging_file_handles[0] = fopen("logs/signal1.csv", "w+");
-    logging_file_handles[1] = fopen("logs/signal2.csv", "w+");
+    FILE * logging_file_handle = fopen("logs/signals.csv", "w+");
 
-    if ((logging_file_handles[0] != NULL) && (logging_file_handles[1] != NULL))
+    if (logging_file_handle != NULL)
     {
-        for(uint8_t i = 0; i < FAST_LOGGING_NUM_SIGNALS; i++)
+        float t = 0.0f;
+
+        for(uint16_t i = 0; i < FAST_LOGGING_BUFFER_SIZE; i++)
         {
-            for (uint8_t j= 0; j < FAST_LOGGING_BUFFER_SIZE; j++)
-            {
-                char text[10] = "";
-                snprintf(text, 10, "%f,\n", fast_logging_signals[i][j]);
-                fputs(text, logging_file_handles[i]);
-            }
+            char text[50] = "";
+            snprintf(text, 50, "%f,%f,%f\n", t, fast_logging_signals[0][i], fast_logging_signals[1][i]);
+
+            t += TIMESTEP;
+
+            fputs(text, logging_file_handle);
         }
     }
+
+    fclose(logging_file_handle);
 }
 
 // Step 4: the Window Procedure
@@ -258,7 +261,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 GetWindowText(torque_cmd_edit, string, 10);
                 union uint_to_float_U float_data = { .value = atof(string) };
 
-                const uint8_t data_to_send[5] = { (uint8_t)TORQUE_CMD, float_data.raw[0], float_data.raw[1], float_data.raw[2], float_data.raw[3] };
+                const uint8_t data_to_send[5] = { (uint8_t)TORQUE_CMD_OVERRIDE, float_data.raw[0], float_data.raw[1], float_data.raw[2], float_data.raw[3] };
                 WriteFile(hCom, &data_to_send, 5, NULL, NULL);
 
                 SetWindowText(info_message, "Set torque command override");

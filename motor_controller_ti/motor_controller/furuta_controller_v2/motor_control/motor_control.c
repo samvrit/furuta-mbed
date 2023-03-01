@@ -61,6 +61,11 @@ float motor_control_get_duty_ratio(void)
     return cla_outputs.duty;
 }
 
+float motor_control_get_torque_cmd(void)
+{
+    return cla_inputs.torque_cmd;
+}
+
 void motor_control_set_enable(const uint16_t enable)
 {
     cla_inputs.enable = enable;

@@ -19,6 +19,7 @@ void motor_control_fault_reset(void);
 float motor_control_get_current_fb(void);
 float motor_control_get_v_bridge(void);
 float motor_control_get_duty_ratio(void);
+float motor_control_get_torque_cmd(void);
 
 void motor_control_set_enable(const uint16_t enable);
 void motor_control_set_override_enable(const uint16_t enable);
