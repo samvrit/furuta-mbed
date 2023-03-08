@@ -10,8 +10,8 @@
 #define CURRENT_BIAS_LPF_A (1.6e-4f)    // 2s time constant at 12.5kHz
 #define TORQUE_CONSTANT (0.968f)    // [Nm/A]
 
-#define CURRENT_CONTROLLER_KP (0.1f)       // [V/A]
-#define CURRENT_CONTROLLER_KI (0.1f)  // [V/A] this term is already multiplied by the timestep (1e-5)
+#define CURRENT_CONTROLLER_KP (4.4257f)  // [V/A]
+#define CURRENT_CONTROLLER_KI (4.4728f)  // [V/A] this term is already multiplied by the timestep (1e-5)
 #define CURRENT_CONTROLLER_I_TERM_MAX (12.0f) // [V/A]
 
 #define V_BRIDGE_MAX (12.0f)    // [V] DC voltage

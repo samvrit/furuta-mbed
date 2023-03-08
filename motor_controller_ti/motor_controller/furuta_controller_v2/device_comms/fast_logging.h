@@ -9,9 +9,7 @@
 #define DEVICE_COMMS_FAST_LOGGING_H_
 
 #include <stdbool.h>
-
-#define FAST_LOGGING_NUM_SIGNALS (2U)
-#define FAST_LOGGING_BUFFER_SIZE (1000U)
+#include "host_comms_shared.h"
 
 typedef enum
 {
@@ -20,7 +18,7 @@ typedef enum
     FAST_LOGGING_BUFFER_FULL,
 } fast_logging_states_E;
 
-fast_logging_states_E fast_logging_step(const bool enable, const bool trigger, const float signals[FAST_LOGGING_NUM_SIGNALS]);
+fast_logging_states_E fast_logging_step(const bool trigger, const float signals[FAST_LOGGING_NUM_SIGNALS]);
 
 float * fast_logging_get_buffer(void);
 

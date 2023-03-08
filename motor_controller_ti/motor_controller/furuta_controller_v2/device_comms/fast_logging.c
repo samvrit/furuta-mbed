@@ -15,7 +15,7 @@ static fast_logging_states_E state = FAST_LOGGING_STANDBY;
 
 static bool reset_state = false;
 
-fast_logging_states_E fast_logging_step(const bool enable, const bool trigger, const float signals[FAST_LOGGING_NUM_SIGNALS])
+fast_logging_states_E fast_logging_step(const bool trigger, const float signals[FAST_LOGGING_NUM_SIGNALS])
 {
     static uint16_t index = 0U;
 
@@ -24,7 +24,7 @@ fast_logging_states_E fast_logging_step(const bool enable, const bool trigger, c
         case FAST_LOGGING_STANDBY:
         {
             index = 0U;
-            if (enable || trigger)
+            if (trigger)
             {
                 state = FAST_LOGGING_LOGGING;
             }

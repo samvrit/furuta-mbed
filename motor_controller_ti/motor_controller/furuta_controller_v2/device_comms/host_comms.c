@@ -390,19 +390,20 @@ void host_comms_1kHz_task(void)
     const float torque_cmd = motor_control_get_torque_cmd();
     const float current_fb = motor_control_get_current_fb();
 
+    static float torque_cmd_prev = 0.0f;
+
     const float signals[2] = { torque_cmd, current_fb };
 
-    bool trigger = false;
+    const bool trigger = host_rx_command_trigger_fast_logging && (torque_cmd > 0.0f) && (torque_cmd_prev <= 0.0f);
 
-    if (host_rx_command_trigger_fast_logging)
+    torque_cmd_prev = torque_cmd;
+
+    if(trigger)
     {
-        trigger = true;
         host_rx_command_trigger_fast_logging = 0U;
     }
 
-    fast_logging_state = fast_logging_step(false, trigger, signals);
-
-    trigger = false;
+    fast_logging_state = fast_logging_step(trigger, signals);
 }
 
 

@@ -5,6 +5,7 @@
 #include "esp_comms.h"
 #include "state_machine.h"
 #include "fast_logging.h"
+#include "motor_control.h"
 #include <string.h>
 
 #include "driverlib.h"
@@ -12,10 +13,12 @@
 // Defines
 #define MEASUREMENTS_LPF_A (0.09090909091f)
 
-#define TICK_1KHZ_AT_10KHZ (5U)
+#define TICK_1KHZ_AT_10KHZ (10U)
 #define TICK_100HZ_AT_10KHZ (100U)
 
 #define TIMESTEP (1e-4f)    // [s] 10kHz
+
+#define PI (3.1415f)
 
 // Extern data declaration
 uint16_t task_100Hz_flag = 0U;
@@ -113,8 +116,6 @@ __interrupt void epwm3ISR(void)
     const float torque_cmd_from_controller = kf_control_output(kf_states.x_hat, TIMESTEP, &kf_input);
 
     core_controls_data.torque_cmd = enable ? torque_cmd_from_controller : 0.0f;
-
-    const float logging_signals[2] = { core_controls_data.torque_cmd, (float)core_controls_data.controller_state };
 
     GPIO_writePin(2U, 0U);
 

@@ -9,8 +9,6 @@
 
 #include "host_comms_shared.h"
 
-#define FAST_LOGGING_NUM_SIGNALS (2U)
-#define FAST_LOGGING_BUFFER_SIZE (1000U)
 #define TIMESTEP (1e-3f)
 
 #define ZERO_OFFSET_BTN_ID (1)
