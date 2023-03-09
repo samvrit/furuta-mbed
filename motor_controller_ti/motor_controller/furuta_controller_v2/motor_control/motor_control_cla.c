@@ -7,7 +7,9 @@
 // Defines
 
 #define CURRENT_SCALING (0.003076923077f)   // [A/adc_resolution] = (3/4095)*(5/2.976)*(1/0.4)
-#define CURRENT_BIAS_LPF_A (1.6e-4f)    // 2s time constant at 12.5kHz
+#define CURRENT_BIAS_LPF_A (1.6e-4f)    // 125ms time constant at 50kHz
+
+#define TORQUE_CMD_LPF (0.01960f)  // 1kHz cutoff freq at 50kHz
 #define TORQUE_CONSTANT (0.968f)    // [Nm/A]
 
 #define CURRENT_CONTROLLER_KP (4.4257f)  // [V/A]
@@ -24,6 +26,7 @@
 // Globals
 float pi_control_i_term;
 float current_bias;
+float torque_cmd_lpf;
 
 // Private function declarations
 static inline float get_current_feedback_from_adc(void);
@@ -40,7 +43,9 @@ __interrupt void motor_torque_control(void)
     // Accumulate bias when current controller is not active
     const float current_feedback = accumulate_current_bias(current_val_raw, (!cla_inputs.enable) && (!cla_inputs.overrides_enable));
 
-    const float current_ref = cla_inputs.torque_cmd / TORQUE_CONSTANT;
+    torque_cmd_lpf += (cla_inputs.torque_cmd - torque_cmd_lpf) * TORQUE_CMD_LPF;
+
+    const float current_ref = torque_cmd_lpf / TORQUE_CONSTANT;
 
     const float error = current_ref - current_feedback;
 
@@ -143,4 +148,5 @@ __interrupt void sw_task(void)
     // initialize global variables
     pi_control_i_term = 0.0f;
     current_bias = 0.0f;
+    torque_cmd_lpf = 0.0f;
 }
