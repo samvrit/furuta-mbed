@@ -7,6 +7,7 @@
 #include "fast_logging.h"
 #include "motor_control.h"
 #include <string.h>
+#include <stdbool.h>
 
 #include "driverlib.h"
 
@@ -34,6 +35,7 @@ struct core_controls_data_S
     uint16_t rls_error_bitfield;
     uint16_t motor_fault_flag;
     uint16_t rls_fault_flag;
+    bool covariance_matrix_initialized;
     controller_state_E controller_state;
 };
 
@@ -114,13 +116,17 @@ __interrupt void epwm3ISR(void)
         core_controls_data.measurements_lpf[i] += (core_controls_data.measurements[i] - core_controls_data.measurements_lpf[i]) * MEASUREMENTS_LPF_A;
     }
 
-    const bool enable = (CONTROLLER_ACTIVE == core_controls_data.controller_state) && (!core_controls_data.motor_fault_flag);
+    const bool enable = core_controls_data.covariance_matrix_initialized && (CONTROLLER_ACTIVE == core_controls_data.controller_state);
 
     kf_observer_step(core_controls_data.measurements_lpf, enable, &kf_input, &kf_states);
 
     const float torque_cmd_from_controller = kf_control_output(kf_states.x_hat, TIMESTEP, &kf_input);
 
     core_controls_data.torque_cmd = enable ? torque_cmd_from_controller : 0.0f;
+
+    motor_control_set_enable(enable);
+
+    motor_control_set_torque_cmd(core_controls_data.torque_cmd);
 
     GPIO_writePin(2U, 0U);
 
@@ -153,7 +159,7 @@ void controller_init(void)
 
     for(int i = 0; i < 20000; i++)
     {
-        kf_covariance_matrix_step(&kf_input, &kf_states);
+        core_controls_data.covariance_matrix_initialized = kf_covariance_matrix_step(&kf_input, &kf_states);
     }
 }
 
