@@ -58,7 +58,7 @@ static bool check_measurements_within_bounds(const float measurements[3], const 
     return checks;
 }
 
-controller_state_E state_machine_step(const float measurements[3])
+controller_state_E state_machine_step(const float measurements[3], const bool fault_present)
 {
     static controller_state_E state = CONTROLLER_INIT;
 
@@ -110,7 +110,7 @@ controller_state_E state_machine_step(const float measurements[3])
         {
             const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_60DEG, ANGLES_WITHIN_BOUNDS_5DEG, ANGLES_WITHIN_BOUNDS_5DEG);
 
-            if(!measurements_within_bounds)
+            if((!measurements_within_bounds) || (fault_present))
             {
                 state = CONTROLLER_STANDBY;
             }

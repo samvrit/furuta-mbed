@@ -14,6 +14,8 @@
 // Defines
 #define RLS_POSITION_SCALING  (3.83495197e-4f)  // [rad/count] equal to (2*pi)/(2^14)
 
+#define RLS_POSITION_RAW_LPF_A (1.99960008e-4f) // 5s time constant at 1kHz
+
 #define SPI_N_WORDS (4U)
 
 uint16_t position_offset = 0U;
@@ -63,11 +65,21 @@ float rls_get_position(uint16_t* error_bitfield)
 
     const uint16_t position_raw = (raw_data_temp >> 18U);
 
+    static float position_raw_lpf = 0.0f;
+
     if(host_rx_command_zero_position_offset)
     {
         host_rx_command_zero_position_offset = 0U;
 
+        position_raw_lpf = position_raw;
+
         position_offset = position_raw;
+    }
+    else
+    {
+        position_raw_lpf += (position_raw - position_raw_lpf) * RLS_POSITION_RAW_LPF_A;
+
+        position_offset = (uint16_t)position_raw_lpf;
     }
 
     const int16_t diff = position_raw - position_offset;

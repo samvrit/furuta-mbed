@@ -33,6 +33,7 @@ struct core_controls_data_S
     float measurements_lpf[N_STATES];
     uint16_t rls_error_bitfield;
     uint16_t motor_fault_flag;
+    uint16_t rls_fault_flag;
     controller_state_E controller_state;
 };
 
@@ -91,9 +92,13 @@ __interrupt void epwm3ISR(void)
 
         core_controls_data.measurements[0] = rls_get_position(&core_controls_data.rls_error_bitfield);
 
-        core_controls_data.controller_state = state_machine_step(core_controls_data.measurements);
-
         core_controls_data.motor_fault_flag = !GPIO_readPin(123);  // active low
+
+        core_controls_data.rls_fault_flag = (core_controls_data.rls_error_bitfield > 0U);
+
+        const bool fault_present = core_controls_data.motor_fault_flag || core_controls_data.rls_fault_flag;
+
+        core_controls_data.controller_state = state_machine_step(core_controls_data.measurements, fault_present);
     }
 
     if(++tick_100Hz == TICK_100HZ_AT_10KHZ)

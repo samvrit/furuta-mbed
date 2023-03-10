@@ -9,6 +9,7 @@
 #define CONTROLS_STATE_MACHINE_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum
 {
@@ -18,6 +19,6 @@ typedef enum
     CONTROLLER_ACTIVE = 3U
 } controller_state_E;
 
-controller_state_E state_machine_step(const float measurements[3]);
+controller_state_E state_machine_step(const float measurements[3], const bool fault_present);
 
 #endif /* CONTROLS_STATE_MACHINE_H_ */
