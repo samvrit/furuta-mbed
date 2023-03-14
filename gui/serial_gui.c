@@ -24,7 +24,7 @@
 
 #define PI (3.1415f)
 #define DEG2RAD(x) ((x) * (2.0f * PI / 360.0f ))
-#define ANGLES_WITHIN_BOUNDS_DEG (2.0f)
+#define ANGLES_WITHIN_BOUNDS_DEG (10.0f)
 
 HWND hwnd;
 

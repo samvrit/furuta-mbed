@@ -19,10 +19,11 @@
 #define ANGLES_WITHIN_BOUNDS_2DEG (2.0f)
 #define ANGLES_WITHIN_BOUNDS_5DEG (5.0f)
 #define ANGLES_WITHIN_BOUNDS_10DEG (10.0f)
-#define ANGLES_WITHIN_BOUNDS_60DEG (60.0f)
+#define ANGLES_WITHIN_BOUNDS_20DEG (20.0f)
+#define ANGLES_WITHIN_BOUNDS_90DEG (90.0f)
 
 #define TIMER_1SEC_1KHZ (1000U)
-#define TIMER_4SEC_1KHZ (4000U)
+#define TIMER_2_5_SEC_1KHZ (2500U)
 
 uint32_t init_timer = 0U;
 uint32_t qualifying_timer = 0U;
@@ -78,7 +79,7 @@ controller_state_E state_machine_step(const float measurements[3], const bool fa
         }
         case CONTROLLER_STANDBY:
         {
-            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_10DEG, ANGLES_WITHIN_BOUNDS_2DEG, ANGLES_WITHIN_BOUNDS_2DEG);
+            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_20DEG, ANGLES_WITHIN_BOUNDS_10DEG, ANGLES_WITHIN_BOUNDS_10DEG);
 
             if(measurements_within_bounds)
             {
@@ -89,9 +90,9 @@ controller_state_E state_machine_step(const float measurements[3], const bool fa
         }
         case CONTROLLER_QUALIFYING:
         {
-            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_10DEG, ANGLES_WITHIN_BOUNDS_2DEG, ANGLES_WITHIN_BOUNDS_2DEG);
+            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_20DEG, ANGLES_WITHIN_BOUNDS_10DEG, ANGLES_WITHIN_BOUNDS_10DEG);
 
-            const bool qualifying_timer_expired = timer_step(measurements_within_bounds, TIMER_4SEC_1KHZ, &qualifying_timer);
+            const bool qualifying_timer_expired = timer_step(measurements_within_bounds, TIMER_2_5_SEC_1KHZ, &qualifying_timer);
 
             if(!measurements_within_bounds)
             {
@@ -108,7 +109,7 @@ controller_state_E state_machine_step(const float measurements[3], const bool fa
         }
         case CONTROLLER_ACTIVE:
         {
-            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_60DEG, ANGLES_WITHIN_BOUNDS_5DEG, ANGLES_WITHIN_BOUNDS_5DEG);
+            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_90DEG, ANGLES_WITHIN_BOUNDS_20DEG, ANGLES_WITHIN_BOUNDS_20DEG);
 
             if((!measurements_within_bounds) || (fault_present))
             {

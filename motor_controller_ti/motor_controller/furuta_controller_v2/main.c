@@ -80,10 +80,10 @@ void main(void)
 
     for(;;)
     {
-        if(task_100Hz_flag)
+        if(task_200Hz_flag)
         {
-            task_100Hz_flag = 0U;
-            host_comms_100Hz_task();
+            task_200Hz_flag = 0U;
+            host_comms_200Hz_task();
         }
 
         if(task_1kHz_flag)

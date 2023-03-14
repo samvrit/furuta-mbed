@@ -71,7 +71,7 @@ float rls_get_position(uint16_t* error_bitfield)
     {
         host_rx_command_zero_position_offset = 0U;
 
-        position_raw_lpf = position_raw;
+        position_raw_lpf = (float)position_raw;
 
         position_offset = position_raw;
     }

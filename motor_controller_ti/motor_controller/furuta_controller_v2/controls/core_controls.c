@@ -6,23 +6,28 @@
 #include "state_machine.h"
 #include "fast_logging.h"
 #include "motor_control.h"
+#include "host_comms.h"
 #include <string.h>
 #include <stdbool.h>
 
 #include "driverlib.h"
 
 // Defines
-#define MEASUREMENTS_LPF_A (0.09090909091f)
+#define SAT(x, max, min)    ( (x) > (max) ? (max) : ((x) < (min) ? (min) : (x)))
+
+#define MEASUREMENTS_LPF_A (1.0f)
 
 #define TICK_1KHZ_AT_10KHZ (10U)
-#define TICK_100HZ_AT_10KHZ (100U)
+#define TICK_200HZ_AT_10KHZ (50U)
+
+#define TORQUE_MAX (5.0f)
 
 #define TIMESTEP (1e-4f)    // [s] 10kHz
 
 #define PI (3.1415f)
 
 // Extern data declaration
-uint16_t task_100Hz_flag = 0U;
+uint16_t task_200Hz_flag = 0U;
 uint16_t task_1kHz_flag = 0U;
 
 // Private data
@@ -65,25 +70,25 @@ const float C[N_STATES][N_STATES] = {   {1.000000,  0.000000,   0.000000,   0.00
                                         {0.000000,  0.000000,   0.000000,   0.000000,   0.000000,   0.000000},
                                         {0.000000,  0.000000,   0.000000,   0.000000,   0.000000,   0.000000}};
 
-const float K[N_STATES][N_STATES] = {   {3.162278,  -677.257131,    -1339.746051,   33.700353,  -218.398551,    -198.544387},
+const float K[N_STATES][N_STATES] = {   {3.1623,  -315.1931,    -1.0096e3,    12.7667,  -125.8331,  -148.5290},
                                         {0.000000,  0.000000,   0.000000,   0.000000,   0.000000,   0.000000},
                                         {0.000000,  0.000000,   0.000000,   0.000000,   0.000000,   0.000000},
                                         {0.000000,  0.000000,   0.000000,   0.000000,   0.000000,   0.000000},
                                         {0.000000,  0.000000,   0.000000,   0.000000,   0.000000,   0.000000},
                                         {0.000000,  0.000000,   0.000000,   0.000000,   0.000000,   0.000000}};
 
-const float Q = 7.5e-5f;
-const float R = 1.21e-6f;
+const float Q = 75e-2f;
+const float R = 1.21e-2f;
 
 // Private function declarations
-void update_measurements_100Hz(void);
+void update_measurements_200Hz(void);
 
 // ISR functions
 
 __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
-    static uint32_t tick_100Hz = 0U;
+    static uint32_t tick_200Hz = 0U;
 
     GPIO_writePin(2U, 1U);
 
@@ -103,11 +108,11 @@ __interrupt void epwm3ISR(void)
         core_controls_data.controller_state = state_machine_step(core_controls_data.measurements, fault_present);
     }
 
-    if(++tick_100Hz == TICK_100HZ_AT_10KHZ)
+    if(++tick_200Hz == TICK_200HZ_AT_10KHZ)
     {
-        tick_100Hz = 0U;
-        task_100Hz_flag = 1U;
-        update_measurements_100Hz();
+        tick_200Hz = 0U;
+        task_200Hz_flag = 1U;
+        update_measurements_200Hz();
     }
 
     #pragma UNROLL(6)
@@ -122,9 +127,9 @@ __interrupt void epwm3ISR(void)
 
     const float torque_cmd_from_controller = kf_control_output(kf_states.x_hat, TIMESTEP, &kf_input);
 
-    core_controls_data.torque_cmd = enable ? torque_cmd_from_controller : 0.0f;
+    core_controls_data.torque_cmd = enable ? SAT(torque_cmd_from_controller, TORQUE_MAX, -TORQUE_MAX) : 0.0f;
 
-    motor_control_set_enable(enable);
+    motor_control_set_enable(enable && host_rx_command_motor_enable);
 
     motor_control_set_torque_cmd(core_controls_data.torque_cmd);
 
@@ -136,7 +141,7 @@ __interrupt void epwm3ISR(void)
 
 // Private functions
 
-void update_measurements_100Hz(void)
+void update_measurements_200Hz(void)
 {
     esp_get_data(&core_controls_data.measurements[1], &core_controls_data.measurements[2]);
 }
@@ -169,7 +174,7 @@ void controller_get_measurements(float measurements_output[3])
 {
     for (uint16_t i = 0; i < 3; i++)
     {
-        measurements_output[i] = core_controls_data.measurements[i];
+        measurements_output[i] = core_controls_data.measurements_lpf[i];
     }
 }
 

@@ -16,6 +16,7 @@
 // Extern global variables
 
 uint16_t host_rx_command_zero_position_offset = 0U;
+uint16_t host_rx_command_motor_enable = 0U;
 
 // Local types
 
@@ -105,7 +106,7 @@ __interrupt void scibRXFIFOISR(void)
 
         case MOTOR_ENABLE_TOGGLE:
         {
-            motor_control_set_enable(received_data[1]);
+            host_rx_command_motor_enable = received_data[1];
             break;
         }
 
@@ -374,7 +375,7 @@ static void send_data_to_host(void)
 }
 
 // Public functions
-void host_comms_100Hz_task(void)
+void host_comms_200Hz_task(void)
 {
     send_data_to_host();
 

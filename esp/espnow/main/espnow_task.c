@@ -71,11 +71,11 @@ void espnow_task(void *pvParameter)
 #if (CONFIG_TRANSMIT_DEVICE1)
     timer_semaphore = xSemaphoreCreateBinary();
 
-    TimerHandle_t periodic_timer_100Hz;
+    TimerHandle_t periodic_timer_200Hz;
 
-    periodic_timer_100Hz = xTimerCreate("periodic_timer_100Hz", pdMS_TO_TICKS(10), pdTRUE, NULL, periodic_timer_callback);
+    periodic_timer_200Hz = xTimerCreate("periodic_timer_200Hz", pdMS_TO_TICKS(5), pdTRUE, NULL, periodic_timer_callback);
 
-    xTimerStart(periodic_timer_100Hz, portMAX_DELAY);
+    xTimerStart(periodic_timer_200Hz, portMAX_DELAY);
 #endif // (CONFIG_TRANSMIT_DEVICE1)
 
     for(;;)
