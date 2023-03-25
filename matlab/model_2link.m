@@ -1,4 +1,4 @@
-run_model = true;
+run_model = false;
 
 if run_model
     syms theta alpha a d theta1 theta2 q1(t) q2(t) x1 x2 x3 x4 tau
@@ -157,8 +157,8 @@ if run_model
         B_matrix(i+2) = subs(diff(accel(i), tau), [X(1) X(2) X(3) X(4) tau], [op(1) op(2) op(3) op(4) 0]);
     end
     
-    C_matrix = eye(4);
-    D_matrix = zeros(4,2);
+    C_matrix = [eye(2) zeros(2,2)];
+    D_matrix = zeros(2,2);
     
     fprintf('Time to calc M: %f | Time to calc accel: %f\n', time_M, time_accel);
 else
@@ -171,11 +171,11 @@ else
 end
 
 % LQR calculations
-Q = diag([1 800 1 100]);
+Q = diag([0.1 1 0.1 1]);
 R = 1;
 
 Q_kalman = eye(2) * 75e-6;
-R_kalman = eye(4) * 1.21e-2;
+R_kalman = eye(2) * 1.21e-6;
 
 [K, ~] = lqr(A_matrix, B_matrix, Q, R);
 sys = ss(A_matrix, B_matrix, C_matrix, D_matrix);
