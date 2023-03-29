@@ -141,7 +141,7 @@ static void send_data_to_host(void)
     static int16_t fast_index = (int16_t)FAST_LOGGING_SIGNALS_READY;
     static uint16_t fast_logging_index = 0U;
 
-    float x_hat[6] = { 0.0f };
+    float x_hat[4] = { 0.0f };
     float measurements[3] = { 0.0f };
 
     controller_get_measurements(measurements);
@@ -201,7 +201,8 @@ static void send_data_to_host(void)
             {
                 if(fifo_empty_bins >= 5U)
                 {
-                    send_float(x_hat[4], X_HAT_4);
+                    // send_float(x_hat[4], X_HAT_4);
+                    send_float(0.0f, X_HAT_4);
                 }
                 break;
             }
@@ -209,7 +210,8 @@ static void send_data_to_host(void)
             {
                 if(fifo_empty_bins >= 5U)
                 {
-                    send_float(x_hat[5], X_HAT_5);
+                    // send_float(x_hat[5], X_HAT_5);
+                    send_float(0.0f, X_HAT_5);
                 }
                 break;
             }
