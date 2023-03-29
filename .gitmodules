@@ -5,3 +5,6 @@
 [submodule "matlab/kalman_filter_lqr_lib"]
 	path = matlab/kalman_filter_lqr_lib
 	url = https://github.com/samvrit/kalman_filter_lqr_lib.git
+[submodule "matlab/TwoLink/kalman_filter_lqr_lib"]
+	path = matlab/TwoLink/kalman_filter_lqr_lib
+	url = https://github.com/samvrit/kalman_filter_lqr_lib.git

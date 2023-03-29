@@ -1,0 +1,6 @@
+#ifndef PROJECT_SPECIFIC_H_
+#define PROJECT_SPECIFIC_H_
+
+#define N_STATES (4)
+
+#endif // PROJECT_SPECIFIC_H_
