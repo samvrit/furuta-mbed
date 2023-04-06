@@ -24,6 +24,9 @@
 
 #define TIMESTEP (1e-4f)    // [s] 10kHz
 
+#define PERIOD_1KHZ (0.001f)
+#define PERIOD_200HZ (0.005f)
+
 #define PI (3.1415f)
 
 // Extern data declaration
@@ -61,10 +64,10 @@ const float B[N_STATES][N_STATES] = {   {0.000000,  0.000000,   0.000000,   0.00
 
 const float C[N_STATES][N_STATES] = {   {1.000000,  0.000000,   0.000000,   0.000000},
                                         {0.000000,  1.000000,   0.000000,   0.000000},
-                                        {0.000000,  0.000000,   0.000000,   0.000000},
-                                        {0.000000,  0.000000,   0.000000,   0.000000}};
+                                        {0.000000,  0.000000,   1.000000,   0.000000},
+                                        {0.000000,  0.000000,   0.000000,   1.000000}};
 
-const float K[N_STATES][N_STATES] = {   {-0.3162,    6.9812,   -0.4795,    1.4726},
+const float K[N_STATES][N_STATES] = {   {-0.3162,    9.5801,   -0.5308,    2.4884},
                                         {0.000000,  0.000000,   0.000000,   0.000000},
                                         {0.000000,  0.000000,   0.000000,   0.000000},
                                         {0.000000,  0.000000,   0.000000,   0.000000}};
@@ -89,7 +92,7 @@ __interrupt void epwm3ISR(void)
         tick_1kHz = 0U;
         task_1kHz_flag = 1U;
 
-        core_controls_data.measurements[0] = rls_get_position(&core_controls_data.rls_error_bitfield);
+        rls_get_position(&core_controls_data.measurements[0], &core_controls_data.measurements[2], &core_controls_data.rls_error_bitfield, PERIOD_1KHZ);
 
         core_controls_data.motor_fault_flag = !GPIO_readPin(123);  // active low
 
@@ -135,7 +138,10 @@ __interrupt void epwm3ISR(void)
 
 void update_measurements_200Hz(void)
 {
-    esp_get_data(&core_controls_data.measurements[1], &core_controls_data.measurements[2]);
+    float dummy_measurement1 = 0.0f;
+    float dummy_measurement2 = 0.0f;
+
+    esp_get_data(&core_controls_data.measurements[1], &dummy_measurement1, &core_controls_data.measurements[3], &dummy_measurement2, PERIOD_200HZ);
 }
 
 // Public Functions

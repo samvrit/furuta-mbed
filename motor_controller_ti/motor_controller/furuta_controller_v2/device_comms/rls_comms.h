@@ -10,6 +10,6 @@
 
 #include <stdint.h>
 
-float rls_get_position(uint16_t* error_bitfield);
+void rls_get_position(float* position, float* velocity, uint16_t* error_bitfield, const float timestep);
 
 #endif /* DEVICE_COMMS_RLS_COMMS_H_ */

@@ -15,6 +15,8 @@
 
 #define ESP_POSITION_SCALING  (3.83495197e-4f)  // [rad/count] equal to (2*pi)/(2^14)
 
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 uint16_t angles_combined = 0U;
 
 // Local functions
@@ -39,7 +41,7 @@ static inline int16_t wrap_count(const uint16_t count)
 }
 
 // Global functions
-void esp_get_data(float * angle1, float * angle2)
+void esp_get_data(float * angle1, float * angle2, float * velocity1, float * velocity2, const float timestep)
 {
     const uint16_t sData[SPI_N_WORDS] = {0x4100U, 0x4200U, 0x4300U, 0x4400U};   // Dummy characters (ABCD)
 
@@ -64,15 +66,30 @@ void esp_get_data(float * angle1, float * angle2)
     const uint16_t angle1_temp = (raw_data_temp & 0xFFFFU);
     const uint16_t angle2_temp = (raw_data_temp >> 16U);
 
+    static float angle1_prev = 0.0f;
+    static float angle2_prev = 0.0f;
+
     if(angle1_temp <= 16383U)  // check for sane values (0 to 2^14-1)
     {
         const int16_t angle1_int = wrap_count(angle1_temp);
-        *angle1 = angle1_int * ESP_POSITION_SCALING;;
+        const float angle1_local = angle1_int * ESP_POSITION_SCALING;
+        const float velocity_local = (angle1_local - angle1_prev) / MAX(timestep, 0.001f);
+
+        angle1_prev = angle1_local;
+
+        *angle1 = angle1_local;
+        *velocity1 = velocity_local;
     }
 
     if(angle2_temp <= 16383U)  // check for sane values (0 to 2^14-1)
     {
         const int16_t angle2_int = wrap_count((angle2_temp & 0x3FFFU));
-        *angle2 = angle2_int * ESP_POSITION_SCALING;
+        const float angle2_local = angle2_int * ESP_POSITION_SCALING;
+        const float velocity_local = (angle2_local - angle2_prev) / MAX(timestep, 0.001f);
+
+        angle2_prev = angle2_local;
+
+        *angle2 = angle2_local;
+        *velocity2 = velocity_local;
     }
 }

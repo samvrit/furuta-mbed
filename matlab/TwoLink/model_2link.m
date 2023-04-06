@@ -171,7 +171,7 @@ else
 end
 
 % LQR calculations
-Q = diag([0.1 1 0.1 1]);
+Q = diag([0.1 4 0.1 4]);
 R = 1;
 
 Q_kalman = eye(2) * 75e-6;

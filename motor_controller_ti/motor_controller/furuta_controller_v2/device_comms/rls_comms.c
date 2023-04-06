@@ -18,6 +18,8 @@
 
 #define SPI_N_WORDS (4U)
 
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 uint16_t position_offset = 0U;
 
 // Local functions
@@ -42,7 +44,7 @@ static inline int16_t wrap_count(const uint16_t count)
 }
 
 // Global functions
-float rls_get_position(uint16_t* error_bitfield)
+void rls_get_position(float* position, float* velocity, uint16_t* error_bitfield, const float timestep)
 {
     const uint16_t sData[SPI_N_WORDS] = {0x6400U, 0x0U, 0x0U, 0x0U};
 
@@ -88,9 +90,15 @@ float rls_get_position(uint16_t* error_bitfield)
 
     const int16_t position_int = wrap_count(position_after_correction);
 
-    const float position = position_int * RLS_POSITION_SCALING;
+    const float position_local = position_int * RLS_POSITION_SCALING;
 
+    static float position_previous = 0.0f;
+
+    const float velocity_local = (position_local - position_previous) / MAX(timestep, 0.001f);
+
+    position_previous = position_local;
+
+    *position = position_local;
+    *velocity = velocity_local;
     *error_bitfield = ((raw_data_temp & 0xFF00U) >> 8U);
-
-    return position;
 }

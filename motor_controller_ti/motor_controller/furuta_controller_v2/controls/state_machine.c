@@ -52,7 +52,7 @@ static bool check_measurements_within_bounds(const float measurements[3], const 
 {
     const bool check1 = fabsf(measurements[0]) < DEG2RAD(bounds_deg1);
     const bool check2 = fabsf(measurements[1]) < DEG2RAD(bounds_deg2);
-    const bool check3 = fabsf(measurements[2]) < DEG2RAD(bounds_deg3);
+    const bool check3 = true; // fabsf(measurements[2]) < DEG2RAD(bounds_deg3);
 
     const bool checks = check1 && check2 && check3;
 
