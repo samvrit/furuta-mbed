@@ -49,9 +49,9 @@ void main(void)
     // Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR).
     Interrupt_initVectorTable();
 
-    controller_init();
-
     initGPIO();
+
+    controller_init();
 
     initADC();
 

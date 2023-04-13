@@ -164,6 +164,8 @@ void controller_init(void)
     {
         core_controls_data.covariance_matrix_initialized = kf_covariance_matrix_step(&kf_input, &kf_states);
     }
+
+    GPIO_writePin(52U, core_controls_data.covariance_matrix_initialized);
 }
 
 // Getter functions

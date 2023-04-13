@@ -17,6 +17,11 @@ void initGPIO(void)
     GPIO_setPadConfig(2, GPIO_PIN_TYPE_PULLUP);
     GPIO_setDirectionMode(2, GPIO_DIR_MODE_OUT);
 
+    // LED1
+    GPIO_setPinConfig(GPIO_52_GPIO52);
+    GPIO_setPadConfig(52, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(52, GPIO_DIR_MODE_OUT);
+
     // nFAULT (motor)
     GPIO_setPinConfig(GPIO_123_GPIO123);
     GPIO_setPadConfig(123, GPIO_PIN_TYPE_PULLUP);
