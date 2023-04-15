@@ -1,5 +1,6 @@
 // Includes
 #include "gpio_init.h"
+#include "external_switch.h"
 
 #include "driverlib.h"
 
@@ -21,6 +22,11 @@ void initGPIO(void)
     GPIO_setPinConfig(GPIO_52_GPIO52);
     GPIO_setPadConfig(52, GPIO_PIN_TYPE_PULLUP);
     GPIO_setDirectionMode(52, GPIO_DIR_MODE_OUT);
+
+    // LED1
+    GPIO_setPinConfig(GPIO_41_GPIO41);
+    GPIO_setPadConfig(41, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(41, GPIO_DIR_MODE_OUT);
 
     // nFAULT (motor)
     GPIO_setPinConfig(GPIO_123_GPIO123);
@@ -83,5 +89,18 @@ void initGPIO(void)
 
     GPIO_setPinConfig(GPIO_42_SCITXDA);
     GPIO_setDirectionMode(42, GPIO_DIR_MODE_OUT);
+
+    // External switch
+    GPIO_setPinConfig(GPIO_131_GPIO131);
+    GPIO_setPadConfig(131, GPIO_PIN_TYPE_PULLUP);
+    GPIO_setDirectionMode(131, GPIO_DIR_MODE_IN);
+    GPIO_setQualificationMode(131, GPIO_QUAL_SYNC);
+
+    GPIO_setInterruptType(GPIO_INT_XINT1, GPIO_INT_TYPE_RISING_EDGE);
+    GPIO_setInterruptPin(131, GPIO_INT_XINT1);
+    GPIO_enableInterrupt(GPIO_INT_XINT1);
+
+    Interrupt_register(INT_XINT1, &switch_interrupt);
+    Interrupt_enable(INT_XINT1);
 }
 

@@ -13,6 +13,7 @@
 
 #include "core_controls.h"
 #include "host_comms.h"
+#include "external_switch.h"
 
 #include "driverlib.h"
 #include "device.h"
@@ -90,6 +91,8 @@ void main(void)
         {
             task_1kHz_flag = 0U;
             host_comms_1kHz_task();
+
+            GPIO_writePin(41, (host_rx_command_motor_enable || motor_enable_switch));
         }
     }
 }

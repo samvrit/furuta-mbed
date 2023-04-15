@@ -7,6 +7,7 @@
 #include "fast_logging.h"
 #include "motor_control.h"
 #include "host_comms.h"
+#include "external_switch.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -124,7 +125,7 @@ __interrupt void epwm3ISR(void)
 
     core_controls_data.torque_cmd = enable ? SAT(torque_cmd_from_controller, TORQUE_MAX, -TORQUE_MAX) : 0.0f;
 
-    motor_control_set_enable(enable && host_rx_command_motor_enable);
+    motor_control_set_enable(enable && (host_rx_command_motor_enable || motor_enable_switch));
 
     motor_control_set_torque_cmd(core_controls_data.torque_cmd);
 
