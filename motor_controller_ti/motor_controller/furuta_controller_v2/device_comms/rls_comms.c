@@ -14,7 +14,7 @@
 // Defines
 #define RLS_POSITION_SCALING  (3.83495197e-4f)  // [rad/count] equal to (2*pi)/(2^14)
 
-#define RLS_POSITION_RAW_LPF_A (1.99960008e-4f) // 5s time constant at 1kHz
+#define RLS_POSITION_RAW_LPF_A (1.9996e-4f) // 5s time constant at 1kHz
 
 #define SPI_N_WORDS (4U)
 
