@@ -8,6 +8,7 @@
 #include "motor_control.h"
 #include "host_comms.h"
 #include "external_switch.h"
+#include "matrix_definitions.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -52,29 +53,6 @@ struct core_controls_data_S core_controls_data = { 0 };
 
 kf_input_S kf_input;
 kf_states_S kf_states;
-
-const float A[N_STATES][N_STATES] = {   {0.000000,  0.000000,   1.000000,   0.000000},
-                                        {0.000000,  0.000000,   0.000000,   1.000000},
-                                        {0.000000,  37.3894,    0.000000,   0.000000},
-                                        {0.000000,  82.4377,    0.000000,   0.000000}};
-
-const float B[N_STATES][N_STATES] = {   {0.000000,  0.000000,   0.000000,   0.000000},
-                                        {0.000000,  0.000000,   0.000000,   0.000000},
-                                        {148.1531,  0.000000,   0.000000,   0.000000},
-                                        {176.7290,  0.000000,   0.000000,   0.000000}};
-
-const float C[N_STATES][N_STATES] = {   {1.000000,  0.000000,   0.000000,   0.000000},
-                                        {0.000000,  1.000000,   0.000000,   0.000000},
-                                        {0.000000,  0.000000,   1.000000,   0.000000},
-                                        {0.000000,  0.000000,   0.000000,   1.000000}};
-
-const float K[N_STATES][N_STATES] = {   {-0.3162,    9.5801,   -0.5308,    2.4884},
-                                        {0.000000,  0.000000,   0.000000,   0.000000},
-                                        {0.000000,  0.000000,   0.000000,   0.000000},
-                                        {0.000000,  0.000000,   0.000000,   0.000000}};
-
-const float Q = 75e-6f;
-const float R = 1.21e-6f;
 
 // Private function declarations
 void update_measurements_200Hz(void);
