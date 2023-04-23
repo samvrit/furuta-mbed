@@ -29,7 +29,7 @@
 uint32_t init_timer = 0U;
 uint32_t qualifying_timer = 0U;
 
-static bool timer_step(const bool condition, uint32_t threshold, uint32_t * timer_state)
+static inline bool timer_step(const bool condition, uint32_t threshold, uint32_t * timer_state)
 {
     bool timer_output = false;
 
@@ -49,17 +49,23 @@ static bool timer_step(const bool condition, uint32_t threshold, uint32_t * time
     return timer_output;
 }
 
-static bool check_measurements_within_bounds(const float measurements[3], const float bounds_deg1, const float bounds_deg2, const float bounds_deg3)
+static inline bool check_measurements_within_bounds(const float measurements[3], const float bounds_deg1, const float bounds_deg2, const float bounds_deg3)
 {
     const bool check1 = fabsf(measurements[0]) < DEG2RAD(bounds_deg1);
     const bool check2 = fabsf(measurements[1]) < DEG2RAD(bounds_deg2);
-    const bool check3 = true; // fabsf(measurements[2]) < DEG2RAD(bounds_deg3);
+
+#if (SINGLE_PENDULUM)
+    const bool check3 = true;
+#else
+    const bool check3 = fabsf(measurements[2]) < DEG2RAD(bounds_deg3);
+#endif
 
     const bool checks = check1 && check2 && check3;
 
     return checks;
 }
 
+#pragma CODE_SECTION(state_machine_step, ".TI.ramfunc")
 controller_state_E state_machine_step(const float measurements[3], const bool fault_present)
 {
     static controller_state_E state = CONTROLLER_INIT;
@@ -91,7 +97,11 @@ controller_state_E state_machine_step(const float measurements[3], const bool fa
         }
         case CONTROLLER_QUALIFYING:
         {
+#if (SINGLE_PENDULUM)
             const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_20DEG, ANGLES_WITHIN_BOUNDS_10DEG, ANGLES_WITHIN_BOUNDS_10DEG);
+#else
+            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_10DEG, ANGLES_WITHIN_BOUNDS_5DEG, ANGLES_WITHIN_BOUNDS_5DEG);
+#endif
 
             const bool qualifying_timer_expired = timer_step(measurements_within_bounds, TIMER_2_5_SEC_1KHZ, &qualifying_timer);
 

@@ -9,6 +9,7 @@
 #include "host_comms.h"
 #include "external_switch.h"
 #include "matrix_definitions.h"
+#include "cpu_cla_shared.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -58,7 +59,7 @@ kf_states_S kf_states;
 void update_measurements_200Hz(void);
 
 // ISR functions
-
+#pragma CODE_SECTION(epwm3ISR, ".TI.ramfunc")
 __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
@@ -71,7 +72,11 @@ __interrupt void epwm3ISR(void)
         tick_1kHz = 0U;
         task_1kHz_flag = 1U;
 
+#if (SINGLE_PENDULUM)
         rls_get_position(&core_controls_data.measurements[0], &core_controls_data.measurements[2], &core_controls_data.rls_error_bitfield, PERIOD_1KHZ);
+#else
+        rls_get_position(&core_controls_data.measurements[0], &core_controls_data.measurements[3], &core_controls_data.rls_error_bitfield, PERIOD_1KHZ);
+#endif
 
         core_controls_data.motor_fault_flag = !GPIO_readPin(123);  // active low
 
@@ -103,9 +108,13 @@ __interrupt void epwm3ISR(void)
 
     core_controls_data.torque_cmd = enable ? SAT(torque_cmd_from_controller, TORQUE_MAX, -TORQUE_MAX) : 0.0f;
 
-    motor_control_set_enable(enable && (host_rx_command_motor_enable || motor_enable_switch));
+    cla_inputs.enable = enable && (host_rx_command_motor_enable || motor_enable_switch);
 
-    motor_control_set_torque_cmd(core_controls_data.torque_cmd);
+    cla_inputs.torque_cmd = core_controls_data.torque_cmd;
+
+//    motor_control_set_enable(enable && (host_rx_command_motor_enable || motor_enable_switch));
+//
+//    motor_control_set_torque_cmd(core_controls_data.torque_cmd);
 
     GPIO_writePin(2U, 0U);
 
@@ -114,13 +123,17 @@ __interrupt void epwm3ISR(void)
 }
 
 // Private functions
-
+#pragma CODE_SECTION(update_measurements_200Hz, ".TI.ramfunc")
 void update_measurements_200Hz(void)
 {
+#if (SINGLE_PENDULUM)
     float dummy_measurement1 = 0.0f;
     float dummy_measurement2 = 0.0f;
 
     esp_get_data(&core_controls_data.measurements[1], &dummy_measurement1, &core_controls_data.measurements[3], &dummy_measurement2, PERIOD_200HZ);
+#else
+    esp_get_data(&core_controls_data.measurements[1], &core_controls_data.measurements[2], &core_controls_data.measurements[4], &core_controls_data.measurements[5], PERIOD_200HZ);
+#endif
 }
 
 // Public Functions

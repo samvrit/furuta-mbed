@@ -1,4 +1,4 @@
-run_model = false;
+run_model = true;
 
 if run_model
     syms theta alpha a d theta1 theta2 theta3 q1(t) q2(t) q3(t) x1 x2 x3 x4 x5 x6 tau
@@ -187,7 +187,7 @@ else
 end
 
 % LQR calculations
-Q = diag([10 400000 4000 1000 10000 1000]);
+Q = diag([0.1 10 10 0.1 10 10]);
 R = 1;
 
 Q_kalman = 7.5e-5;

@@ -44,6 +44,7 @@ static inline int16_t wrap_count(const uint16_t count)
 }
 
 // Global functions
+#pragma CODE_SECTION(rls_get_position, ".TI.ramfunc")
 void rls_get_position(float* position, float* velocity, uint16_t* error_bitfield, const float timestep)
 {
     const uint16_t sData[SPI_N_WORDS] = {0x6400U, 0x0U, 0x0U, 0x0U};

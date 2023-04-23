@@ -20,13 +20,13 @@
 uint16_t angles_combined = 0U;
 
 // Local functions
-static void cs_deassert(void)
+static inline void cs_deassert(void)
 {
     GPIO_writePin(66, 0U);
     DEVICE_DELAY_US(5);
 }
 
-static void cs_assert(void)
+static inline void cs_assert(void)
 {
     DEVICE_DELAY_US(5);
     GPIO_writePin(66, 1U);
@@ -41,6 +41,7 @@ static inline int16_t wrap_count(const uint16_t count)
 }
 
 // Global functions
+#pragma CODE_SECTION(esp_get_data, ".TI.ramfunc")
 void esp_get_data(float * angle1, float * angle2, float * velocity1, float * velocity2, const float timestep)
 {
     const uint16_t sData[SPI_N_WORDS] = {0x4100U, 0x4200U, 0x4300U, 0x4400U};   // Dummy characters (ABCD)

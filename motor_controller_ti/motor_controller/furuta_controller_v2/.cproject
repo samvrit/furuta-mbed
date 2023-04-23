@@ -175,7 +175,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.ABI.78160898" name="Application binary interface [See 'General' page to edit] (--abi)" superClass="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.ABI" useByScannerDiscovery="false" value="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.ABI.eabi" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.DEFINE.1437262941" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="${COM_TI_C2000WARE_SOFTWARE_PACKAGE_SYMBOLS}"/>
-									<listOptionValue builtIn="false" value="CONFIG_SINGLE_PENDULUM"/>
+									<listOptionValue builtIn="false" value="SINGLE_PENDULUM=1"/>
 									<listOptionValue builtIn="false" value="_LAUNCHXL_F28379D"/>
 									<listOptionValue builtIn="false" value="__TI_EABI__"/>
 									<listOptionValue builtIn="false" value="DEBUG"/>
@@ -316,7 +316,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.ABI.611631765" name="Application binary interface [See 'General' page to edit] (--abi)" superClass="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.ABI" useByScannerDiscovery="false" value="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.ABI.eabi" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.DEFINE.2095829080" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="${COM_TI_C2000WARE_SOFTWARE_PACKAGE_SYMBOLS}"/>
-									<listOptionValue builtIn="false" value="CONFIG_DOUBLE_PENDULUM"/>
+									<listOptionValue builtIn="false" value="DOUBLE_PENDULUM=1"/>
 									<listOptionValue builtIn="false" value="_LAUNCHXL_F28379D"/>
 									<listOptionValue builtIn="false" value="__TI_EABI__"/>
 									<listOptionValue builtIn="false" value="DEBUG"/>

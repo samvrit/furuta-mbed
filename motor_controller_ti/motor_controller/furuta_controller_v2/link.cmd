@@ -156,8 +156,8 @@ SECTIONS
 #ifdef __TI_COMPILER_VERSION__
    #if __TI_COMPILER_VERSION__ >= 15009000
         #if defined(__TI_EABI__)
-		    .TI.ramfunc : {} LOAD = FLASHD,
-							 RUN = RAMD0,
+		    .TI.ramfunc : {} LOAD = FLASHB | FLASHC | FLASHD | FLASHE,
+							 RUN = RAMD0 | RAMLS0 | RAMLS1 | RAMLS4_5 | RAMGS14 | RAMGS15,
                 	         LOAD_START(RamfuncsLoadStart),
                  	         LOAD_SIZE(RamfuncsLoadSize),
                  	         LOAD_END(RamfuncsLoadEnd),
