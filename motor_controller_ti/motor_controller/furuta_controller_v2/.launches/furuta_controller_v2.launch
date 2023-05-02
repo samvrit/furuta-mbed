@@ -26,7 +26,7 @@
     <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${workspace_loc:/furuta_controller_v2/targetConfigs/TMS320F28379D.ccxml}"/>
     <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.TMS320F28377D.ccxml.Texas Instruments XDS100v2 USB Debug Probe_0/C28xx_CPU1" value="${build_artifact:furuta_controller_v2}"/>
     <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.TMS320F28377D.ccxml.Texas Instruments XDS100v2 USB Debug Probe_0/CPU1_CLA1" value="C:\Users\Samvrit\Desktop\furuta-new\motor_controller_ti\motor_controller\furuta_controller_v2\CPU1_FLASH\furuta_controller_v2.out"/>
-    <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.TMS320F28379D.ccxml.Texas Instruments XDS100v2 USB Debug Probe_0/C28xx_CPU1" value="C:\Users\Samvrit\Desktop\furuta-new\motor_controller_ti\motor_controller\furuta_controller_v2\SINGLE_PENDULUM\furuta_controller_v2.out"/>
+    <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.TMS320F28379D.ccxml.Texas Instruments XDS100v2 USB Debug Probe_0/C28xx_CPU1" value="C:\Users\Samvrit\Desktop\furuta-new\motor_controller_ti\motor_controller\furuta_controller_v2\DOUBLE_PENDULUM\furuta_controller_v2.out"/>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
         <listEntry value="/furuta_controller_v2"/>
     </listAttribute>

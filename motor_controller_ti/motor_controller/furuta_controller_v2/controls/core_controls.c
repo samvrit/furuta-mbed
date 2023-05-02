@@ -59,7 +59,6 @@ kf_states_S kf_states;
 void update_measurements_200Hz(void);
 
 // ISR functions
-#pragma CODE_SECTION(epwm3ISR, ".TI.ramfunc")
 __interrupt void epwm3ISR(void)
 {
     static uint32_t tick_1kHz = 0U;
@@ -123,7 +122,6 @@ __interrupt void epwm3ISR(void)
 }
 
 // Private functions
-#pragma CODE_SECTION(update_measurements_200Hz, ".TI.ramfunc")
 void update_measurements_200Hz(void)
 {
 #if (SINGLE_PENDULUM)
