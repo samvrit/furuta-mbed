@@ -111,10 +111,6 @@ __interrupt void epwm3ISR(void)
 
     cla_inputs.torque_cmd = core_controls_data.torque_cmd;
 
-//    motor_control_set_enable(enable && (host_rx_command_motor_enable || motor_enable_switch));
-//
-//    motor_control_set_torque_cmd(core_controls_data.torque_cmd);
-
     GPIO_writePin(2U, 0U);
 
     EPWM_clearEventTriggerInterruptFlag(EPWM3_BASE);

@@ -120,7 +120,7 @@ controller_state_E state_machine_step(const float measurements[3], const bool fa
         }
         case CONTROLLER_ACTIVE:
         {
-            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_180DEG, ANGLES_WITHIN_BOUNDS_60DEG, ANGLES_WITHIN_BOUNDS_20DEG);
+            const bool measurements_within_bounds = check_measurements_within_bounds(measurements, ANGLES_WITHIN_BOUNDS_180DEG, ANGLES_WITHIN_BOUNDS_60DEG, ANGLES_WITHIN_BOUNDS_60DEG);
 
             if((!measurements_within_bounds) || (fault_present))
             {
